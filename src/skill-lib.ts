@@ -52,3 +52,12 @@ export async function addSkill(
   }
   await fs.cp(sourceDir, destDir, { recursive: true });
 }
+
+export async function removeSkill(name: string, roots: Roots): Promise<void> {
+  const destDir = path.join(roots.projectSkillsDir, name);
+  const destExists = await fs.access(destDir).then(() => true).catch(() => false);
+  if (!destExists) {
+    throw new Error(`skill '${name}' is not installed in ${roots.projectSkillsDir}`);
+  }
+  await fs.rm(destDir, { recursive: true, force: true });
+}

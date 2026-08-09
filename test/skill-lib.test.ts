@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { listSkills, addSkill } from '../src/skill-lib.js';
+import { listSkills, addSkill, removeSkill } from '../src/skill-lib.js';
 import type { Roots } from '../src/paths.js';
 
 let skillsRoot: string;
@@ -78,5 +78,22 @@ describe('addSkill', () => {
 
     const copied = fs.readFileSync(path.join(projectSkillsDir, 'my-skill', 'SKILL.md'), 'utf8');
     expect(copied).toBe('# new content');
+  });
+});
+
+describe('removeSkill', () => {
+  it('removes an installed skill from projectSkillsDir', async () => {
+    fs.mkdirSync(path.join(projectSkillsDir, 'my-skill'), { recursive: true });
+    fs.writeFileSync(path.join(projectSkillsDir, 'my-skill', 'SKILL.md'), '# my-skill');
+
+    await removeSkill('my-skill', roots);
+
+    expect(fs.existsSync(path.join(projectSkillsDir, 'my-skill'))).toBe(false);
+  });
+
+  it('throws when the skill is not installed', async () => {
+    await expect(removeSkill('missing-skill', roots)).rejects.toThrow(
+      `skill 'missing-skill' is not installed in ${projectSkillsDir}`
+    );
   });
 });
