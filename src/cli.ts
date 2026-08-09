@@ -30,14 +30,19 @@ skill
   .command('list')
   .description('List skills available in ~/.raygent/skills and whether installed in this project')
   .action(async () => {
-    const roots = defaultRoots();
-    const skills = await listSkills(roots);
-    if (skills.length === 0) {
-      console.log(`No skills found in ${roots.skillsRoot}`);
-      return;
-    }
-    for (const s of skills) {
-      console.log(`${s.installed ? '[installed]' : '[available]'} ${s.name}`);
+    try {
+      const roots = defaultRoots();
+      const skills = await listSkills(roots);
+      if (skills.length === 0) {
+        console.log(`No skills found in ${roots.skillsRoot}`);
+        return;
+      }
+      for (const s of skills) {
+        console.log(`${s.installed ? '[installed]' : '[available]'} ${s.name}`);
+      }
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
     }
   });
 
