@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { initProject, docTitle } from '../src/init-lib.js';
+import { initProject, docTitle, FRAMEWORKS_BY_PLATFORM } from '../src/init-lib.js';
 
 let cwd: string;
 
@@ -24,7 +24,10 @@ describe('docTitle', () => {
 
 describe('initProject', () => {
   it('creates the 9 product docs, including DESIGN.html', async () => {
-    const { docsDir } = await initProject({ projectName: 'demo', framework: 'next', type: 'product' }, cwd);
+    const { docsDir } = await initProject(
+      { projectName: 'demo', platform: 'web', framework: 'next', type: 'product' },
+      cwd
+    );
 
     const files = fs.readdirSync(docsDir).sort();
     expect(files).toEqual(
@@ -44,7 +47,10 @@ describe('initProject', () => {
   });
 
   it('creates the 8 client docs, without DESIGN.html', async () => {
-    const { docsDir } = await initProject({ projectName: 'demo', framework: 'node', type: 'client' }, cwd);
+    const { docsDir } = await initProject(
+      { projectName: 'demo', platform: 'cli', framework: 'node', type: 'client' },
+      cwd
+    );
 
     const files = fs.readdirSync(docsDir).sort();
     expect(files).toEqual(
@@ -53,50 +59,68 @@ describe('initProject', () => {
     expect(files).not.toContain('DESIGN.html');
   });
 
-  it('rejects an invalid framework and creates nothing', async () => {
-    await expect(initProject({ projectName: 'demo', framework: 'ruby', type: 'product' }, cwd)).rejects.toThrow(
-      /invalid framework/
-    );
+  it('accepts every platform with a framework from its own list', async () => {
+    for (const [platform, frameworks] of Object.entries(FRAMEWORKS_BY_PLATFORM)) {
+      for (const framework of frameworks) {
+        const projectName = `demo-${platform}-${framework}`;
+        await expect(
+          initProject({ projectName, platform, framework, type: 'product' }, cwd)
+        ).resolves.toBeDefined();
+      }
+    }
+  });
+
+  it('rejects an invalid platform and creates nothing', async () => {
+    await expect(
+      initProject({ projectName: 'demo', platform: 'blockchain', framework: 'next', type: 'product' }, cwd)
+    ).rejects.toThrow(/invalid platform/);
+    expect(fs.existsSync(path.join(cwd, 'demo'))).toBe(false);
+  });
+
+  it('rejects a framework not in the chosen platform\'s list, and creates nothing', async () => {
+    await expect(
+      initProject({ projectName: 'demo', platform: 'web', framework: 'react-native', type: 'product' }, cwd)
+    ).rejects.toThrow(/invalid framework 'react-native' for platform 'web'/);
     expect(fs.existsSync(path.join(cwd, 'demo'))).toBe(false);
   });
 
   it('rejects an invalid type and creates nothing', async () => {
-    await expect(initProject({ projectName: 'demo', framework: 'next', type: 'internal' }, cwd)).rejects.toThrow(
-      /invalid type/
-    );
+    await expect(
+      initProject({ projectName: 'demo', platform: 'web', framework: 'next', type: 'internal' }, cwd)
+    ).rejects.toThrow(/invalid type/);
     expect(fs.existsSync(path.join(cwd, 'demo'))).toBe(false);
   });
 
   it('rejects an invalid project name like ".." without touching the filesystem', async () => {
-    await expect(initProject({ projectName: '..', framework: 'next', type: 'product' }, cwd)).rejects.toThrow(
-      /invalid project name/
-    );
+    await expect(
+      initProject({ projectName: '..', platform: 'web', framework: 'next', type: 'product' }, cwd)
+    ).rejects.toThrow(/invalid project name/);
     expect(fs.readdirSync(cwd)).toEqual([]);
   });
 
   it('rejects a project name containing a slash', async () => {
-    await expect(initProject({ projectName: 'a/b', framework: 'next', type: 'product' }, cwd)).rejects.toThrow(
-      /invalid project name/
-    );
+    await expect(
+      initProject({ projectName: 'a/b', platform: 'web', framework: 'next', type: 'product' }, cwd)
+    ).rejects.toThrow(/invalid project name/);
   });
 
   it('refuses to overwrite existing docs without --force, naming the conflict', async () => {
-    await initProject({ projectName: 'demo', framework: 'next', type: 'client' }, cwd);
+    await initProject({ projectName: 'demo', platform: 'web', framework: 'next', type: 'client' }, cwd);
     const prdPath = path.join(cwd, 'demo', 'docs', 'PRD.md');
     fs.writeFileSync(prdPath, 'do not touch');
 
-    await expect(initProject({ projectName: 'demo', framework: 'next', type: 'client' }, cwd)).rejects.toThrow(
-      /PRD\.md/
-    );
+    await expect(
+      initProject({ projectName: 'demo', platform: 'web', framework: 'next', type: 'client' }, cwd)
+    ).rejects.toThrow(/PRD\.md/);
     expect(fs.readFileSync(prdPath, 'utf8')).toBe('do not touch');
   });
 
   it('overwrites existing docs when --force is set', async () => {
-    await initProject({ projectName: 'demo', framework: 'next', type: 'client' }, cwd);
+    await initProject({ projectName: 'demo', platform: 'web', framework: 'next', type: 'client' }, cwd);
     const prdPath = path.join(cwd, 'demo', 'docs', 'PRD.md');
     fs.writeFileSync(prdPath, 'stale content');
 
-    await initProject({ projectName: 'demo', framework: 'next', type: 'client', force: true }, cwd);
+    await initProject({ projectName: 'demo', platform: 'web', framework: 'next', type: 'client', force: true }, cwd);
 
     expect(fs.readFileSync(prdPath, 'utf8')).toContain('# PRD');
   });
@@ -106,7 +130,7 @@ describe('initProject', () => {
     const sentinel = path.join(cwd, 'demo', 'README.md');
     fs.writeFileSync(sentinel, 'keep me');
 
-    await initProject({ projectName: 'demo', framework: 'next', type: 'client' }, cwd);
+    await initProject({ projectName: 'demo', platform: 'web', framework: 'next', type: 'client' }, cwd);
 
     expect(fs.readFileSync(sentinel, 'utf8')).toBe('keep me');
     expect(fs.existsSync(path.join(cwd, 'demo', 'docs', 'PRD.md'))).toBe(true);

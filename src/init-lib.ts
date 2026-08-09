@@ -1,11 +1,19 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-export const FRAMEWORKS = ['next', 'node', 'python'] as const;
+export const PLATFORMS = ['web', 'mobile', 'cli', 'desktop', 'agent-skills'] as const;
 export const PROJECT_TYPES = ['product', 'client'] as const;
 
-export type Framework = (typeof FRAMEWORKS)[number];
+export type Platform = (typeof PLATFORMS)[number];
 export type ProjectType = (typeof PROJECT_TYPES)[number];
+
+export const FRAMEWORKS_BY_PLATFORM: Record<Platform, readonly string[]> = {
+  web: ['next', 'tanstack-start', 'remix'],
+  mobile: ['react-native'],
+  cli: ['node', 'python', 'rust'],
+  desktop: ['electron'],
+  'agent-skills': ['claude-code'],
+};
 
 const DOC_SETS: Record<ProjectType, string[]> = {
   product: [
@@ -33,6 +41,7 @@ const DOC_SETS: Record<ProjectType, string[]> = {
 
 export interface InitOptions {
   projectName: string;
+  platform: string;
   framework: string;
   type: string;
   force?: boolean;
@@ -66,8 +75,14 @@ export async function initProject(
 ): Promise<{ targetDir: string; docsDir: string }> {
   assertValidProjectName(opts.projectName);
 
-  if (!FRAMEWORKS.includes(opts.framework as Framework)) {
-    throw new Error(`invalid framework '${opts.framework}' (expected one of: ${FRAMEWORKS.join(', ')})`);
+  if (!PLATFORMS.includes(opts.platform as Platform)) {
+    throw new Error(`invalid platform '${opts.platform}' (expected one of: ${PLATFORMS.join(', ')})`);
+  }
+  const validFrameworks = FRAMEWORKS_BY_PLATFORM[opts.platform as Platform];
+  if (!validFrameworks.includes(opts.framework)) {
+    throw new Error(
+      `invalid framework '${opts.framework}' for platform '${opts.platform}' (expected one of: ${validFrameworks.join(', ')})`
+    );
   }
   if (!PROJECT_TYPES.includes(opts.type as ProjectType)) {
     throw new Error(`invalid type '${opts.type}' (expected one of: ${PROJECT_TYPES.join(', ')})`);

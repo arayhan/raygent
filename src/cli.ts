@@ -4,7 +4,7 @@ import { Command } from 'commander';
 import { input, select } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
 import { listSkills, addSkill, removeSkill } from './skill-lib.js';
-import { initProject, FRAMEWORKS, PROJECT_TYPES } from './init-lib.js';
+import { initProject, PLATFORMS, FRAMEWORKS_BY_PLATFORM, PROJECT_TYPES } from './init-lib.js';
 
 const program = new Command();
 program
@@ -67,23 +67,41 @@ program
   .command('init')
   .description('Scaffold a new project with AI-context docs')
   .argument('[project-name]', 'name of the project folder to create')
-  .option('--framework <framework>', `next | node | python`)
+  .option('--platform <platform>', 'web | mobile | cli | desktop | agent-skills')
+  .option('--framework <framework>', 'framework valid for the chosen --platform')
   .option('--type <type>', `product | client`)
   .option('-f, --force', 'overwrite existing docs files')
-  .action(async (projectNameArg: string | undefined, opts: { framework?: string; type?: string; force?: boolean }) => {
-    try {
-      const projectName = projectNameArg ?? (await input({ message: 'Project name:' }));
-      const framework =
-        opts.framework ?? (await select({ message: 'Framework:', choices: FRAMEWORKS.map((f) => ({ name: f, value: f })) }));
-      const type =
-        opts.type ?? (await select({ message: 'Type:', choices: PROJECT_TYPES.map((t) => ({ name: t, value: t })) }));
+  .action(
+    async (
+      projectNameArg: string | undefined,
+      opts: { platform?: string; framework?: string; type?: string; force?: boolean }
+    ) => {
+      try {
+        const projectName = projectNameArg ?? (await input({ message: 'Project name:' }));
+        const platform =
+          opts.platform ?? (await select({ message: 'Platform:', choices: PLATFORMS.map((p) => ({ name: p, value: p })) }));
+        const frameworkChoices = (FRAMEWORKS_BY_PLATFORM as Record<string, readonly string[]>)[platform] ?? [];
+        const framework =
+          opts.framework ??
+          (frameworkChoices.length > 0
+            ? await select({ message: 'Framework:', choices: frameworkChoices.map((f) => ({ name: f, value: f })) })
+            : undefined);
+        const type =
+          opts.type ?? (await select({ message: 'Type:', choices: PROJECT_TYPES.map((t) => ({ name: t, value: t })) }));
 
-      const { docsDir } = await initProject({ projectName, framework, type, force: opts.force });
-      console.log(`Initialized ${type} project '${projectName}' with docs in ${docsDir}`);
-    } catch (err) {
-      console.error((err as Error).message);
-      process.exitCode = 1;
+        const { docsDir } = await initProject({
+          projectName,
+          platform,
+          framework: framework as string,
+          type,
+          force: opts.force,
+        });
+        console.log(`Initialized ${type} ${platform}/${framework} project '${projectName}' with docs in ${docsDir}`);
+      } catch (err) {
+        console.error((err as Error).message);
+        process.exitCode = 1;
+      }
     }
-  });
+  );
 
 await program.parseAsync();
