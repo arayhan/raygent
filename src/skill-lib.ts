@@ -7,6 +7,12 @@ export interface SkillInfo {
   installed: boolean;
 }
 
+function assertValidSkillName(name: string): void {
+  if (!/^[A-Za-z0-9._-]+$/.test(name) || name === '.' || name === '..') {
+    throw new Error(`invalid skill name '${name}'`);
+  }
+}
+
 export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   let entries;
   try {
@@ -25,6 +31,7 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
       .catch(() => false);
     skills.push({ name: entry.name, installed });
   }
+  skills.sort((a, b) => a.name.localeCompare(b.name));
   return skills;
 }
 
@@ -33,11 +40,16 @@ export async function addSkill(
   roots: Roots,
   opts: { force?: boolean } = {}
 ): Promise<void> {
+  assertValidSkillName(name);
+
   const sourceDir = path.join(roots.skillsRoot, name);
   const destDir = path.join(roots.projectSkillsDir, name);
 
-  const sourceExists = await fs.access(sourceDir).then(() => true).catch(() => false);
-  if (!sourceExists) {
+  const sourceIsDir = await fs
+    .stat(sourceDir)
+    .then((stat) => stat.isDirectory())
+    .catch(() => false);
+  if (!sourceIsDir) {
     throw new Error(`skill '${name}' not found in ${roots.skillsRoot}`);
   }
 
@@ -54,6 +66,8 @@ export async function addSkill(
 }
 
 export async function removeSkill(name: string, roots: Roots): Promise<void> {
+  assertValidSkillName(name);
+
   const destDir = path.join(roots.projectSkillsDir, name);
   const destExists = await fs.access(destDir).then(() => true).catch(() => false);
   if (!destExists) {

@@ -79,6 +79,24 @@ describe('addSkill', () => {
     const copied = fs.readFileSync(path.join(projectSkillsDir, 'my-skill', 'SKILL.md'), 'utf8');
     expect(copied).toBe('# new content');
   });
+
+  it('rejects a name of "." without touching the filesystem', async () => {
+    await expect(addSkill('.', roots)).rejects.toThrow(Error);
+
+    // projectSkillsDir should remain exactly as it started (empty tmp dir) -
+    // no botched copy of skillsRoot's contents into it.
+    expect(fs.readdirSync(projectSkillsDir)).toEqual([]);
+  });
+
+  it('rejects a path-traversal name like "../evil"', async () => {
+    await expect(addSkill('../evil', roots)).rejects.toThrow(Error);
+  });
+
+  it('rejects a source that exists but is a plain file, not a directory', async () => {
+    fs.writeFileSync(path.join(skillsRoot, 'not-a-skill'), 'not a directory');
+
+    await expect(addSkill('not-a-skill', roots)).rejects.toThrow(Error);
+  });
 });
 
 describe('removeSkill', () => {
@@ -95,5 +113,19 @@ describe('removeSkill', () => {
     await expect(removeSkill('missing-skill', roots)).rejects.toThrow(
       `skill 'missing-skill' is not installed in ${projectSkillsDir}`
     );
+  });
+
+  it('rejects a name of "." and does not delete projectSkillsDir', async () => {
+    const sentinel = path.join(projectSkillsDir, 'sentinel.txt');
+    fs.writeFileSync(sentinel, 'keep me');
+
+    await expect(removeSkill('.', roots)).rejects.toThrow(Error);
+
+    expect(fs.existsSync(projectSkillsDir)).toBe(true);
+    expect(fs.existsSync(sentinel)).toBe(true);
+  });
+
+  it('rejects a path-traversal name like "../evil"', async () => {
+    await expect(removeSkill('../evil', roots)).rejects.toThrow(Error);
   });
 });

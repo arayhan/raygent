@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import path from 'node:path';
 import { Command } from 'commander';
 import { defaultRoots } from './paths.js';
 import { listSkills, addSkill, removeSkill } from './skill-lib.js';
@@ -19,7 +20,7 @@ skill
     try {
       const roots = defaultRoots();
       await addSkill(name, roots, { force: opts.force });
-      console.log(`Installed skill '${name}' to ${roots.projectSkillsDir}/${name}`);
+      console.log(`Installed skill '${name}' to ${path.join(roots.projectSkillsDir, name)}`);
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;
@@ -53,11 +54,11 @@ skill
     try {
       const roots = defaultRoots();
       await removeSkill(name, roots);
-      console.log(`Removed skill '${name}' from ${roots.projectSkillsDir}/${name}`);
+      console.log(`Removed skill '${name}' from ${path.join(roots.projectSkillsDir, name)}`);
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;
     }
   });
 
-program.parse();
+await program.parseAsync();
