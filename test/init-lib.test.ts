@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { initProject, docTitle, FRAMEWORKS_BY_PLATFORM } from '../src/init-lib.js';
+import { initProject, installSelectedSkills, docTitle, FRAMEWORKS_BY_PLATFORM } from '../src/init-lib.js';
 
 let cwd: string;
 
@@ -134,5 +134,48 @@ describe('initProject', () => {
 
     expect(fs.readFileSync(sentinel, 'utf8')).toBe('keep me');
     expect(fs.existsSync(path.join(cwd, 'demo', 'docs', 'PRD.md'))).toBe(true);
+  });
+});
+
+describe('installSelectedSkills', () => {
+  let skillsRoot: string;
+  let targetDir: string;
+
+  beforeEach(() => {
+    skillsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-init-skills-'));
+    targetDir = path.join(cwd, 'demo');
+    fs.mkdirSync(targetDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(skillsRoot, { recursive: true, force: true });
+  });
+
+  it('copies personal skills into <targetDir>/.claude/skills', async () => {
+    fs.mkdirSync(path.join(skillsRoot, 'my-skill'));
+    fs.writeFileSync(path.join(skillsRoot, 'my-skill', 'SKILL.md'), '# my-skill');
+
+    await installSelectedSkills({ targetDir, skillsRoot, personalSkillNames: ['my-skill'], builtinSkillNames: [] });
+
+    const copied = fs.readFileSync(path.join(targetDir, '.claude', 'skills', 'my-skill', 'SKILL.md'), 'utf8');
+    expect(copied).toBe('# my-skill');
+  });
+
+  it('writes .claude/skills.json listing built-in skill names', async () => {
+    await installSelectedSkills({
+      targetDir,
+      skillsRoot,
+      personalSkillNames: [],
+      builtinSkillNames: ['ui-ux-pro-max', 'impeccable'],
+    });
+
+    const manifest = JSON.parse(fs.readFileSync(path.join(targetDir, '.claude', 'skills.json'), 'utf8'));
+    expect(manifest).toEqual(['ui-ux-pro-max', 'impeccable']);
+  });
+
+  it('does not write skills.json when no built-in skills are selected', async () => {
+    await installSelectedSkills({ targetDir, skillsRoot, personalSkillNames: [], builtinSkillNames: [] });
+
+    expect(fs.existsSync(path.join(targetDir, '.claude', 'skills.json'))).toBe(false);
   });
 });

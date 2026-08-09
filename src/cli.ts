@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import { Command } from 'commander';
-import { input, select } from '@inquirer/prompts';
+import { input, select, checkbox } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
 import { listSkills, addSkill, removeSkill } from './skill-lib.js';
-import { initProject, PLATFORMS, FRAMEWORKS_BY_PLATFORM, PROJECT_TYPES } from './init-lib.js';
+import { initProject, installSelectedSkills, PLATFORMS, FRAMEWORKS_BY_PLATFORM, PROJECT_TYPES } from './init-lib.js';
+import { relevantCatalogSkills } from './skill-catalog.js';
 
 const program = new Command();
 program
@@ -89,7 +90,7 @@ program
         const type =
           opts.type ?? (await select({ message: 'Type:', choices: PROJECT_TYPES.map((t) => ({ name: t, value: t })) }));
 
-        const { docsDir } = await initProject({
+        const { targetDir, docsDir } = await initProject({
           projectName,
           platform,
           framework: framework as string,
@@ -97,6 +98,36 @@ program
           force: opts.force,
         });
         console.log(`Initialized ${type} ${platform}/${framework} project '${projectName}' with docs in ${docsDir}`);
+
+        const roots = defaultRoots();
+        const skillChoices: { name: string; value: { source: 'builtin' | 'personal'; name: string } }[] = [
+          ...relevantCatalogSkills(type, platform).map((s) => ({
+            name: `${s.name} (built-in)`,
+            value: { source: 'builtin' as const, name: s.name },
+          })),
+          ...(await listSkills(roots)).map((s) => ({
+            name: `${s.name} (personal)`,
+            value: { source: 'personal' as const, name: s.name },
+          })),
+        ];
+
+        if (skillChoices.length > 0) {
+          const selected = await checkbox({
+            message: 'Recommended skills to install (space to select, enter to confirm):',
+            choices: skillChoices,
+          });
+          if (selected.length > 0) {
+            const personalSkillNames = selected.filter((s) => s.source === 'personal').map((s) => s.name);
+            const builtinSkillNames = selected.filter((s) => s.source === 'builtin').map((s) => s.name);
+            await installSelectedSkills({
+              targetDir,
+              skillsRoot: roots.skillsRoot,
+              personalSkillNames,
+              builtinSkillNames,
+            });
+            console.log(`Installed skills: ${selected.map((s) => s.name).join(', ')}`);
+          }
+        }
       } catch (err) {
         console.error((err as Error).message);
         process.exitCode = 1;

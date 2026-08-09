@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { addSkill } from './skill-lib.js';
 
 export const PLATFORMS = ['web', 'mobile', 'cli', 'desktop', 'agent-skills'] as const;
 export const PROJECT_TYPES = ['product', 'client'] as const;
@@ -113,4 +114,25 @@ export async function initProject(
   }
 
   return { targetDir, docsDir };
+}
+
+export interface InstallSelectedSkillsOptions {
+  targetDir: string;
+  skillsRoot: string;
+  personalSkillNames: string[];
+  builtinSkillNames: string[];
+}
+
+export async function installSelectedSkills(opts: InstallSelectedSkillsOptions): Promise<void> {
+  const projectSkillsDir = path.join(opts.targetDir, '.claude', 'skills');
+
+  for (const name of opts.personalSkillNames) {
+    await addSkill(name, { skillsRoot: opts.skillsRoot, projectSkillsDir });
+  }
+
+  if (opts.builtinSkillNames.length > 0) {
+    const claudeDir = path.join(opts.targetDir, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.writeFile(path.join(claudeDir, 'skills.json'), JSON.stringify(opts.builtinSkillNames, null, 2) + '\n');
+  }
 }
