@@ -27,3 +27,28 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   }
   return skills;
 }
+
+export async function addSkill(
+  name: string,
+  roots: Roots,
+  opts: { force?: boolean } = {}
+): Promise<void> {
+  const sourceDir = path.join(roots.skillsRoot, name);
+  const destDir = path.join(roots.projectSkillsDir, name);
+
+  const sourceExists = await fs.access(sourceDir).then(() => true).catch(() => false);
+  if (!sourceExists) {
+    throw new Error(`skill '${name}' not found in ${roots.skillsRoot}`);
+  }
+
+  const destExists = await fs.access(destDir).then(() => true).catch(() => false);
+  if (destExists && !opts.force) {
+    throw new Error(`skill '${name}' is already installed at ${destDir} (use --force to overwrite)`);
+  }
+
+  await fs.mkdir(roots.projectSkillsDir, { recursive: true });
+  if (destExists) {
+    await fs.rm(destDir, { recursive: true, force: true });
+  }
+  await fs.cp(sourceDir, destDir, { recursive: true });
+}
