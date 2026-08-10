@@ -92,6 +92,13 @@ describe('addSkill', () => {
     await expect(addSkill('../evil', roots)).rejects.toThrow(Error);
   });
 
+  it('rejects Windows reserved names and trailing dots', async () => {
+    await expect(addSkill('nul', roots)).rejects.toThrow(/invalid skill name/);
+    await expect(addSkill('CON', roots)).rejects.toThrow(/invalid skill name/);
+    await expect(addSkill('com1.txt', roots)).rejects.toThrow(/invalid skill name/);
+    await expect(addSkill('foo.', roots)).rejects.toThrow(/invalid skill name/);
+  });
+
   it('rejects a source that exists but is a plain file, not a directory', async () => {
     fs.writeFileSync(path.join(skillsRoot, 'not-a-skill'), 'not a directory');
 

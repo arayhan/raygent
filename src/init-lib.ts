@@ -49,7 +49,13 @@ export interface InitOptions {
 }
 
 function assertValidProjectName(name: string): void {
-  if (!/^[A-Za-z0-9._-]+$/.test(name) || name === '.' || name === '..') {
+  if (
+    !/^[A-Za-z0-9._-]+$/.test(name) ||
+    name === '.' ||
+    name === '..' ||
+    name.endsWith('.') ||
+    /^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(name)
+  ) {
     throw new Error(`invalid project name '${name}'`);
   }
 }
@@ -110,7 +116,10 @@ export async function initProject(
 
   await fs.mkdir(docsDir, { recursive: true });
   for (const filename of files) {
-    await fs.writeFile(path.join(docsDir, filename), docContent(filename));
+    // 'wx' backstops the conflict pre-check against files appearing mid-run
+    await fs.writeFile(path.join(docsDir, filename), docContent(filename), {
+      flag: opts.force ? 'w' : 'wx',
+    });
   }
 
   return { targetDir, docsDir };
@@ -126,13 +135,25 @@ export interface InstallSelectedSkillsOptions {
 export async function installSelectedSkills(opts: InstallSelectedSkillsOptions): Promise<void> {
   const projectSkillsDir = path.join(opts.targetDir, '.claude', 'skills');
 
+  // force: the user just confirmed each skill in the checklist
   for (const name of opts.personalSkillNames) {
-    await addSkill(name, { skillsRoot: opts.skillsRoot, projectSkillsDir });
+    await addSkill(name, { skillsRoot: opts.skillsRoot, projectSkillsDir }, { force: true });
   }
 
   if (opts.builtinSkillNames.length > 0) {
     const claudeDir = path.join(opts.targetDir, '.claude');
+    const manifestPath = path.join(claudeDir, 'skills.json');
     await fs.mkdir(claudeDir, { recursive: true });
-    await fs.writeFile(path.join(claudeDir, 'skills.json'), JSON.stringify(opts.builtinSkillNames, null, 2) + '\n');
+
+    let existing: string[] = [];
+    try {
+      const parsed = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+      if (Array.isArray(parsed)) existing = parsed.filter((n): n is string => typeof n === 'string');
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    }
+
+    const merged = [...new Set([...existing, ...opts.builtinSkillNames])];
+    await fs.writeFile(manifestPath, JSON.stringify(merged, null, 2) + '\n');
   }
 }

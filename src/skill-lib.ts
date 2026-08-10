@@ -8,8 +8,24 @@ export interface SkillInfo {
 }
 
 function assertValidSkillName(name: string): void {
-  if (!/^[A-Za-z0-9._-]+$/.test(name) || name === '.' || name === '..') {
+  if (
+    !/^[A-Za-z0-9._-]+$/.test(name) ||
+    name === '.' ||
+    name === '..' ||
+    name.endsWith('.') ||
+    /^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(name)
+  ) {
     throw new Error(`invalid skill name '${name}'`);
+  }
+}
+
+async function exists(target: string): Promise<boolean> {
+  try {
+    await fs.lstat(target);
+    return true;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw err;
   }
 }
 
@@ -25,10 +41,7 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   const skills: SkillInfo[] = [];
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const installed = await fs
-      .access(path.join(roots.projectSkillsDir, entry.name))
-      .then(() => true)
-      .catch(() => false);
+    const installed = await exists(path.join(roots.projectSkillsDir, entry.name));
     skills.push({ name: entry.name, installed });
   }
   skills.sort((a, b) => a.name.localeCompare(b.name));
@@ -45,32 +58,44 @@ export async function addSkill(
   const sourceDir = path.join(roots.skillsRoot, name);
   const destDir = path.join(roots.projectSkillsDir, name);
 
-  const sourceIsDir = await fs
-    .stat(sourceDir)
-    .then((stat) => stat.isDirectory())
-    .catch(() => false);
+  let sourceIsDir = false;
+  try {
+    sourceIsDir = (await fs.stat(sourceDir)).isDirectory();
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+  }
   if (!sourceIsDir) {
     throw new Error(`skill '${name}' not found in ${roots.skillsRoot}`);
   }
 
-  const destExists = await fs.access(destDir).then(() => true).catch(() => false);
+  const destExists = await exists(destDir);
   if (destExists && !opts.force) {
     throw new Error(`skill '${name}' is already installed at ${destDir} (use --force to overwrite)`);
   }
 
   await fs.mkdir(roots.projectSkillsDir, { recursive: true });
   if (destExists) {
-    await fs.rm(destDir, { recursive: true, force: true });
+    // copy fully into a temp sibling first so a failed copy never destroys the
+    // existing install
+    const tmpDir = `${destDir}.raygent-tmp`;
+    await fs.rm(tmpDir, { recursive: true, force: true });
+    try {
+      await fs.cp(sourceDir, tmpDir, { recursive: true });
+      await fs.rm(destDir, { recursive: true, force: true });
+      await fs.rename(tmpDir, destDir);
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+  } else {
+    await fs.cp(sourceDir, destDir, { recursive: true });
   }
-  await fs.cp(sourceDir, destDir, { recursive: true });
 }
 
 export async function removeSkill(name: string, roots: Roots): Promise<void> {
   assertValidSkillName(name);
 
   const destDir = path.join(roots.projectSkillsDir, name);
-  const destExists = await fs.access(destDir).then(() => true).catch(() => false);
-  if (!destExists) {
+  if (!(await exists(destDir))) {
     throw new Error(`skill '${name}' is not installed in ${roots.projectSkillsDir}`);
   }
   await fs.rm(destDir, { recursive: true, force: true });

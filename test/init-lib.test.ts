@@ -104,6 +104,15 @@ describe('initProject', () => {
     ).rejects.toThrow(/invalid project name/);
   });
 
+  it('rejects Windows reserved names and trailing dots', async () => {
+    for (const name of ['nul', 'CON', 'lpt1', 'aux.md', 'demo.']) {
+      await expect(
+        initProject({ projectName: name, platform: 'web', framework: 'next', type: 'product' }, cwd)
+      ).rejects.toThrow(/invalid project name/);
+    }
+    expect(fs.readdirSync(cwd)).toEqual([]);
+  });
+
   it('refuses to overwrite existing docs without --force, naming the conflict', async () => {
     await initProject({ projectName: 'demo', platform: 'web', framework: 'next', type: 'client' }, cwd);
     const prdPath = path.join(cwd, 'demo', 'docs', 'PRD.md');
@@ -177,5 +186,33 @@ describe('installSelectedSkills', () => {
     await installSelectedSkills({ targetDir, skillsRoot, personalSkillNames: [], builtinSkillNames: [] });
 
     expect(fs.existsSync(path.join(targetDir, '.claude', 'skills.json'))).toBe(false);
+  });
+
+  it('overwrites an already-installed personal skill instead of throwing', async () => {
+    fs.mkdirSync(path.join(skillsRoot, 'my-skill'));
+    fs.writeFileSync(path.join(skillsRoot, 'my-skill', 'SKILL.md'), '# new');
+    const installedDir = path.join(targetDir, '.claude', 'skills', 'my-skill');
+    fs.mkdirSync(installedDir, { recursive: true });
+    fs.writeFileSync(path.join(installedDir, 'SKILL.md'), '# old');
+
+    await installSelectedSkills({ targetDir, skillsRoot, personalSkillNames: ['my-skill'], builtinSkillNames: [] });
+
+    expect(fs.readFileSync(path.join(installedDir, 'SKILL.md'), 'utf8')).toBe('# new');
+  });
+
+  it('merges builtin names into an existing skills.json instead of clobbering it', async () => {
+    const claudeDir = path.join(targetDir, '.claude');
+    fs.mkdirSync(claudeDir, { recursive: true });
+    fs.writeFileSync(path.join(claudeDir, 'skills.json'), JSON.stringify(['hand-added', 'impeccable']));
+
+    await installSelectedSkills({
+      targetDir,
+      skillsRoot,
+      personalSkillNames: [],
+      builtinSkillNames: ['impeccable', 'ui-ux-pro-max'],
+    });
+
+    const manifest = JSON.parse(fs.readFileSync(path.join(claudeDir, 'skills.json'), 'utf8'));
+    expect(manifest).toEqual(['hand-added', 'impeccable', 'ui-ux-pro-max']);
   });
 });

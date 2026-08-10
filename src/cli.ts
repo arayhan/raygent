@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { Command } from 'commander';
 import { input, select, checkbox } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
@@ -7,11 +8,13 @@ import { listSkills, addSkill, removeSkill } from './skill-lib.js';
 import { initProject, installSelectedSkills, PLATFORMS, FRAMEWORKS_BY_PLATFORM, PROJECT_TYPES } from './init-lib.js';
 import { relevantCatalogSkills } from './skill-catalog.js';
 
+const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
+
 const program = new Command();
 program
   .name('raygent')
   .description('Personal CLI for Claude Code skills and project scaffolding')
-  .version('0.1.0');
+  .version(version);
 
 const skill = program.command('skill').description('Manage Claude Code skills');
 
@@ -78,7 +81,15 @@ program
       opts: { platform?: string; framework?: string; type?: string; force?: boolean }
     ) => {
       try {
-        const projectName = projectNameArg ?? (await input({ message: 'Project name:' }));
+        const projectName =
+          projectNameArg ??
+          (await input({
+            message: 'Project name:',
+            validate: (value) =>
+              /^[A-Za-z0-9._-]+$/.test(value) && value !== '.' && value !== '..'
+                ? true
+                : 'use only letters, digits, ".", "_", "-"',
+          }));
         const platform =
           opts.platform ?? (await select({ message: 'Platform:', choices: PLATFORMS.map((p) => ({ name: p, value: p })) }));
         const frameworkChoices = (FRAMEWORKS_BY_PLATFORM as Record<string, readonly string[]>)[platform] ?? [];
@@ -129,6 +140,10 @@ program
           }
         }
       } catch (err) {
+        if (err instanceof Error && err.name === 'ExitPromptError') {
+          process.exitCode = 130;
+          return;
+        }
         console.error((err as Error).message);
         process.exitCode = 1;
       }
