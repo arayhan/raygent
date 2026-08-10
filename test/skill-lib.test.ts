@@ -7,21 +7,24 @@ import type { Roots } from '../src/paths.js';
 
 let skillsRoot: string;
 let projectSkillsDir: string;
+let agentSkillsDir: string;
 let roots: Roots;
 
 beforeEach(() => {
   skillsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-skills-'));
   projectSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-project-'));
-  roots = { skillsRoot, projectSkillsDir };
+  agentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-agent-'));
+  roots = { skillsRoot, projectSkillsDir, agentSkillsDir };
 });
 
 afterEach(() => {
   fs.rmSync(skillsRoot, { recursive: true, force: true });
   fs.rmSync(projectSkillsDir, { recursive: true, force: true });
+  fs.rmSync(agentSkillsDir, { recursive: true, force: true });
 });
 
 describe('listSkills', () => {
-  it('returns skills found in skillsRoot, marking installed status', async () => {
+  it('returns skills found in skillsRoot, marking installed status and source personal', async () => {
     fs.mkdirSync(path.join(skillsRoot, 'skill-a'));
     fs.mkdirSync(path.join(skillsRoot, 'skill-b'));
     fs.mkdirSync(path.join(projectSkillsDir, 'skill-a'));
@@ -30,8 +33,8 @@ describe('listSkills', () => {
 
     expect(result).toEqual(
       expect.arrayContaining([
-        { name: 'skill-a', installed: true },
-        { name: 'skill-b', installed: false },
+        { name: 'skill-a', installed: true, source: 'personal' },
+        { name: 'skill-b', installed: false, source: 'personal' },
       ])
     );
     expect(result).toHaveLength(2);
@@ -41,6 +44,32 @@ describe('listSkills', () => {
     fs.rmSync(skillsRoot, { recursive: true, force: true });
     const result = await listSkills(roots);
     expect(result).toEqual([]);
+  });
+
+  it('includes skills found only in agentSkillsDir, tagged source agent', async () => {
+    fs.mkdirSync(path.join(agentSkillsDir, 'agent-only'));
+
+    const result = await listSkills(roots);
+
+    expect(result).toEqual([{ name: 'agent-only', installed: false, source: 'agent' }]);
+  });
+
+  it('when a name exists in both dirs, lists it once with source personal', async () => {
+    fs.mkdirSync(path.join(skillsRoot, 'shared'));
+    fs.mkdirSync(path.join(agentSkillsDir, 'shared'));
+
+    const result = await listSkills(roots);
+
+    expect(result).toEqual([{ name: 'shared', installed: false, source: 'personal' }]);
+  });
+
+  it('does not throw when agentSkillsDir does not exist', async () => {
+    fs.rmSync(agentSkillsDir, { recursive: true, force: true });
+    fs.mkdirSync(path.join(skillsRoot, 'skill-a'));
+
+    const result = await listSkills(roots);
+
+    expect(result).toEqual([{ name: 'skill-a', installed: false, source: 'personal' }]);
   });
 });
 
@@ -55,10 +84,32 @@ describe('addSkill', () => {
     expect(copied).toBe('# my-skill');
   });
 
-  it('throws when the source skill does not exist', async () => {
+  it('throws when the source skill does not exist in either location', async () => {
     await expect(addSkill('missing-skill', roots)).rejects.toThrow(
-      `skill 'missing-skill' not found in ${skillsRoot}`
+      `skill 'missing-skill' not found in ${skillsRoot} or ${agentSkillsDir}`
     );
+  });
+
+  it('falls back to agentSkillsDir when the skill is not in skillsRoot', async () => {
+    fs.mkdirSync(path.join(agentSkillsDir, 'agent-skill'));
+    fs.writeFileSync(path.join(agentSkillsDir, 'agent-skill', 'SKILL.md'), '# from agent');
+
+    await addSkill('agent-skill', roots);
+
+    const copied = fs.readFileSync(path.join(projectSkillsDir, 'agent-skill', 'SKILL.md'), 'utf8');
+    expect(copied).toBe('# from agent');
+  });
+
+  it('prefers skillsRoot content when the name exists in both locations', async () => {
+    fs.mkdirSync(path.join(skillsRoot, 'shared'));
+    fs.writeFileSync(path.join(skillsRoot, 'shared', 'SKILL.md'), '# personal');
+    fs.mkdirSync(path.join(agentSkillsDir, 'shared'));
+    fs.writeFileSync(path.join(agentSkillsDir, 'shared', 'SKILL.md'), '# agent');
+
+    await addSkill('shared', roots);
+
+    const copied = fs.readFileSync(path.join(projectSkillsDir, 'shared', 'SKILL.md'), 'utf8');
+    expect(copied).toBe('# personal');
   });
 
   it('throws when destination already exists and force is not set', async () => {

@@ -45,7 +45,7 @@ skill
         return;
       }
       for (const s of skills) {
-        console.log(`${s.installed ? '[installed]' : '[available]'} ${s.name}`);
+        console.log(`${s.installed ? '[installed]' : '[available]'} ${s.name} (${s.source})`);
       }
     } catch (err) {
       console.error((err as Error).message);
@@ -111,14 +111,14 @@ program
         console.log(`Initialized ${type} ${platform}/${framework} project '${projectName}' with docs in ${docsDir}`);
 
         const roots = defaultRoots();
-        const skillChoices: { name: string; value: { source: 'builtin' | 'personal'; name: string } }[] = [
+        const skillChoices: { name: string; value: { source: 'builtin' | 'personal' | 'agent'; name: string } }[] = [
           ...relevantCatalogSkills(type, platform).map((s) => ({
             name: `${s.name} (built-in)`,
             value: { source: 'builtin' as const, name: s.name },
           })),
           ...(await listSkills(roots)).map((s) => ({
-            name: `${s.name} (personal)`,
-            value: { source: 'personal' as const, name: s.name },
+            name: `${s.name} (${s.source})`,
+            value: { source: s.source, name: s.name },
           })),
         ];
 
@@ -128,11 +128,12 @@ program
             choices: skillChoices,
           });
           if (selected.length > 0) {
-            const personalSkillNames = selected.filter((s) => s.source === 'personal').map((s) => s.name);
+            const personalSkillNames = selected.filter((s) => s.source !== 'builtin').map((s) => s.name);
             const builtinSkillNames = selected.filter((s) => s.source === 'builtin').map((s) => s.name);
             await installSelectedSkills({
               targetDir,
               skillsRoot: roots.skillsRoot,
+              agentSkillsDir: roots.agentSkillsDir,
               personalSkillNames,
               builtinSkillNames,
             });

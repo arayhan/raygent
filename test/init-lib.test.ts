@@ -148,23 +148,32 @@ describe('initProject', () => {
 
 describe('installSelectedSkills', () => {
   let skillsRoot: string;
+  let agentSkillsDir: string;
   let targetDir: string;
 
   beforeEach(() => {
     skillsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-init-skills-'));
+    agentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-init-agent-'));
     targetDir = path.join(cwd, 'demo');
     fs.mkdirSync(targetDir, { recursive: true });
   });
 
   afterEach(() => {
     fs.rmSync(skillsRoot, { recursive: true, force: true });
+    fs.rmSync(agentSkillsDir, { recursive: true, force: true });
   });
 
   it('copies personal skills into <targetDir>/.claude/skills', async () => {
     fs.mkdirSync(path.join(skillsRoot, 'my-skill'));
     fs.writeFileSync(path.join(skillsRoot, 'my-skill', 'SKILL.md'), '# my-skill');
 
-    await installSelectedSkills({ targetDir, skillsRoot, personalSkillNames: ['my-skill'], builtinSkillNames: [] });
+    await installSelectedSkills({
+      targetDir,
+      skillsRoot,
+      agentSkillsDir,
+      personalSkillNames: ['my-skill'],
+      builtinSkillNames: [],
+    });
 
     const copied = fs.readFileSync(path.join(targetDir, '.claude', 'skills', 'my-skill', 'SKILL.md'), 'utf8');
     expect(copied).toBe('# my-skill');
@@ -174,6 +183,7 @@ describe('installSelectedSkills', () => {
     await installSelectedSkills({
       targetDir,
       skillsRoot,
+      agentSkillsDir,
       personalSkillNames: [],
       builtinSkillNames: ['ui-ux-pro-max', 'impeccable'],
     });
@@ -183,7 +193,13 @@ describe('installSelectedSkills', () => {
   });
 
   it('does not write skills.json when no built-in skills are selected', async () => {
-    await installSelectedSkills({ targetDir, skillsRoot, personalSkillNames: [], builtinSkillNames: [] });
+    await installSelectedSkills({
+      targetDir,
+      skillsRoot,
+      agentSkillsDir,
+      personalSkillNames: [],
+      builtinSkillNames: [],
+    });
 
     expect(fs.existsSync(path.join(targetDir, '.claude', 'skills.json'))).toBe(false);
   });
@@ -195,7 +211,13 @@ describe('installSelectedSkills', () => {
     fs.mkdirSync(installedDir, { recursive: true });
     fs.writeFileSync(path.join(installedDir, 'SKILL.md'), '# old');
 
-    await installSelectedSkills({ targetDir, skillsRoot, personalSkillNames: ['my-skill'], builtinSkillNames: [] });
+    await installSelectedSkills({
+      targetDir,
+      skillsRoot,
+      agentSkillsDir,
+      personalSkillNames: ['my-skill'],
+      builtinSkillNames: [],
+    });
 
     expect(fs.readFileSync(path.join(installedDir, 'SKILL.md'), 'utf8')).toBe('# new');
   });
@@ -208,6 +230,7 @@ describe('installSelectedSkills', () => {
     await installSelectedSkills({
       targetDir,
       skillsRoot,
+      agentSkillsDir,
       personalSkillNames: [],
       builtinSkillNames: ['impeccable', 'ui-ux-pro-max'],
     });

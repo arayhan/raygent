@@ -128,6 +128,7 @@ export async function initProject(
 export interface InstallSelectedSkillsOptions {
   targetDir: string;
   skillsRoot: string;
+  agentSkillsDir: string;
   personalSkillNames: string[];
   builtinSkillNames: string[];
 }
@@ -137,7 +138,11 @@ export async function installSelectedSkills(opts: InstallSelectedSkillsOptions):
 
   // force: the user just confirmed each skill in the checklist
   for (const name of opts.personalSkillNames) {
-    await addSkill(name, { skillsRoot: opts.skillsRoot, projectSkillsDir }, { force: true });
+    await addSkill(
+      name,
+      { skillsRoot: opts.skillsRoot, projectSkillsDir, agentSkillsDir: opts.agentSkillsDir },
+      { force: true }
+    );
   }
 
   if (opts.builtinSkillNames.length > 0) {

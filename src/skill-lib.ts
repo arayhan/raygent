@@ -5,6 +5,7 @@ import type { Roots } from './paths.js';
 export interface SkillInfo {
   name: string;
   installed: boolean;
+  source: 'personal' | 'agent';
 }
 
 function assertValidSkillName(name: string): void {
@@ -29,20 +30,29 @@ async function exists(target: string): Promise<boolean> {
   }
 }
 
-export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
+async function readSkillDirNames(dir: string): Promise<string[]> {
   let entries;
   try {
-    entries = await fs.readdir(roots.skillsRoot, { withFileTypes: true });
+    entries = await fs.readdir(dir, { withFileTypes: true });
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
     throw err;
   }
+  return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+}
+
+export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
+  const personalNames = await readSkillDirNames(roots.skillsRoot);
+  const agentNames = await readSkillDirNames(roots.agentSkillsDir);
+
+  const bySource = new Map<string, 'personal' | 'agent'>();
+  for (const name of agentNames) bySource.set(name, 'agent');
+  for (const name of personalNames) bySource.set(name, 'personal'); // personal wins on collision
 
   const skills: SkillInfo[] = [];
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const installed = await exists(path.join(roots.projectSkillsDir, entry.name));
-    skills.push({ name: entry.name, installed });
+  for (const [name, source] of bySource) {
+    const installed = await exists(path.join(roots.projectSkillsDir, name));
+    skills.push({ name, installed, source });
   }
   skills.sort((a, b) => a.name.localeCompare(b.name));
   return skills;
@@ -55,17 +65,27 @@ export async function addSkill(
 ): Promise<void> {
   assertValidSkillName(name);
 
-  const sourceDir = path.join(roots.skillsRoot, name);
   const destDir = path.join(roots.projectSkillsDir, name);
 
-  let sourceIsDir = false;
-  try {
-    sourceIsDir = (await fs.stat(sourceDir)).isDirectory();
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+  async function isDir(dir: string): Promise<boolean> {
+    try {
+      return (await fs.stat(dir)).isDirectory();
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') return false;
+      throw err;
+    }
   }
-  if (!sourceIsDir) {
-    throw new Error(`skill '${name}' not found in ${roots.skillsRoot}`);
+
+  const personalSourceDir = path.join(roots.skillsRoot, name);
+  const agentSourceDir = path.join(roots.agentSkillsDir, name);
+
+  let sourceDir: string;
+  if (await isDir(personalSourceDir)) {
+    sourceDir = personalSourceDir;
+  } else if (await isDir(agentSourceDir)) {
+    sourceDir = agentSourceDir;
+  } else {
+    throw new Error(`skill '${name}' not found in ${roots.skillsRoot} or ${roots.agentSkillsDir}`);
   }
 
   const destExists = await exists(destDir);
