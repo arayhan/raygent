@@ -149,11 +149,13 @@ describe('initProject', () => {
 describe('installSelectedSkills', () => {
   let skillsRoot: string;
   let agentSkillsDir: string;
+  let globalAgentSkillsDir: string;
   let targetDir: string;
 
   beforeEach(() => {
     skillsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-init-skills-'));
     agentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-init-agent-'));
+    globalAgentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-init-global-'));
     targetDir = path.join(cwd, 'demo');
     fs.mkdirSync(targetDir, { recursive: true });
   });
@@ -161,6 +163,7 @@ describe('installSelectedSkills', () => {
   afterEach(() => {
     fs.rmSync(skillsRoot, { recursive: true, force: true });
     fs.rmSync(agentSkillsDir, { recursive: true, force: true });
+    fs.rmSync(globalAgentSkillsDir, { recursive: true, force: true });
   });
 
   it('copies personal skills into <targetDir>/.claude/skills', async () => {
@@ -171,6 +174,7 @@ describe('installSelectedSkills', () => {
       targetDir,
       skillsRoot,
       agentSkillsDir,
+      globalAgentSkillsDir,
       personalSkillNames: ['my-skill'],
       builtinSkillNames: [],
     });
@@ -184,6 +188,7 @@ describe('installSelectedSkills', () => {
       targetDir,
       skillsRoot,
       agentSkillsDir,
+      globalAgentSkillsDir,
       personalSkillNames: [],
       builtinSkillNames: ['ui-ux-pro-max', 'impeccable'],
     });
@@ -197,6 +202,7 @@ describe('installSelectedSkills', () => {
       targetDir,
       skillsRoot,
       agentSkillsDir,
+      globalAgentSkillsDir,
       personalSkillNames: [],
       builtinSkillNames: [],
     });
@@ -215,6 +221,7 @@ describe('installSelectedSkills', () => {
       targetDir,
       skillsRoot,
       agentSkillsDir,
+      globalAgentSkillsDir,
       personalSkillNames: ['my-skill'],
       builtinSkillNames: [],
     });
@@ -231,11 +238,48 @@ describe('installSelectedSkills', () => {
       targetDir,
       skillsRoot,
       agentSkillsDir,
+      globalAgentSkillsDir,
       personalSkillNames: [],
       builtinSkillNames: ['impeccable', 'ui-ux-pro-max'],
     });
 
     const manifest = JSON.parse(fs.readFileSync(path.join(claudeDir, 'skills.json'), 'utf8'));
     expect(manifest).toEqual(['hand-added', 'impeccable', 'ui-ux-pro-max']);
+  });
+
+  it('copies a builtin skill for real when found in globalAgentSkillsDir, no manifest entry for it', async () => {
+    fs.mkdirSync(path.join(globalAgentSkillsDir, 'impeccable'));
+    fs.writeFileSync(path.join(globalAgentSkillsDir, 'impeccable', 'SKILL.md'), '# impeccable');
+
+    await installSelectedSkills({
+      targetDir,
+      skillsRoot,
+      agentSkillsDir,
+      globalAgentSkillsDir,
+      personalSkillNames: [],
+      builtinSkillNames: ['impeccable'],
+    });
+
+    const copied = fs.readFileSync(path.join(targetDir, '.claude', 'skills', 'impeccable', 'SKILL.md'), 'utf8');
+    expect(copied).toBe('# impeccable');
+    expect(fs.existsSync(path.join(targetDir, '.claude', 'skills.json'))).toBe(false);
+  });
+
+  it('mixes resolved and unresolved builtin names: resolved gets copied, unresolved goes to skills.json', async () => {
+    fs.mkdirSync(path.join(globalAgentSkillsDir, 'impeccable'));
+    fs.writeFileSync(path.join(globalAgentSkillsDir, 'impeccable', 'SKILL.md'), '# impeccable');
+
+    await installSelectedSkills({
+      targetDir,
+      skillsRoot,
+      agentSkillsDir,
+      globalAgentSkillsDir,
+      personalSkillNames: [],
+      builtinSkillNames: ['impeccable', 'some-unknown-skill'],
+    });
+
+    expect(fs.existsSync(path.join(targetDir, '.claude', 'skills', 'impeccable', 'SKILL.md'))).toBe(true);
+    const manifest = JSON.parse(fs.readFileSync(path.join(targetDir, '.claude', 'skills.json'), 'utf8'));
+    expect(manifest).toEqual(['some-unknown-skill']);
   });
 });

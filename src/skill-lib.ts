@@ -5,7 +5,7 @@ import type { Roots } from './paths.js';
 export interface SkillInfo {
   name: string;
   installed: boolean;
-  source: 'personal' | 'agent';
+  source: 'personal' | 'project' | 'global';
 }
 
 function assertValidSkillName(name: string): void {
@@ -43,11 +43,14 @@ async function readSkillDirNames(dir: string): Promise<string[]> {
 
 export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   const personalNames = await readSkillDirNames(roots.skillsRoot);
-  const agentNames = await readSkillDirNames(roots.agentSkillsDir);
+  const projectNames = await readSkillDirNames(roots.agentSkillsDir);
+  const globalNames = await readSkillDirNames(roots.globalAgentSkillsDir);
 
-  const bySource = new Map<string, 'personal' | 'agent'>();
-  for (const name of agentNames) bySource.set(name, 'agent');
-  for (const name of personalNames) bySource.set(name, 'personal'); // personal wins on collision
+  // precedence on name collision: personal > project > global
+  const bySource = new Map<string, 'personal' | 'project' | 'global'>();
+  for (const name of globalNames) bySource.set(name, 'global');
+  for (const name of projectNames) bySource.set(name, 'project');
+  for (const name of personalNames) bySource.set(name, 'personal');
 
   const skills: SkillInfo[] = [];
   for (const [name, source] of bySource) {
@@ -76,16 +79,21 @@ export async function addSkill(
     }
   }
 
-  const personalSourceDir = path.join(roots.skillsRoot, name);
-  const agentSourceDir = path.join(roots.agentSkillsDir, name);
+  const candidateDirs = [
+    path.join(roots.skillsRoot, name),
+    path.join(roots.agentSkillsDir, name),
+    path.join(roots.globalAgentSkillsDir, name),
+  ];
 
-  let sourceDir: string;
-  if (await isDir(personalSourceDir)) {
-    sourceDir = personalSourceDir;
-  } else if (await isDir(agentSourceDir)) {
-    sourceDir = agentSourceDir;
-  } else {
-    throw new Error(`skill '${name}' not found in ${roots.skillsRoot} or ${roots.agentSkillsDir}`);
+  let sourceDir: string | undefined;
+  for (const candidate of candidateDirs) {
+    if (await isDir(candidate)) {
+      sourceDir = candidate;
+      break;
+    }
+  }
+  if (!sourceDir) {
+    throw new Error(`skill '${name}' not found in ${candidateDirs.join(', ')}`);
   }
 
   const destExists = await exists(destDir);

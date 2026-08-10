@@ -111,7 +111,7 @@ program
         console.log(`Initialized ${type} ${platform}/${framework} project '${projectName}' with docs in ${docsDir}`);
 
         const roots = defaultRoots();
-        const skillChoices: { name: string; value: { source: 'builtin' | 'personal' | 'agent'; name: string } }[] = [
+        const skillChoices: { name: string; value: { source: 'builtin' | 'personal' | 'project' | 'global'; name: string } }[] = [
           ...relevantCatalogSkills(type, platform).map((s) => ({
             name: `${s.name} (built-in)`,
             value: { source: 'builtin' as const, name: s.name },
@@ -134,6 +134,7 @@ program
               targetDir,
               skillsRoot: roots.skillsRoot,
               agentSkillsDir: roots.agentSkillsDir,
+              globalAgentSkillsDir: roots.globalAgentSkillsDir,
               personalSkillNames,
               builtinSkillNames,
             });

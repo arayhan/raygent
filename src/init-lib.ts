@@ -129,23 +129,38 @@ export interface InstallSelectedSkillsOptions {
   targetDir: string;
   skillsRoot: string;
   agentSkillsDir: string;
+  globalAgentSkillsDir: string;
   personalSkillNames: string[];
   builtinSkillNames: string[];
 }
 
 export async function installSelectedSkills(opts: InstallSelectedSkillsOptions): Promise<void> {
   const projectSkillsDir = path.join(opts.targetDir, '.claude', 'skills');
+  const roots = {
+    skillsRoot: opts.skillsRoot,
+    projectSkillsDir,
+    agentSkillsDir: opts.agentSkillsDir,
+    globalAgentSkillsDir: opts.globalAgentSkillsDir,
+  };
 
   // force: the user just confirmed each skill in the checklist
   for (const name of opts.personalSkillNames) {
-    await addSkill(
-      name,
-      { skillsRoot: opts.skillsRoot, projectSkillsDir, agentSkillsDir: opts.agentSkillsDir },
-      { force: true }
-    );
+    await addSkill(name, roots, { force: true });
   }
 
-  if (opts.builtinSkillNames.length > 0) {
+  // catalog ("built-in") names: try a real copy first (they often do exist,
+  // e.g. under globalAgentSkillsDir) and only fall back to a manifest
+  // reminder for names addSkill can't resolve anywhere
+  const unresolved: string[] = [];
+  for (const name of opts.builtinSkillNames) {
+    try {
+      await addSkill(name, roots, { force: true });
+    } catch {
+      unresolved.push(name);
+    }
+  }
+
+  if (unresolved.length > 0) {
     const claudeDir = path.join(opts.targetDir, '.claude');
     const manifestPath = path.join(claudeDir, 'skills.json');
     await fs.mkdir(claudeDir, { recursive: true });
@@ -158,7 +173,7 @@ export async function installSelectedSkills(opts: InstallSelectedSkillsOptions):
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
     }
 
-    const merged = [...new Set([...existing, ...opts.builtinSkillNames])];
+    const merged = [...new Set([...existing, ...unresolved])];
     await fs.writeFile(manifestPath, JSON.stringify(merged, null, 2) + '\n');
   }
 }

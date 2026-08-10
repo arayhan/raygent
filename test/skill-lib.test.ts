@@ -8,19 +8,22 @@ import type { Roots } from '../src/paths.js';
 let skillsRoot: string;
 let projectSkillsDir: string;
 let agentSkillsDir: string;
+let globalAgentSkillsDir: string;
 let roots: Roots;
 
 beforeEach(() => {
   skillsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-skills-'));
   projectSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-project-'));
   agentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-agent-'));
-  roots = { skillsRoot, projectSkillsDir, agentSkillsDir };
+  globalAgentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-global-agent-'));
+  roots = { skillsRoot, projectSkillsDir, agentSkillsDir, globalAgentSkillsDir };
 });
 
 afterEach(() => {
   fs.rmSync(skillsRoot, { recursive: true, force: true });
   fs.rmSync(projectSkillsDir, { recursive: true, force: true });
   fs.rmSync(agentSkillsDir, { recursive: true, force: true });
+  fs.rmSync(globalAgentSkillsDir, { recursive: true, force: true });
 });
 
 describe('listSkills', () => {
@@ -46,15 +49,23 @@ describe('listSkills', () => {
     expect(result).toEqual([]);
   });
 
-  it('includes skills found only in agentSkillsDir, tagged source agent', async () => {
-    fs.mkdirSync(path.join(agentSkillsDir, 'agent-only'));
+  it('includes skills found only in agentSkillsDir, tagged source project', async () => {
+    fs.mkdirSync(path.join(agentSkillsDir, 'project-only'));
 
     const result = await listSkills(roots);
 
-    expect(result).toEqual([{ name: 'agent-only', installed: false, source: 'agent' }]);
+    expect(result).toEqual([{ name: 'project-only', installed: false, source: 'project' }]);
   });
 
-  it('when a name exists in both dirs, lists it once with source personal', async () => {
+  it('includes skills found only in globalAgentSkillsDir, tagged source global', async () => {
+    fs.mkdirSync(path.join(globalAgentSkillsDir, 'global-only'));
+
+    const result = await listSkills(roots);
+
+    expect(result).toEqual([{ name: 'global-only', installed: false, source: 'global' }]);
+  });
+
+  it('when a name exists in personal and project dirs, lists it once with source personal', async () => {
     fs.mkdirSync(path.join(skillsRoot, 'shared'));
     fs.mkdirSync(path.join(agentSkillsDir, 'shared'));
 
@@ -63,8 +74,28 @@ describe('listSkills', () => {
     expect(result).toEqual([{ name: 'shared', installed: false, source: 'personal' }]);
   });
 
-  it('does not throw when agentSkillsDir does not exist', async () => {
+  it('precedence personal > project > global on a three-way name collision', async () => {
+    fs.mkdirSync(path.join(skillsRoot, 'shared'));
+    fs.mkdirSync(path.join(agentSkillsDir, 'shared'));
+    fs.mkdirSync(path.join(globalAgentSkillsDir, 'shared'));
+
+    const result = await listSkills(roots);
+
+    expect(result).toEqual([{ name: 'shared', installed: false, source: 'personal' }]);
+  });
+
+  it('project wins over global when personal has no entry', async () => {
+    fs.mkdirSync(path.join(agentSkillsDir, 'shared'));
+    fs.mkdirSync(path.join(globalAgentSkillsDir, 'shared'));
+
+    const result = await listSkills(roots);
+
+    expect(result).toEqual([{ name: 'shared', installed: false, source: 'project' }]);
+  });
+
+  it('does not throw when agentSkillsDir or globalAgentSkillsDir does not exist', async () => {
     fs.rmSync(agentSkillsDir, { recursive: true, force: true });
+    fs.rmSync(globalAgentSkillsDir, { recursive: true, force: true });
     fs.mkdirSync(path.join(skillsRoot, 'skill-a'));
 
     const result = await listSkills(roots);
@@ -84,9 +115,9 @@ describe('addSkill', () => {
     expect(copied).toBe('# my-skill');
   });
 
-  it('throws when the source skill does not exist in either location', async () => {
+  it('throws when the source skill does not exist in any location', async () => {
     await expect(addSkill('missing-skill', roots)).rejects.toThrow(
-      `skill 'missing-skill' not found in ${skillsRoot} or ${agentSkillsDir}`
+      `skill 'missing-skill' not found in ${path.join(skillsRoot, 'missing-skill')}, ${path.join(agentSkillsDir, 'missing-skill')}, ${path.join(globalAgentSkillsDir, 'missing-skill')}`
     );
   });
 
@@ -98,6 +129,16 @@ describe('addSkill', () => {
 
     const copied = fs.readFileSync(path.join(projectSkillsDir, 'agent-skill', 'SKILL.md'), 'utf8');
     expect(copied).toBe('# from agent');
+  });
+
+  it('falls back to globalAgentSkillsDir when the skill is in neither skillsRoot nor agentSkillsDir', async () => {
+    fs.mkdirSync(path.join(globalAgentSkillsDir, 'global-skill'));
+    fs.writeFileSync(path.join(globalAgentSkillsDir, 'global-skill', 'SKILL.md'), '# from global');
+
+    await addSkill('global-skill', roots);
+
+    const copied = fs.readFileSync(path.join(projectSkillsDir, 'global-skill', 'SKILL.md'), 'utf8');
+    expect(copied).toBe('# from global');
   });
 
   it('prefers skillsRoot content when the name exists in both locations', async () => {
