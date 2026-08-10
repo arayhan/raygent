@@ -9,15 +9,24 @@ describe('supportsRealScaffold', () => {
     expect(supportsRealScaffold('web', 'tanstack-start')).toBe(true);
   });
 
+  it('is true for mobile + react-native and desktop + electron', () => {
+    expect(supportsRealScaffold('mobile', 'react-native')).toBe(true);
+    expect(supportsRealScaffold('desktop', 'electron')).toBe(true);
+  });
+
   it('is false for web + remix (validated framework, no real scaffold yet)', () => {
     expect(supportsRealScaffold('web', 'remix')).toBe(false);
   });
 
-  it('is false for any non-web platform', () => {
-    expect(supportsRealScaffold('mobile', 'react-native')).toBe(false);
+  it('is false for platforms without any real scaffold', () => {
     expect(supportsRealScaffold('cli', 'node')).toBe(false);
-    expect(supportsRealScaffold('desktop', 'electron')).toBe(false);
+    expect(supportsRealScaffold('cli', 'rust')).toBe(false);
     expect(supportsRealScaffold('agent-skills', 'claude-code')).toBe(false);
+  });
+
+  it('does not cross-match a framework against the wrong platform', () => {
+    expect(supportsRealScaffold('web', 'react-native')).toBe(false);
+    expect(supportsRealScaffold('mobile', 'nextjs')).toBe(false);
   });
 });
 

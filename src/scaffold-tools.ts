@@ -3,14 +3,18 @@ import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 
-// Frameworks create-client-project can actually scaffold for real (its
-// registry.mjs FRONTENDS keys). Any web framework outside this list (e.g.
-// 'remix') still validates against FRAMEWORKS_BY_PLATFORM but only gets
-// raygent's own stub docs -- no real scaffold exists for it yet.
-export const REAL_SCAFFOLD_FRAMEWORKS = ['nextjs', 'vite-react', 'tanstack-start'];
+// platform -> frameworks create-client-project can actually scaffold for real
+// (its registry.mjs FRONTENDS keys). A validated framework outside these lists
+// (e.g. web's 'remix') only gets raygent's own stub docs -- no real scaffold
+// exists for it yet.
+export const REAL_SCAFFOLD_FRAMEWORKS: Record<string, readonly string[]> = {
+  web: ['nextjs', 'vite-react', 'tanstack-start'],
+  mobile: ['react-native'],
+  desktop: ['electron'],
+};
 
 export function supportsRealScaffold(platform: string, framework: string): boolean {
-  return platform === 'web' && REAL_SCAFFOLD_FRAMEWORKS.includes(framework);
+  return (REAL_SCAFFOLD_FRAMEWORKS[platform] ?? []).includes(framework);
 }
 
 // dist/scaffold-tools.js -> package root is one level up. create-client-project

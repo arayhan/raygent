@@ -50,14 +50,17 @@ the platform:
 | desktop      | electron                                |
 | agent-skills | claude-code                             |
 
-**Real scaffolding vs stub docs:** `web` + `nextjs`/`vite-react`/`tanstack-start`
-delegates to [`create-client-project`](../raygent-scaffolds)
+**Real scaffolding vs stub docs:** `web` (`nextjs`/`vite-react`/`tanstack-start`),
+`mobile` (`react-native`, Expo-based) and `desktop` (`electron`) delegate to
+[`create-client-project`](../raygent-scaffolds)
 (a sibling tool) for a fully runnable project — real `package.json`, installed
-dependencies, `.claude/` agents, and templated docs. It needs to be resolvable
-on disk; set `RAYGENT_CCP_PATH` to its `bin/create.mjs` if your checkout layout
-differs from the default sibling-folder assumption. Every other
-platform/framework combination (including `web` + `remix`, not yet supported by
-that tool) falls back to raygent's own `./<project-name>/docs/` stub set:
+dependencies, `.claude/` agents, templated docs, and (react-native/electron) a
+deletable example feature module demonstrating the feature-driven layout. It
+needs to be resolvable on disk; set `RAYGENT_CCP_PATH` to its `bin/create.mjs`
+if your checkout layout differs from the default sibling-folder assumption.
+Every other platform/framework combination (including `web` + `remix`, not yet
+supported by that tool) falls back to raygent's own `./<project-name>/docs/`
+stub set:
 
 - **product**: PRD.md, VISION.md, ARCHITECTURE.md, DESIGN.md, ANTISLOP.md,
   DATABASE.md, PROGRESS.md, product-roadmap.md, DESIGN.html
