@@ -26,8 +26,8 @@ raygent skill remove <name>   # remove an installed skill from the current proje
 
 ### Init
 
-Scaffolds `./<project-name>/docs/` with a doc set matched to the project type,
-then offers a checklist of recommended skills to install.
+Scaffolds a new project, then offers a checklist of recommended skills to
+install.
 
 ```bash
 raygent init [project-name] [options]
@@ -36,21 +36,28 @@ Options:
   --platform <platform>    web | mobile | cli | desktop | agent-skills
   --framework <framework>  framework valid for the chosen platform
   --type <type>            product | client
-  -f, --force              overwrite existing docs files
+  -f, --force              overwrite existing docs files (stub-doc path only)
 ```
 
 Any missing argument is prompted for interactively. Framework choices depend on
 the platform:
 
-| Platform     | Frameworks                  |
-| ------------ | --------------------------- |
-| web          | next, tanstack-start, remix |
-| mobile       | react-native                |
-| cli          | node, python, rust          |
-| desktop      | electron                    |
-| agent-skills | claude-code                 |
+| Platform     | Frameworks                              |
+| ------------ | ---------------------------------------- |
+| web          | nextjs, vite-react, tanstack-start, remix |
+| mobile       | react-native                            |
+| cli          | node, python, rust                      |
+| desktop      | electron                                |
+| agent-skills | claude-code                             |
 
-Doc sets:
+**Real scaffolding vs stub docs:** `web` + `nextjs`/`vite-react`/`tanstack-start`
+delegates to [`create-client-project`](../raygent-scaffolds/client-project-scaffold)
+(a sibling tool) for a fully runnable project — real `package.json`, installed
+dependencies, `.claude/` agents, and templated docs. It needs to be resolvable
+on disk; set `RAYGENT_CCP_PATH` to its `bin/create.mjs` if your checkout layout
+differs from the default sibling-folder assumption. Every other
+platform/framework combination (including `web` + `remix`, not yet supported by
+that tool) falls back to raygent's own `./<project-name>/docs/` stub set:
 
 - **product**: PRD.md, VISION.md, ARCHITECTURE.md, DESIGN.md, ANTISLOP.md,
   DATABASE.md, PROGRESS.md, product-roadmap.md, DESIGN.html

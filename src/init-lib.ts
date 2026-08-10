@@ -9,7 +9,7 @@ export type Platform = (typeof PLATFORMS)[number];
 export type ProjectType = (typeof PROJECT_TYPES)[number];
 
 export const FRAMEWORKS_BY_PLATFORM: Record<Platform, readonly string[]> = {
-  web: ['next', 'tanstack-start', 'remix'],
+  web: ['nextjs', 'vite-react', 'tanstack-start', 'remix'],
   mobile: ['react-native'],
   cli: ['node', 'python', 'rust'],
   desktop: ['electron'],
@@ -48,7 +48,7 @@ export interface InitOptions {
   force?: boolean;
 }
 
-function assertValidProjectName(name: string): void {
+export function assertValidProjectName(name: string): void {
   if (
     !/^[A-Za-z0-9._-]+$/.test(name) ||
     name === '.' ||

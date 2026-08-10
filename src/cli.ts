@@ -5,8 +5,16 @@ import { Command } from 'commander';
 import { input, select, checkbox } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
 import { listSkills, addSkill, removeSkill } from './skill-lib.js';
-import { initProject, installSelectedSkills, PLATFORMS, FRAMEWORKS_BY_PLATFORM, PROJECT_TYPES } from './init-lib.js';
+import {
+  initProject,
+  installSelectedSkills,
+  assertValidProjectName,
+  PLATFORMS,
+  FRAMEWORKS_BY_PLATFORM,
+  PROJECT_TYPES,
+} from './init-lib.js';
 import { relevantCatalogSkills } from './skill-catalog.js';
+import { supportsRealScaffold, runClientProjectScaffold } from './scaffold-tools.js';
 
 const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
 
@@ -101,14 +109,23 @@ program
         const type =
           opts.type ?? (await select({ message: 'Type:', choices: PROJECT_TYPES.map((t) => ({ name: t, value: t })) }));
 
-        const { targetDir, docsDir } = await initProject({
-          projectName,
-          platform,
-          framework: framework as string,
-          type,
-          force: opts.force,
-        });
-        console.log(`Initialized ${type} ${platform}/${framework} project '${projectName}' with docs in ${docsDir}`);
+        let targetDir: string;
+        if (supportsRealScaffold(platform, framework as string)) {
+          assertValidProjectName(projectName);
+          targetDir = path.join(process.cwd(), projectName);
+          await runClientProjectScaffold({ projectName, targetDir, frontend: framework as string, type });
+          console.log(`Scaffolded ${type} ${platform}/${framework} project '${projectName}' at ${targetDir}`);
+        } else {
+          const result = await initProject({
+            projectName,
+            platform,
+            framework: framework as string,
+            type,
+            force: opts.force,
+          });
+          targetDir = result.targetDir;
+          console.log(`Initialized ${type} ${platform}/${framework} project '${projectName}' with docs in ${result.docsDir}`);
+        }
 
         const roots = defaultRoots();
         const skillChoices: { name: string; value: { source: 'builtin' | 'personal' | 'project' | 'global'; name: string } }[] = [
