@@ -37,6 +37,6 @@ describe('resolveCcpBin', () => {
   it('defaults to the sibling raygent-scaffolds layout when unset', () => {
     delete process.env.RAYGENT_CCP_PATH;
     const result = resolveCcpBin();
-    expect(result.endsWith(path.join('raygent-scaffolds', 'client-project-scaffold', 'bin', 'create.mjs'))).toBe(true);
+    expect(result.endsWith(path.join('raygent-scaffolds', 'bin', 'create.mjs'))).toBe(true);
   });
 });

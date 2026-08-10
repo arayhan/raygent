@@ -16,7 +16,7 @@ export const FRAMEWORKS_BY_PLATFORM: Record<Platform, readonly string[]> = {
   'agent-skills': ['claude-code'],
 };
 
-const DOC_SETS: Record<ProjectType, string[]> = {
+export const DOC_SETS: Record<ProjectType, string[]> = {
   product: [
     'PRD.md',
     'VISION.md',

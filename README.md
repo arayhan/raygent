@@ -51,7 +51,7 @@ the platform:
 | agent-skills | claude-code                             |
 
 **Real scaffolding vs stub docs:** `web` + `nextjs`/`vite-react`/`tanstack-start`
-delegates to [`create-client-project`](../raygent-scaffolds/client-project-scaffold)
+delegates to [`create-client-project`](../raygent-scaffolds)
 (a sibling tool) for a fully runnable project — real `package.json`, installed
 dependencies, `.claude/` agents, and templated docs. It needs to be resolvable
 on disk; set `RAYGENT_CCP_PATH` to its `bin/create.mjs` if your checkout layout
@@ -63,6 +63,38 @@ that tool) falls back to raygent's own `./<project-name>/docs/` stub set:
   DATABASE.md, PROGRESS.md, product-roadmap.md, DESIGN.html
 - **client**: PRD.md, scope.md, handoff.md, DESIGN.md, ANTISLOP.md,
   ARCHITECTURE.md, DATABASE.md, PROGRESS.md
+
+### Guided setup & AI feedback
+
+`raygent init` asks for a **setup mode** (or pass `--mode guided|quick`):
+
+- **quick** — scaffold/stub docs only (previous behavior).
+- **guided** — a deep interview first: YC-application-style questions for
+  `product` (problem, vision, market, business model, riskiest assumption, …)
+  or a brief-intake for `client` (requirements, scope, deliverables,
+  decision-maker, …). Every question is skippable with Enter. Answers pre-fill
+  the generated docs and are saved raw to `docs/interview.json` for
+  `/bootstrap-project` and other tooling to build on.
+
+**Optional AI review** (guided mode only): configure an OpenAI-compatible
+endpoint and raygent offers YC-partner-style feedback on your answers (saved
+to `docs/ai-review.md`) and, optionally, AI elaboration of the pre-filled
+docs. Without config, no AI prompts appear at all.
+
+```jsonc
+// ~/.raygent/config.json
+{
+  "ai": {
+    "baseUrl": "https://your-omniroute-host/v1",
+    "apiKey": "sk-...",
+    "model": "your-model-id"
+  }
+}
+```
+
+Env overrides: `RAYGENT_AI_BASE_URL`, `RAYGENT_AI_API_KEY`, `RAYGENT_AI_MODEL`.
+All three values are required for the AI steps to activate. AI failures never
+fail `init` — the project is complete either way.
 
 ## Development
 

@@ -19,7 +19,7 @@ export function supportsRealScaffold(platform: string, framework: string): boole
 // checkout layout differs.
 function defaultCcpBinPath(): string {
   const packageRoot = fileURLToPath(new URL('..', import.meta.url));
-  return path.resolve(packageRoot, '..', 'raygent-scaffolds', 'client-project-scaffold', 'bin', 'create.mjs');
+  return path.resolve(packageRoot, '..', 'raygent-scaffolds', 'bin', 'create.mjs');
 }
 
 export function resolveCcpBin(): string {
