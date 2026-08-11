@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-11T13:00:00Z",
+  "title": "Design System: raygent dashboard",
+  "extensions": {
+    "colorMeta": {
+      "guardian-cyan": {
+        "role": "primary",
+        "displayName": "Guardian Cyan",
+        "canonical": "#4fd3e8",
+        "tonalRamp": ["#0f2a30", "#164450", "#1d5e70", "#257890", "#2f92ab", "#4fd3e8", "#7fdff0", "#b6ecf6"]
+      },
+      "void": {
+        "role": "neutral",
+        "displayName": "Void",
+        "canonical": "#0a0d12",
+        "tonalRamp": ["#05070a", "#0a0d12", "#10151d", "#161d28", "#1e2733", "#2a3542", "#5b6b7d", "#8b98a8"]
+      },
+      "signal-white": {
+        "role": "neutral",
+        "displayName": "Signal White",
+        "canonical": "#e7edf5",
+        "tonalRamp": ["#8b98a8", "#b7c1cd", "#c9d1db", "#dbe1e9", "#e7edf5", "#eef2f8", "#f4f7fb", "#ffffff"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The 'raygent dashboard' wordmark only. Rajdhani, self-hosted." },
+      "label": { "displayName": "Label", "purpose": "Column headers, stat unit labels, meta rows -- uppercase, tracked." },
+      "data": { "displayName": "Data", "purpose": "Every numeric readout -- tabular monospace so figures line up across rows." }
+    },
+    "shadows": [
+      { "name": "console-lift", "value": "0 1px 0 rgba(255,255,255,0.03) inset, 0 14px 30px -18px rgba(0,0,0,0.65)", "purpose": "The system's only shadow -- applied once, to the console panel." },
+      { "name": "revenue-glow", "value": "text-shadow: 0 0 16px rgba(79,211,232,0.4)", "purpose": "Cyan glow on the revenue figure and the ring mark's drop-shadow -- the accent's only 'lit' treatment." }
+    ],
+    "motion": [
+      { "name": "ring-pulse", "value": "opacity 3.2s ease-in-out infinite, 0.55 to 1 to 0.55", "purpose": "The page's one authored ambient motion, on the ring mark only. Disabled under prefers-reduced-motion." },
+      { "name": "row-hover", "value": "background 140ms ease to rgba(79,211,232,0.04)", "purpose": "The only interactive state transition; not an ambient effect." }
+    ],
+    "breakpoints": [
+      { "name": "row-collapse", "value": "720px" },
+      { "name": "compact", "value": "520px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Console Panel",
+      "kind": "custom",
+      "refersTo": "console",
+      "description": "The whole page's one structural component -- a bordered, gradient-filled plate holding a header row and N product rows.",
+      "html": "<div class=\"ds-console\"><div class=\"ds-console-head\"><span>Product</span><span>Revenue</span><span>Activity</span><span>Signal</span></div><div class=\"ds-row\">...</div></div>",
+      "css": ".ds-console { background: linear-gradient(165deg, #161d28 0%, #10151d 100%); border: 1px solid #2a3542; border-radius: 8px; box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 14px 30px -18px rgba(0,0,0,0.65); overflow: hidden; } .ds-console-head { display: grid; grid-template-columns: 1.4fr 0.9fr 1.3fr 1fr; gap: 18px; padding: 14px 20px; color: #8b98a8; font-family: Rajdhani, sans-serif; font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid #2a3542; }"
+    },
+    {
+      "name": "Product Row",
+      "kind": "custom",
+      "refersTo": "row",
+      "description": "One product's data: name/meta, revenue, a 3-up stat trio, and a 14-day activity readout. No border/shadow/radius of its own -- hairline divider only.",
+      "html": "<div class=\"ds-row\"><div class=\"ds-row-id\"><h2>mylanding</h2><p class=\"ds-meta\">WEB / NEXTJS / PRODUCT</p></div><div class=\"ds-row-revenue\"><span class=\"ds-revenue-value\">2,450,000</span><span class=\"ds-revenue-label\">revenue</span></div></div>",
+      "css": ".ds-row { display: grid; grid-template-columns: 1.4fr 0.9fr 1.3fr 1fr; gap: 18px; align-items: center; padding: 14px 20px; border-top: 1px solid #202932; transition: background 140ms ease; } .ds-row:hover { background: rgba(79,211,232,0.04); } .ds-row-id h2 { font-family: Rajdhani, sans-serif; font-size: 16px; font-weight: 600; color: #e7edf5; } .ds-meta { color: #8b98a8; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; } .ds-revenue-value { font-family: ui-monospace, monospace; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: #4fd3e8; text-shadow: 0 0 16px rgba(79,211,232,0.4); font-variant-numeric: tabular-nums; } .ds-revenue-label { color: #8b98a8; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }"
+    },
+    {
+      "name": "Ring Mark",
+      "kind": "custom",
+      "refersTo": "ring-mark",
+      "description": "The brand motif: a small SVG with a static outer ring, a pulsing mid-ring, and a pulsing center dot. The system's one authored ambient animation.",
+      "html": "<svg class=\"ds-ring-mark\" width=\"36\" height=\"36\" viewBox=\"0 0 36 36\" fill=\"none\"><circle cx=\"18\" cy=\"18\" r=\"15.5\" stroke=\"#2a3542\" stroke-width=\"1\"/><circle class=\"ds-pulse\" cx=\"18\" cy=\"18\" r=\"6\" stroke=\"#4fd3e8\" stroke-width=\"1.2\"/><circle class=\"ds-pulse\" cx=\"18\" cy=\"18\" r=\"1.6\" fill=\"#4fd3e8\"/></svg>",
+      "css": ".ds-ring-mark { filter: drop-shadow(0 0 8px rgba(79,211,232,0.4)); } .ds-pulse { animation: ds-pulse 3.2s ease-in-out infinite; transform-origin: 50% 50%; } @keyframes ds-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } } @media (prefers-reduced-motion: reduce) { .ds-pulse { animation: none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Guardian's Instrument Console",
+    "overview": "raygent's brand mark is a steel-blue armored dragon rendered as a sci-fi guardian statue -- glowing cyan tech-rings, dark charcoal ground, faint circuit linework. The dashboard is that guardian's instrument panel: a console you check late at night to see the state of everything it watches over. It does not perform 'dashboard.' It reads as a single sealed plate of dark alloy with one live channel -- cyan -- reserved for the number that matters and the signal that's still moving. Built for a solo founder glancing at this on a laptop at 1am: dark by scene (not by category default), high enough contrast to read fast in a dim room, and structured as one continuous panel rather than a shelf of identical boxes, because a guardian's console has one surface, not a grid of cards pretending to be separate machines. Rejected explicitly: the generic 'dark GitHub card grid' -- same-size bordered tiles, a hero-metric template repeated N times, a random neon accent with no lineage. Every product here is a row on one console, not its own floating card.",
+    "keyCharacteristics": [
+      "One accent, no exceptions: cyan/steel-blue is the entire color vocabulary beyond charcoal and text.",
+      "One continuous panel (the console), rows divided by hairlines, never N separately bordered cards.",
+      "Tabular monospace for every number; self-hosted Rajdhani for the wordmark and structural labels.",
+      "A single authored ambient motion (the ring mark's pulse); everything else is a state, not an effect.",
+      "Real data only: DAU is only claimed when events carry an identity."
+    ],
+    "rules": [
+      { "name": "The One Channel Rule", "body": "Cyan is the only accent in the system. A new element needing emphasis gets more of the existing cyan (size, weight, glow), never a second hue.", "section": "colors" },
+      { "name": "The Tabular Numerals Rule", "body": "Any number compared across rows renders in the monospace data face with tabular-nums, so figures line up.", "section": "typography" },
+      { "name": "The One Plate Rule", "body": "Depth is authored once, on the console panel. No row, stat, or label gets its own shadow.", "section": "elevation" },
+      { "name": "The Real Signal Rule", "body": "The 14-day activity readout only ever encodes real per-day counts, never decoration standing in for data that isn't there.", "section": "components" }
+    ],
+    "dos": [
+      "Do keep revenue the largest, only-glowing figure on every row.",
+      "Do add new products as new rows in the existing console, never as a new card or a second console.",
+      "Do use the monospace data face for any new numeric readout compared across rows.",
+      "Do keep hairlines as the only divider language; no colored border-left/border-right on any element.",
+      "Do say 'events today' (never DAU) when events carry no userId/sessionId."
+    ],
+    "donts": [
+      "Don't introduce a second accent hue for anything (status, success, warning).",
+      "Don't wrap a product's row in its own border, shadow, or border-radius.",
+      "Don't add a second ambient animation.",
+      "Don't use a sparkline, progress ring, or bar chart as decoration."
+    ]
+  }
+}

@@ -1,99 +1,374 @@
-:root {
-  --bg: #0e1116;
-  --card: #161b22;
-  --fg: #e6edf3;
-  --muted: #8b949e;
-  --accent: #3b82f6;
-  --ok: #22c55e;
-  --err: #f87171;
+/* raygent dashboard -- guardian dark/cyan tech register, derived from
+   raygent-avatar.jpg. See index.html for the direction contract. */
+
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/fonts/rajdhani-500.woff2') format('woff2');
 }
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/fonts/rajdhani-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/rajdhani-700.woff2') format('woff2');
+}
+
+:root {
+  /* charcoal plating scale */
+  --c-0: #0a0d12;
+  --c-1: #10151d;
+  --c-2: #161d28;
+  --c-3: #1e2733;
+  --c-line: #2a3542;
+  --c-line-soft: #202932;
+
+  /* text */
+  --fg: #e7edf5;
+  --fg-dim: #b7c1cd;
+  --fg-mute: #8b98a8; /* >=4.5:1 on --c-1/--c-2 */
+
+  /* the single accent family: steel/cyan, lifted from the tech rings.
+     Revenue is NOT a second hue -- it reads bigger/brighter, same family. */
+  --accent: #4fd3e8;
+  --accent-dim: #2f7a8c;
+  --accent-glow: rgba(79, 211, 232, 0.4);
+  --err: #f0899a;
+
+  --radius: 8px;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, 'Roboto Mono', monospace;
+  --sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --display: 'Rajdhani', var(--sans);
+
+  /* faint circuit/hex ambient linework -- one repeating SVG tile, low
+     opacity so it never competes with foreground contrast */
+  --hex-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='96' viewBox='0 0 84 96'%3E%3Cg fill='none' stroke='%234fd3e8' stroke-opacity='0.05' stroke-width='1'%3E%3Cpath d='M42 0 L84 24 L84 72 L42 96 L0 72 L0 24 Z'/%3E%3Cpath d='M42 0 L42 34 M0 24 L42 34 L84 24 M0 72 L42 62 L84 72 M42 96 L42 62'/%3E%3C/g%3E%3C/svg%3E");
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
 }
+
 body {
-  background: var(--bg);
+  /* CSS background layers paint first-on-top: the texture (transparent
+     except its 5%-opacity strokes) must be listed before the opaque
+     gradient, or the gradient occludes it entirely. */
+  background:
+    var(--hex-texture),
+    radial-gradient(120% 100% at 12% 0%, var(--c-2) 0%, var(--c-0) 55%);
   color: var(--fg);
-  font: 14px/1.5 system-ui, sans-serif;
-  padding: 24px;
+  font: 14px/1.55 var(--sans);
+  padding: 32px 28px 48px;
+  min-height: 100vh;
 }
+
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ---------- header ---------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+/* large faint watermark ring behind the header -- reinforces the guardian
+   tech-ring motif as more than a 36px icon, without adding a second effect */
+.header::before {
+  content: '';
+  position: absolute;
+  left: -40px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.ring-mark {
+  flex: none;
+  filter: drop-shadow(0 0 8px var(--accent-glow));
+}
+
+.ring-mark .pulse {
+  animation: pulse 3.2s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+
 h1 {
-  font-size: 18px;
-  margin-bottom: 4px;
+  font-family: var(--display);
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
 }
+
 .sub {
-  color: var(--muted);
-  margin-bottom: 20px;
+  color: var(--fg-mute);
+  font-size: 12.5px;
+  margin: 3px 0 26px;
+  margin-left: 52px;
 }
+
 .error {
   color: var(--err);
-  margin-bottom: 12px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: rgba(240, 137, 154, 0.08);
+  border: 1px solid rgba(240, 137, 154, 0.25);
+  border-radius: 8px;
 }
-.grid {
+
+/* ---------- console: one continuous instrument panel, not a card grid ---------- */
+
+.console {
+  background: linear-gradient(165deg, var(--c-2) 0%, var(--c-1) 100%);
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 14px 30px -18px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+}
+
+.console-head,
+.row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  grid-template-columns: 1.4fr 0.9fr 1.3fr 1fr;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 20px;
 }
-.card {
-  background: var(--card);
-  border: 1px solid #21262d;
-  border-radius: 10px;
-  padding: 16px;
+
+.console-head {
+  color: var(--fg-mute);
+  font-family: var(--display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--c-line);
 }
-.card h2 {
-  font-size: 15px;
-  margin-bottom: 2px;
+
+.row {
+  border-top: 1px solid var(--c-line-soft);
+  transition: background 140ms ease;
 }
+
+.row:first-of-type {
+  border-top: none;
+}
+
+.row:hover {
+  background: rgba(79, 211, 232, 0.04);
+}
+
+.row-id h2 {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 .meta {
-  color: var(--muted);
-  font-size: 12px;
-  margin-bottom: 10px;
-  min-height: 18px;
+  color: var(--fg-mute);
+  font-size: 10.5px;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-.stats {
+
+/* revenue: the number that matters, per PRODUCT.md -- larger + glowing,
+   same accent family as everything else, never a second hue */
+.row-revenue {
   display: flex;
-  gap: 16px;
-  margin-bottom: 10px;
+  align-items: baseline;
+  gap: 6px;
 }
+
+.revenue-value {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  text-shadow: 0 0 16px var(--accent-glow);
+  font-variant-numeric: tabular-nums;
+}
+
+.revenue-label {
+  color: var(--fg-mute);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* secondary stats: compact mono trio, hairline-separated (not boxed) */
+
+.row-stats {
+  display: flex;
+}
+
+.stat {
+  flex: 1;
+  padding-right: 10px;
+  border-right: 1px solid var(--c-line-soft);
+}
+
+.stat:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
 .stat b {
   display: block;
-  font-size: 18px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
 }
+
 .stat span {
-  color: var(--muted);
-  font-size: 11px;
+  color: var(--fg-mute);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
-.bars {
+
+/* signal readout: real 14-day counts, HUD-style ticks */
+
+.signal-label {
+  color: var(--fg-mute);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+}
+
+.signal-bars {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
-  height: 36px;
+  gap: 2.5px;
+  height: 26px;
 }
-.bars i {
+
+.signal-bars i {
   flex: 1;
   background: var(--accent);
-  border-radius: 2px 2px 0 0;
+  border-radius: 1.5px 1.5px 0 0;
   min-height: 2px;
-  opacity: 0.85;
 }
-.revenue b {
-  color: var(--ok);
+
+.signal-bars i.today {
+  box-shadow: 0 0 6px var(--accent-glow);
 }
-.empty {
-  color: var(--muted);
-  padding: 40px;
+
+.no-events {
+  color: var(--fg-mute);
+  font-size: 11px;
+}
+
+.row-standby {
+  padding: 48px 20px;
   text-align: center;
-  border: 1px dashed #21262d;
-  border-radius: 10px;
+  color: var(--fg-dim);
+  font-size: 13px;
 }
+
+.row-standby .ring-mark {
+  margin: 0 auto 16px;
+  display: block;
+}
+
+/* ---------- footer ---------- */
+
 footer {
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 24px;
+  color: var(--fg-mute);
+  font-size: 11.5px;
+  margin-top: 26px;
 }
+
 code {
-  background: #21262d;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 12px;
+  background: var(--c-3);
+  border: 1px solid var(--c-line);
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+
+/* ---------- motion: exactly one authored ambient moment (the ring pulse);
+   .row:hover above is a state, not a scattered effect ---------- */
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-mark .pulse {
+    animation: none;
+  }
+}
+
+/* ---------- responsive: rows collapse to a stacked block, still one
+   continuous list -- never N separate boxed cards ---------- */
+
+@media (max-width: 720px) {
+  .console-head {
+    display: none;
+  }
+  .row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 16px 18px;
+  }
+  .row-stats {
+    order: 2;
+  }
+  .signal-bars {
+    height: 22px;
+  }
+}
+
+@media (max-width: 520px) {
+  body {
+    padding: 22px 16px 36px;
+  }
+  .sub {
+    margin-left: 0;
+  }
+  .header {
+    gap: 12px;
+  }
+  .header::before {
+    display: none;
+  }
 }
