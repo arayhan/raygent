@@ -15,6 +15,8 @@ import {
   PROJECT_TYPES,
 } from './init-lib.js';
 import { relevantCatalogSkills } from './skill-catalog.js';
+import { MCP_CATALOG } from './mcp-catalog.js';
+import { writeMcpConfig } from './mcp-lib.js';
 import { supportsRealScaffold, runClientProjectScaffold } from './scaffold-tools.js';
 import { questionsForType, runInterview, type InterviewAnswers } from './interview.js';
 import { writeInterviewJson, applyInterviewToScaffoldDocs, applyInterviewToStubDocs } from './doc-fill.js';
@@ -468,37 +470,48 @@ program
             builtinSkillNames: preset.skills,
           });
           console.log(`Installed preset skills: ${preset.skills.join(', ')}`);
-          return;
+        } else {
+          const skillChoices: { name: string; value: { source: 'builtin' | 'personal' | 'project' | 'global'; name: string } }[] = [
+            ...relevantCatalogSkills(type, platform).map((s) => ({
+              name: `${s.name} (built-in)`,
+              value: { source: 'builtin' as const, name: s.name },
+            })),
+            ...(await listSkills(roots)).map((s) => ({
+              name: `${s.name} (${s.source})`,
+              value: { source: s.source, name: s.name },
+            })),
+          ];
+
+          if (skillChoices.length > 0) {
+            const selected = await checkbox({
+              message: 'Recommended skills to install (space to select, enter to confirm):',
+              choices: skillChoices,
+            });
+            if (selected.length > 0) {
+              const personalSkillNames = selected.filter((s) => s.source !== 'builtin').map((s) => s.name);
+              const builtinSkillNames = selected.filter((s) => s.source === 'builtin').map((s) => s.name);
+              await installSelectedSkills({
+                targetDir,
+                skillsRoot: roots.skillsRoot,
+                agentSkillsDir: roots.agentSkillsDir,
+                globalAgentSkillsDir: roots.globalAgentSkillsDir,
+                personalSkillNames,
+                builtinSkillNames,
+              });
+              console.log(`Installed skills: ${selected.map((s) => s.name).join(', ')}`);
+            }
+          }
         }
 
-        const skillChoices: { name: string; value: { source: 'builtin' | 'personal' | 'project' | 'global'; name: string } }[] = [
-          ...relevantCatalogSkills(type, platform).map((s) => ({
-            name: `${s.name} (built-in)`,
-            value: { source: 'builtin' as const, name: s.name },
-          })),
-          ...(await listSkills(roots)).map((s) => ({
-            name: `${s.name} (${s.source})`,
-            value: { source: s.source, name: s.name },
-          })),
-        ];
-
-        if (skillChoices.length > 0) {
-          const selected = await checkbox({
-            message: 'Recommended skills to install (space to select, enter to confirm):',
-            choices: skillChoices,
-          });
-          if (selected.length > 0) {
-            const personalSkillNames = selected.filter((s) => s.source !== 'builtin').map((s) => s.name);
-            const builtinSkillNames = selected.filter((s) => s.source === 'builtin').map((s) => s.name);
-            await installSelectedSkills({
-              targetDir,
-              skillsRoot: roots.skillsRoot,
-              agentSkillsDir: roots.agentSkillsDir,
-              globalAgentSkillsDir: roots.globalAgentSkillsDir,
-              personalSkillNames,
-              builtinSkillNames,
-            });
-            console.log(`Installed skills: ${selected.map((s) => s.name).join(', ')}`);
+        const mcpSelected = await checkbox({
+          message: 'MCP servers to configure in .mcp.json (space to select, enter to confirm):',
+          choices: MCP_CATALOG.map((s) => ({ name: s.label, value: s.id })),
+        });
+        if (mcpSelected.length > 0) {
+          const { needsEnv } = await writeMcpConfig(targetDir, mcpSelected);
+          console.log(`Configured MCP servers in ${path.join(targetDir, '.mcp.json')}: ${mcpSelected.join(', ')}`);
+          if (needsEnv.length > 0) {
+            console.log(`Set these env vars before Claude Code can use them: ${needsEnv.join(', ')}`);
           }
         }
       } catch (err) {
