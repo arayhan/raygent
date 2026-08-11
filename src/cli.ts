@@ -18,8 +18,17 @@ import { relevantCatalogSkills } from './skill-catalog.js';
 import { supportsRealScaffold, runClientProjectScaffold } from './scaffold-tools.js';
 import { questionsForType, runInterview, type InterviewAnswers } from './interview.js';
 import { writeInterviewJson, applyInterviewToScaffoldDocs, applyInterviewToStubDocs } from './doc-fill.js';
-import { loadAiConfig } from './config.js';
+import {
+  loadAiConfig,
+  loadConfig,
+  loadPreset,
+  saveConfig,
+  setConfigValue,
+  getConfigValue,
+  defaultConfigPath,
+} from './config.js';
 import { runFeedback, runElaborate, type ProjectMeta } from './ai-client.js';
+import { runDoctorChecks } from './doctor.js';
 
 const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
 
@@ -48,13 +57,22 @@ skill
 
 skill
   .command('list')
-  .description('List skills available in ~/.raygent/skills and whether installed in this project')
-  .action(async () => {
+  .description('List available skills and whether they are installed in this project')
+  .option('--source <source>', 'filter by source: personal | project | global')
+  .option('--installed', 'only show skills installed in this project')
+  .action(async (opts: { source?: string; installed?: boolean }) => {
     try {
       const roots = defaultRoots();
-      const skills = await listSkills(roots);
+      let skills = await listSkills(roots);
+      if (opts.source) {
+        if (!['personal', 'project', 'global'].includes(opts.source)) {
+          throw new Error(`invalid source '${opts.source}' (expected one of: personal, project, global)`);
+        }
+        skills = skills.filter((s) => s.source === opts.source);
+      }
+      if (opts.installed) skills = skills.filter((s) => s.installed);
       if (skills.length === 0) {
-        console.log(`No skills found in ${roots.skillsRoot}`);
+        console.log('No skills matched.');
         return;
       }
       for (const s of skills) {
@@ -80,6 +98,77 @@ skill
     }
   });
 
+const config = program.command('config').description('Manage raygent configuration (~/.raygent/config.json)');
+
+config
+  .command('show')
+  .description('Print the current configuration (API key masked)')
+  .action(async () => {
+    try {
+      const cfg = await loadConfig();
+      const masked = JSON.parse(JSON.stringify(cfg)) as Record<string, unknown>;
+      const key = getConfigValue(masked, 'ai.apiKey');
+      if (typeof key === 'string' && key.length > 0) {
+        setConfigValue(masked, 'ai.apiKey', `${key.slice(0, 6)}...`);
+      }
+      console.log(`# ${defaultConfigPath()}`);
+      console.log(JSON.stringify(masked, null, 2));
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+config
+  .command('get <key>')
+  .description("Read a config value by dot-path (e.g. ai.model, presets.saas.platform)")
+  .action(async (key: string) => {
+    try {
+      const value = getConfigValue(await loadConfig(), key);
+      if (value === undefined) {
+        console.error(`'${key}' is not set`);
+        process.exitCode = 1;
+        return;
+      }
+      console.log(typeof value === 'string' ? value : JSON.stringify(value, null, 2));
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+config
+  .command('set <key> <value>')
+  .description("Set a config value by dot-path; JSON values are parsed (e.g. '[\"impeccable\"]')")
+  .action(async (key: string, value: string) => {
+    try {
+      const cfg = await loadConfig();
+      let parsed: unknown = value;
+      try {
+        parsed = JSON.parse(value);
+      } catch {
+        // plain string value
+      }
+      setConfigValue(cfg, key, parsed);
+      await saveConfig(cfg);
+      console.log(`Set ${key} in ${defaultConfigPath()}`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command('doctor')
+  .description('Check the raygent environment: node, pnpm, git, scaffolder, skills, AI endpoint')
+  .action(async () => {
+    const checks = await runDoctorChecks();
+    for (const c of checks) {
+      console.log(`${c.ok ? 'ok  ' : 'FAIL'} ${c.name.padEnd(16)} ${c.detail}`);
+    }
+    if (checks.some((c) => !c.ok)) process.exitCode = 1;
+  });
+
 program
   .command('init')
   .description('Scaffold a new project with AI-context docs')
@@ -88,13 +177,26 @@ program
   .option('--framework <framework>', 'framework valid for the chosen --platform')
   .option('--type <type>', `product | client`)
   .option('--mode <mode>', 'guided (interview to pre-fill docs) | quick (stub docs)')
+  .option('--preset <name>', 'apply a preset from ~/.raygent/config.json (flags still override)')
   .option('-f, --force', 'overwrite existing docs files')
   .action(
     async (
       projectNameArg: string | undefined,
-      opts: { platform?: string; framework?: string; type?: string; mode?: string; force?: boolean }
+      opts: { platform?: string; framework?: string; type?: string; mode?: string; preset?: string; force?: boolean }
     ) => {
       try {
+        const preset = opts.preset ? await loadPreset(opts.preset) : null;
+        if (opts.preset && !preset) {
+          throw new Error(
+            `preset '${opts.preset}' not found in ${defaultConfigPath()} (raygent config set presets.${opts.preset}.platform web ...)`
+          );
+        }
+        if (preset) {
+          opts.platform ??= preset.platform;
+          opts.framework ??= preset.framework;
+          opts.type ??= preset.type;
+          opts.mode ??= preset.mode;
+        }
         const projectName =
           projectNameArg ??
           (await input({
@@ -218,6 +320,22 @@ program
         }
 
         const roots = defaultRoots();
+
+        if (preset?.skills && preset.skills.length > 0) {
+          // Preset skills skip the checklist: attempt a real install for each,
+          // unresolvable names land in .claude/skills.json as reminders.
+          await installSelectedSkills({
+            targetDir,
+            skillsRoot: roots.skillsRoot,
+            agentSkillsDir: roots.agentSkillsDir,
+            globalAgentSkillsDir: roots.globalAgentSkillsDir,
+            personalSkillNames: [],
+            builtinSkillNames: preset.skills,
+          });
+          console.log(`Installed preset skills: ${preset.skills.join(', ')}`);
+          return;
+        }
+
         const skillChoices: { name: string; value: { source: 'builtin' | 'personal' | 'project' | 'global'; name: string } }[] = [
           ...relevantCatalogSkills(type, platform).map((s) => ({
             name: `${s.name} (built-in)`,

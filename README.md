@@ -44,13 +44,13 @@ the platform:
 
 | Platform     | Frameworks                              |
 | ------------ | ---------------------------------------- |
-| web          | nextjs, vite-react, tanstack-start, remix |
+| web          | nextjs, vite-react, tanstack-start, landing, remix |
 | mobile       | react-native                            |
 | cli          | node, python, rust                      |
 | desktop      | electron                                |
 | agent-skills | claude-code                             |
 
-**Real scaffolding vs stub docs:** `web` (`nextjs`/`vite-react`/`tanstack-start`),
+**Real scaffolding vs stub docs:** `web` (`nextjs`/`vite-react`/`tanstack-start`/`landing`),
 `mobile` (`react-native`, Expo-based) and `desktop` (`electron`) delegate to
 [`create-client-project`](../raygent-scaffolds)
 (a sibling tool) for a fully runnable project — real `package.json`, installed
@@ -98,6 +98,31 @@ docs. Without config, no AI prompts appear at all.
 Env overrides: `RAYGENT_AI_BASE_URL`, `RAYGENT_AI_API_KEY`, `RAYGENT_AI_MODEL`.
 All three values are required for the AI steps to activate. AI failures never
 fail `init` — the project is complete either way.
+
+### Presets
+
+Save your usual answers once and init in one command:
+
+```bash
+raygent config set presets.saas.platform web
+raygent config set presets.saas.framework nextjs
+raygent config set presets.saas.type product
+raygent config set presets.saas.mode guided
+raygent config set presets.saas.skills '["impeccable", "ui-ux-pro-max"]'
+
+raygent init myapp --preset saas   # flags still override preset values
+```
+
+A preset with `skills` installs them automatically and skips the checklist.
+
+### Config & doctor
+
+```bash
+raygent config show          # print config (API key masked)
+raygent config get ai.model
+raygent config set ai.baseUrl https://your-host/v1
+raygent doctor               # check node, pnpm, git, scaffolder, skills, AI endpoint
+```
 
 ## Development
 

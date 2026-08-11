@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 // (e.g. web's 'remix') only gets raygent's own stub docs -- no real scaffold
 // exists for it yet.
 export const REAL_SCAFFOLD_FRAMEWORKS: Record<string, readonly string[]> = {
-  web: ['nextjs', 'vite-react', 'tanstack-start'],
+  web: ['nextjs', 'vite-react', 'tanstack-start', 'landing'],
   mobile: ['react-native'],
   desktop: ['electron'],
 };

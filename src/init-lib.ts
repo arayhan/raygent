@@ -9,7 +9,7 @@ export type Platform = (typeof PLATFORMS)[number];
 export type ProjectType = (typeof PROJECT_TYPES)[number];
 
 export const FRAMEWORKS_BY_PLATFORM: Record<Platform, readonly string[]> = {
-  web: ['nextjs', 'vite-react', 'tanstack-start', 'remix'],
+  web: ['nextjs', 'vite-react', 'tanstack-start', 'landing', 'remix'],
   mobile: ['react-native'],
   cli: ['node', 'python', 'rust'],
   desktop: ['electron'],

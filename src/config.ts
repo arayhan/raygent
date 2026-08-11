@@ -59,3 +59,67 @@ export async function loadAiConfig(
   }
   return { baseUrl, apiKey, model };
 }
+
+export interface Preset {
+  platform?: string;
+  framework?: string;
+  type?: string;
+  mode?: string;
+  skills?: string[];
+}
+
+export async function loadConfig(configPath: string = defaultConfigPath()): Promise<Record<string, unknown>> {
+  return readConfigObject(configPath);
+}
+
+export async function loadPreset(name: string, configPath: string = defaultConfigPath()): Promise<Preset | null> {
+  const parsed = await readConfigObject(configPath);
+  const presets =
+    parsed.presets !== null && typeof parsed.presets === 'object' && !Array.isArray(parsed.presets)
+      ? (parsed.presets as Record<string, unknown>)
+      : {};
+  const raw = presets[name];
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const p = raw as Record<string, unknown>;
+  return {
+    platform: typeof p.platform === 'string' ? p.platform : undefined,
+    framework: typeof p.framework === 'string' ? p.framework : undefined,
+    type: typeof p.type === 'string' ? p.type : undefined,
+    mode: typeof p.mode === 'string' ? p.mode : undefined,
+    skills: Array.isArray(p.skills) ? p.skills.filter((s): s is string => typeof s === 'string') : undefined,
+  };
+}
+
+/** Set a dot-path (e.g. 'ai.baseUrl' or 'presets.saas.platform') on a plain object. */
+export function setConfigValue(config: Record<string, unknown>, keyPath: string, value: unknown): void {
+  const keys = keyPath.split('.').filter((k) => k !== '');
+  if (keys.length === 0) throw new Error(`invalid config key '${keyPath}'`);
+  let node = config;
+  for (const key of keys.slice(0, -1)) {
+    const next = node[key];
+    if (next === null || typeof next !== 'object' || Array.isArray(next)) {
+      node[key] = {};
+    }
+    node = node[key] as Record<string, unknown>;
+  }
+  node[keys[keys.length - 1]] = value;
+}
+
+/** Get a dot-path from a plain object; undefined when any segment is missing. */
+export function getConfigValue(config: Record<string, unknown>, keyPath: string): unknown {
+  const keys = keyPath.split('.').filter((k) => k !== '');
+  let node: unknown = config;
+  for (const key of keys) {
+    if (node === null || typeof node !== 'object' || Array.isArray(node)) return undefined;
+    node = (node as Record<string, unknown>)[key];
+  }
+  return node;
+}
+
+export async function saveConfig(
+  config: Record<string, unknown>,
+  configPath: string = defaultConfigPath()
+): Promise<void> {
+  await fs.mkdir(path.dirname(configPath), { recursive: true });
+  await fs.writeFile(configPath, JSON.stringify(config, null, 2) + '\n');
+}
