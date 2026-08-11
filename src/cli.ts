@@ -13,11 +13,21 @@ import {
   PLATFORMS,
   FRAMEWORKS_BY_PLATFORM,
   PROJECT_TYPES,
+  BACKEND_FRAMEWORKS,
+  TARGETS,
+  STACK_CAPABLE_FRAMEWORKS,
+  STORYBOOK_CAPABLE_FRAMEWORKS,
+  BACKEND_STACK_CAPABLE,
+  STACK_TOGGLE_OPTIONS,
+  BACKEND_STACK_TOGGLE_OPTIONS,
+  STYLING_CHOICES,
+  FORM_CHOICES,
+  ICON_CHOICES,
 } from './init-lib.js';
 import { relevantCatalogSkills } from './skill-catalog.js';
 import { MCP_CATALOG } from './mcp-catalog.js';
 import { writeMcpConfig } from './mcp-lib.js';
-import { supportsRealScaffold, runClientProjectScaffold } from './scaffold-tools.js';
+import { supportsRealScaffold, supportsRealScaffoldBackend, runClientProjectScaffold } from './scaffold-tools.js';
 import { questionsForType, runInterview, type InterviewAnswers } from './interview.js';
 import { writeInterviewJson, applyInterviewToScaffoldDocs, applyInterviewToStubDocs } from './doc-fill.js';
 import {
@@ -293,12 +303,53 @@ program
     if (checks.some((c) => !c.ok)) process.exitCode = 1;
   });
 
+async function collectFrontendStack(framework: string): Promise<Record<string, unknown>> {
+  const stack: Record<string, unknown> = {};
+
+  stack.styling = await select({
+    message: 'Styling:',
+    choices: STYLING_CHOICES.map((c) => ({ name: c.name, value: c.value })),
+  });
+
+  const toggled = await checkbox({
+    message: 'Tech stack add-ons (space to select, enter to confirm):',
+    choices: STACK_TOGGLE_OPTIONS.map((o) => ({ name: o.label, value: o.key })),
+  });
+  for (const key of toggled) stack[key] = true;
+
+  if ((STORYBOOK_CAPABLE_FRAMEWORKS as readonly string[]).includes(framework)) {
+    const wantStorybook = await confirm({ message: 'Add Storybook?', default: false });
+    if (wantStorybook) stack.storybook = true;
+  }
+
+  const forms = await select({ message: 'Form library:', choices: FORM_CHOICES.map((c) => ({ name: c.name, value: c.value })) });
+  if (forms !== 'none') stack.forms = forms;
+
+  const icons = await select({ message: 'Icon pack:', choices: ICON_CHOICES.map((c) => ({ name: c.name, value: c.value })) });
+  if (icons !== 'none') stack.icons = icons;
+
+  return stack;
+}
+
+async function collectBackendStack(): Promise<Record<string, unknown>> {
+  const toggled = await checkbox({
+    message: 'Backend add-ons (space to select, enter to confirm):',
+    choices: BACKEND_STACK_TOGGLE_OPTIONS.map((o) => ({ name: o.label, value: o.key })),
+  });
+  const stack: Record<string, unknown> = {};
+  for (const key of toggled) stack[key] = true;
+  return stack;
+}
+
 program
   .command('init')
   .description('Scaffold a new project with AI-context docs')
   .argument('[project-name]', 'name of the project folder to create')
   .option('--platform <platform>', 'web | mobile | cli | desktop | agent-skills')
-  .option('--framework <framework>', 'framework valid for the chosen --platform')
+  .option('--framework <framework>', 'frontend framework valid for the chosen --platform')
+  .option('--target <target>', "web only: frontend | backend | fullstack (default frontend)")
+  .option('--backend <backend>', 'web only: express | hono | nestjs')
+  .option('--monorepo', 'web fullstack only: use Turborepo')
   .option('--type <type>', `product | client`)
   .option('--mode <mode>', 'guided (interview to pre-fill docs) | quick (stub docs)')
   .option('--preset <name>', 'apply a preset from ~/.raygent/config.json (flags still override)')
@@ -306,7 +357,17 @@ program
   .action(
     async (
       projectNameArg: string | undefined,
-      opts: { platform?: string; framework?: string; type?: string; mode?: string; preset?: string; force?: boolean }
+      opts: {
+        platform?: string;
+        framework?: string;
+        target?: string;
+        backend?: string;
+        monorepo?: boolean;
+        type?: string;
+        mode?: string;
+        preset?: string;
+        force?: boolean;
+      }
     ) => {
       try {
         const preset = opts.preset ? await loadPreset(opts.preset) : null;
@@ -320,7 +381,11 @@ program
           opts.framework ??= preset.framework;
           opts.type ??= preset.type;
           opts.mode ??= preset.mode;
+          opts.target ??= preset.target;
+          opts.backend ??= preset.backend;
+          if (opts.monorepo === undefined) opts.monorepo = preset.monorepo;
         }
+        const presetStack = preset?.stack;
         const projectName =
           projectNameArg ??
           (await input({
@@ -332,12 +397,71 @@ program
           }));
         const platform =
           opts.platform ?? (await select({ message: 'Platform:', choices: PLATFORMS.map((p) => ({ name: p, value: p })) }));
-        const frameworkChoices = (FRAMEWORKS_BY_PLATFORM as Record<string, readonly string[]>)[platform] ?? [];
-        const framework =
-          opts.framework ??
-          (frameworkChoices.length > 0
-            ? await select({ message: 'Framework:', choices: frameworkChoices.map((f) => ({ name: f, value: f })) })
-            : undefined);
+
+        let framework: string | undefined = opts.framework;
+        let backend: string | null = opts.backend ?? null;
+        let monorepo: string | null = opts.monorepo ? 'turborepo' : null;
+
+        if (platform === 'web') {
+          const target =
+            opts.target ??
+            (await select({
+              message: 'What are you building?',
+              choices: [
+                { name: 'Frontend only', value: 'frontend' },
+                { name: 'Backend only (API)', value: 'backend' },
+                { name: 'Fullstack (frontend + backend)', value: 'fullstack' },
+              ],
+            }));
+          if (!(TARGETS as readonly string[]).includes(target)) {
+            throw new Error(`invalid target '${target}' (expected one of: ${TARGETS.join(', ')})`);
+          }
+
+          if (target === 'frontend' || target === 'fullstack') {
+            framework =
+              opts.framework ??
+              (await select({
+                message: 'Frontend framework:',
+                choices: FRAMEWORKS_BY_PLATFORM.web.map((f) => ({ name: f, value: f })),
+              }));
+          }
+          if (target === 'backend' || target === 'fullstack') {
+            backend =
+              opts.backend ??
+              (await select({
+                message: 'Backend framework:',
+                choices: BACKEND_FRAMEWORKS.map((f) => ({ name: f, value: f })),
+              }));
+          }
+          if (
+            target === 'fullstack' &&
+            !opts.monorepo &&
+            framework &&
+            backend &&
+            supportsRealScaffold('web', framework) &&
+            supportsRealScaffoldBackend(backend)
+          ) {
+            const wantMonorepo = await confirm({ message: 'Use a monorepo (Turborepo)?', default: false });
+            monorepo = wantMonorepo ? 'turborepo' : null;
+          }
+        } else {
+          const frameworkChoices = (FRAMEWORKS_BY_PLATFORM as Record<string, readonly string[]>)[platform] ?? [];
+          framework =
+            opts.framework ??
+            (frameworkChoices.length > 0
+              ? await select({ message: 'Framework:', choices: frameworkChoices.map((f) => ({ name: f, value: f })) })
+              : undefined);
+        }
+
+        let stack: Record<string, unknown> = presetStack ?? {};
+        if (presetStack === undefined) {
+          if (framework && (STACK_CAPABLE_FRAMEWORKS as readonly string[]).includes(framework)) {
+            stack = await collectFrontendStack(framework);
+          } else if (backend && (BACKEND_STACK_CAPABLE as readonly string[]).includes(backend)) {
+            stack = await collectBackendStack();
+          }
+        }
+
         const type =
           opts.type ?? (await select({ message: 'Type:', choices: PROJECT_TYPES.map((t) => ({ name: t, value: t })) }));
 
@@ -360,14 +484,26 @@ program
           answers = await runInterview(questionsForType(type), (q) => input({ message: q.message }));
         }
 
+        const frontendRealScaffold = Boolean(framework) && supportsRealScaffold(platform, framework as string);
+        const backendRealScaffold = Boolean(backend) && supportsRealScaffoldBackend(backend as string);
+
         let targetDir: string;
         let usedRealScaffold = false;
-        if (supportsRealScaffold(platform, framework as string)) {
+        if (frontendRealScaffold || backendRealScaffold) {
           assertValidProjectName(projectName);
           targetDir = path.join(process.cwd(), projectName);
           usedRealScaffold = true;
-          await runClientProjectScaffold({ projectName, targetDir, frontend: framework as string, type });
-          console.log(`Scaffolded ${type} ${platform}/${framework} project '${projectName}' at ${targetDir}`);
+          await runClientProjectScaffold({
+            projectName,
+            targetDir,
+            frontend: frontendRealScaffold ? (framework as string) : null,
+            backend: backendRealScaffold ? backend : null,
+            monorepo,
+            type,
+            stack,
+          });
+          const stackLabel = [framework, backend].filter(Boolean).join(' + ');
+          console.log(`Scaffolded ${type} ${platform}/${stackLabel} project '${projectName}' at ${targetDir}`);
         } else {
           const result = await initProject({
             projectName,
@@ -384,7 +520,7 @@ program
           await registerProduct({
             name: projectName,
             platform,
-            framework,
+            framework: framework ?? backend ?? undefined,
             type,
             path: targetDir,
             createdAt: new Date().toISOString(),

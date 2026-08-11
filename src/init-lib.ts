@@ -16,6 +16,59 @@ export const FRAMEWORKS_BY_PLATFORM: Record<Platform, readonly string[]> = {
   'agent-skills': ['claude-code'],
 };
 
+// Web-only: what raygent-scaffolds can actually generate a backend for. Not
+// platform-keyed like FRAMEWORKS_BY_PLATFORM -- backend choice only exists on
+// the 'web' platform (fullstack/backend-only targets).
+export const BACKEND_FRAMEWORKS = ['express', 'hono', 'nestjs'] as const;
+export const TARGETS = ['frontend', 'backend', 'fullstack'] as const;
+export type Target = (typeof TARGETS)[number];
+
+// Frontends whose real-scaffold template has the addon plumbing wired up
+// (templates/addons/* merge into these three only, see raygent-scaffolds).
+export const STACK_CAPABLE_FRAMEWORKS = ['nextjs', 'vite-react', 'tanstack-start'] as const;
+// Storybook's addon is Vite-builder-only -- offering it for nextjs would
+// install a broken (Webpack-flavored) Storybook config.
+export const STORYBOOK_CAPABLE_FRAMEWORKS = ['vite-react', 'tanstack-start'] as const;
+// Backend roots only ever get the framework-agnostic toggles (no React/JSX).
+export const BACKEND_STACK_CAPABLE = ['express', 'hono', 'nestjs'] as const;
+
+export const STACK_TOGGLE_OPTIONS: readonly { key: string; label: string }[] = [
+  { key: 'stateManagement', label: 'Zustand (state management)' },
+  { key: 'httpClient', label: 'Axios (HTTP client)' },
+  { key: 'dataFetching', label: 'TanStack Query (server state)' },
+  { key: 'dates', label: 'date-fns (dates)' },
+  { key: 'validation', label: 'Zod (schema validation)' },
+  { key: 'tables', label: 'TanStack Table' },
+  { key: 'urlState', label: 'nuqs (URL state)' },
+  { key: 'designSystem', label: 'Design tokens (tokens.css)' },
+];
+
+// The only two toggles that also apply on a bare backend root (no JSX/DOM).
+export const BACKEND_STACK_TOGGLE_OPTIONS: readonly { key: string; label: string }[] = [
+  { key: 'validation', label: 'Zod (schema validation)' },
+  { key: 'dates', label: 'date-fns (dates)' },
+];
+
+export const STYLING_CHOICES = [
+  { value: 'css', name: 'Plain CSS' },
+  { value: 'tailwind', name: 'Tailwind CSS' },
+] as const;
+
+export const FORM_CHOICES = [
+  { value: 'none', name: 'None' },
+  { value: 'react-hook-form', name: 'React Hook Form (recommended default)' },
+  { value: 'tanstack-form', name: 'TanStack Form' },
+] as const;
+
+export const ICON_CHOICES = [
+  { value: 'none', name: 'None' },
+  { value: 'lucide-react', name: 'lucide-react (recommended default)' },
+  { value: 'react-icons', name: 'react-icons' },
+  { value: 'heroicons', name: 'Heroicons' },
+  { value: 'phosphor-icons', name: 'Phosphor Icons' },
+  { value: 'tabler-icons', name: 'Tabler Icons' },
+] as const;
+
 export const DOC_SETS: Record<ProjectType, string[]> = {
   product: [
     'PRD.md',

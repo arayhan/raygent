@@ -66,6 +66,10 @@ export interface Preset {
   type?: string;
   mode?: string;
   skills?: string[];
+  target?: string;
+  backend?: string;
+  monorepo?: boolean;
+  stack?: Record<string, unknown>;
 }
 
 export async function loadConfig(configPath: string = defaultConfigPath()): Promise<Record<string, unknown>> {
@@ -81,12 +85,20 @@ export async function loadPreset(name: string, configPath: string = defaultConfi
   const raw = presets[name];
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const p = raw as Record<string, unknown>;
+  const stack =
+    p.stack !== null && typeof p.stack === 'object' && !Array.isArray(p.stack)
+      ? (p.stack as Record<string, unknown>)
+      : undefined;
   return {
     platform: typeof p.platform === 'string' ? p.platform : undefined,
     framework: typeof p.framework === 'string' ? p.framework : undefined,
     type: typeof p.type === 'string' ? p.type : undefined,
     mode: typeof p.mode === 'string' ? p.mode : undefined,
     skills: Array.isArray(p.skills) ? p.skills.filter((s): s is string => typeof s === 'string') : undefined,
+    target: typeof p.target === 'string' ? p.target : undefined,
+    backend: typeof p.backend === 'string' ? p.backend : undefined,
+    monorepo: typeof p.monorepo === 'boolean' ? p.monorepo : undefined,
+    stack,
   };
 }
 

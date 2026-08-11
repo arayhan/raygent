@@ -17,6 +17,14 @@ export function supportsRealScaffold(platform: string, framework: string): boole
   return (REAL_SCAFFOLD_FRAMEWORKS[platform] ?? []).includes(framework);
 }
 
+// web-only: backends create-client-project can actually scaffold for real
+// (its registry.mjs BACKENDS keys).
+export const REAL_SCAFFOLD_BACKENDS: readonly string[] = ['express', 'hono', 'nestjs'];
+
+export function supportsRealScaffoldBackend(backend: string): boolean {
+  return REAL_SCAFFOLD_BACKENDS.includes(backend);
+}
+
 // dist/scaffold-tools.js -> package root is one level up. create-client-project
 // is a sibling repo, not an npm dependency, until it's published -- override
 // with RAYGENT_CCP_PATH (pointing directly at its bin/create.mjs) if your
@@ -33,8 +41,11 @@ export function resolveCcpBin(): string {
 export interface RunClientProjectScaffoldOptions {
   projectName: string;
   targetDir: string;
-  frontend: string;
+  frontend: string | null;
+  backend?: string | null;
+  monorepo?: string | null;
   type: string;
+  stack?: Record<string, unknown>;
 }
 
 export async function runClientProjectScaffold(opts: RunClientProjectScaffoldOptions): Promise<void> {
@@ -54,9 +65,10 @@ export async function runClientProjectScaffold(opts: RunClientProjectScaffoldOpt
     projectName: opts.projectName,
     targetDir: opts.targetDir,
     frontend: opts.frontend,
-    backend: null,
-    monorepo: null,
+    backend: opts.backend ?? null,
+    monorepo: opts.monorepo ?? null,
     engagementType: opts.type,
+    stack: opts.stack ?? {},
   };
 
   await new Promise<void>((resolve, reject) => {

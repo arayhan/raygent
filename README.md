@@ -34,7 +34,10 @@ raygent init [project-name] [options]
 
 Options:
   --platform <platform>    web | mobile | cli | desktop | agent-skills
-  --framework <framework>  framework valid for the chosen platform
+  --framework <framework>  frontend framework valid for the chosen platform
+  --target <target>        web only: frontend | backend | fullstack (default frontend)
+  --backend <backend>      web only: express | hono | nestjs
+  --monorepo               web fullstack only: use Turborepo
   --type <type>            product | client
   -f, --force              overwrite existing docs files (stub-doc path only)
 ```
@@ -66,6 +69,20 @@ stub set:
   DATABASE.md, PROGRESS.md, product-roadmap.md, DESIGN.html
 - **client**: PRD.md, scope.md, handoff.md, DESIGN.md, ANTISLOP.md,
   ARCHITECTURE.md, DATABASE.md, PROGRESS.md
+
+**Backend and fullstack (`platform web` only):** init first asks what you're
+building — frontend only, backend only (`express`/`hono`/`nestjs`), or
+fullstack. Fullstack additionally asks whether to use a Turborepo monorepo
+(`apps/web` + `apps/api` + `packages/domain`) or two sibling folders.
+
+**Tech stack add-ons:** for `nextjs`/`vite-react`/`tanstack-start`, init also
+prompts for styling (plain CSS or Tailwind), a checklist of add-ons (Zustand,
+Axios, TanStack Query, date-fns, Zod, TanStack Table, nuqs, design tokens,
+plus Storybook for `vite-react`/`tanstack-start`), a form library (React Hook
+Form by default, or TanStack Form), and an icon pack. A bare backend root
+(`express`/`hono`/`nestjs` with no frontend) only gets the framework-agnostic
+add-ons — Zod and date-fns. See `raygent-scaffolds`' `templates/addons/` for
+what each add-on actually scaffolds.
 
 ### Guided setup & AI feedback
 
@@ -109,11 +126,18 @@ raygent config set presets.saas.framework nextjs
 raygent config set presets.saas.type product
 raygent config set presets.saas.mode guided
 raygent config set presets.saas.skills '["impeccable", "ui-ux-pro-max"]'
+raygent config set presets.saas.target fullstack
+raygent config set presets.saas.backend express
+raygent config set presets.saas.monorepo true
+raygent config set presets.saas.stack '{"styling":"tailwind","dataFetching":true,"forms":"react-hook-form"}'
 
 raygent init myapp --preset saas   # flags still override preset values
 ```
 
-A preset with `skills` installs them automatically and skips the checklist.
+A preset with `skills` installs them automatically and skips the checklist. A
+preset with `stack` set skips the tech-stack prompts entirely and uses those
+values as-is (same shape as the `stack` object above — see `raygent-scaffolds`'
+`registry.mjs` for every key).
 
 ### MCP servers
 
