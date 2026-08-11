@@ -118,11 +118,10 @@ A preset with `skills` installs them automatically and skips the checklist.
 ### MCP servers
 
 After the skill checklist, `raygent init` offers a second checklist for MCP
-servers (filesystem, postgres, sqlite, supabase, github) — picks are written
-to `.mcp.json` in the new project (merged, existing entries untouched).
-Servers that need a secret only get `${VAR_NAME}` placeholders — raygent
-never writes API keys or tokens; set the listed env vars yourself before
-Claude Code loads that project.
+servers (currently just `context7`) — picks are written to `.mcp.json` in the
+new project (merged, existing entries untouched). Servers that need a secret
+only get `${VAR_NAME}` placeholders — raygent never writes API keys or
+tokens.
 
 ### Dashboard
 
