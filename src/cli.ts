@@ -29,6 +29,9 @@ import {
 } from './config.js';
 import { runFeedback, runElaborate, type ProjectMeta } from './ai-client.js';
 import { runDoctorChecks } from './doctor.js';
+import { registerProduct, listProducts } from './products.js';
+import { addFinanceEntry, readFinanceEntries, summarizeFinance } from './finance.js';
+import { createDashboardServer } from './dashboard.js';
 
 const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
 
@@ -159,6 +162,125 @@ config
   });
 
 program
+  .command('dashboard')
+  .description('Serve the local monitoring dashboard (products, events, signups, revenue)')
+  .option('--port <port>', 'port to listen on', '4321')
+  .action(async (opts: { port: string }) => {
+    const port = Number(opts.port);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      console.error(`invalid port '${opts.port}'`);
+      process.exitCode = 1;
+      return;
+    }
+    const server = createDashboardServer();
+    server.listen(port, () => {
+      console.log(`Dashboard: http://localhost:${port}`);
+      console.log(`Ingest:    http://localhost:${port}/api/ingest`);
+      console.log(`Point each product's NEXT_PUBLIC_ANALYTICS_URL at the ingest URL. Ctrl+C to stop.`);
+    });
+    server.on('error', (err) => {
+      console.error(err.message);
+      process.exitCode = 1;
+    });
+    process.on('SIGINT', () => {
+      server.close(() => process.exit(0));
+    });
+  });
+
+const product = program.command('product').description('Manage the product registry (~/.raygent/products.json)');
+
+product
+  .command('add <name>')
+  .description('Register an existing product so the dashboard tracks it')
+  .option('--platform <platform>', 'platform label')
+  .option('--framework <framework>', 'framework label')
+  .option('--type <type>', 'product | client')
+  .action(async (name: string, opts: { platform?: string; framework?: string; type?: string }) => {
+    try {
+      await registerProduct({
+        name,
+        platform: opts.platform,
+        framework: opts.framework,
+        type: opts.type,
+        createdAt: new Date().toISOString(),
+      });
+      console.log(`Registered product '${name}'`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+product
+  .command('list')
+  .description('List registered products')
+  .action(async () => {
+    try {
+      const products = await listProducts();
+      if (products.length === 0) {
+        console.log('No products registered yet (raygent init registers them automatically).');
+        return;
+      }
+      for (const p of products) {
+        const meta = [p.platform, p.framework, p.type].filter(Boolean).join('/');
+        console.log(`${p.name}${meta ? ` (${meta})` : ''}${p.path ? ` — ${p.path}` : ''}`);
+      }
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+const finance = program.command('finance').description('Track revenue per product (~/.raygent/finance.jsonl)');
+
+finance
+  .command('add <product> <amount> [note...]')
+  .description('Record income for a product (amount is a plain number)')
+  .action(async (productName: string, amountArg: string, noteParts: string[]) => {
+    try {
+      const amount = Number(amountArg);
+      if (!Number.isFinite(amount)) {
+        throw new Error(`invalid amount '${amountArg}'`);
+      }
+      await addFinanceEntry({
+        product: productName,
+        amount,
+        note: noteParts.length > 0 ? noteParts.join(' ') : undefined,
+        ts: new Date().toISOString(),
+      });
+      console.log(`Recorded ${amount} for '${productName}'`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+finance
+  .command('summary')
+  .description('Print revenue totals per product and per month')
+  .action(async () => {
+    try {
+      const summary = summarizeFinance(await readFinanceEntries());
+      if (summary.total === 0) {
+        console.log('No finance entries yet (raygent finance add <product> <amount> [note]).');
+        return;
+      }
+      console.log('Per product:');
+      for (const [name, total] of Object.entries(summary.byProduct)) {
+        console.log(`  ${name}: ${total}`);
+      }
+      console.log('Per month:');
+      for (const [month, total] of Object.entries(summary.byMonth).sort()) {
+        console.log(`  ${month}: ${total}`);
+      }
+      console.log(`Total: ${summary.total}`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+program
   .command('doctor')
   .description('Check the raygent environment: node, pnpm, git, scaffolder, skills, AI endpoint')
   .action(async () => {
@@ -254,6 +376,19 @@ program
           });
           targetDir = result.targetDir;
           console.log(`Initialized ${type} ${platform}/${framework} project '${projectName}' with docs in ${result.docsDir}`);
+        }
+
+        try {
+          await registerProduct({
+            name: projectName,
+            platform,
+            framework,
+            type,
+            path: targetDir,
+            createdAt: new Date().toISOString(),
+          });
+        } catch {
+          // registry failure never fails init
         }
 
         if (answers) {

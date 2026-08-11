@@ -115,6 +115,23 @@ raygent init myapp --preset saas   # flags still override preset values
 
 A preset with `skills` installs them automatically and skips the checklist.
 
+### Dashboard
+
+Local monitoring for every product you ship — events, signups, DAU, revenue:
+
+```bash
+raygent dashboard             # http://localhost:4321 (--port to change)
+```
+
+- Products auto-register on `raygent init` (`raygent product add/list` for
+  older ones).
+- Products send events to `http://localhost:4321/api/ingest` — the landing
+  template's `track()` does this once `NEXT_PUBLIC_ANALYTICS_URL` points at
+  the ingest URL (`NEXT_PUBLIC_PRODUCT_ID` overrides the product name).
+- Revenue is manual for now: `raygent finance add <product> <amount> [note]`,
+  `raygent finance summary`. Data lives in `~/.raygent/` (products.json,
+  finance.jsonl, analytics/events.jsonl).
+
 ### Config & doctor
 
 ```bash
