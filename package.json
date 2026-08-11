@@ -7,12 +7,15 @@
     "raygent": "./dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "dist-web"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && vite build --config dashboard-web/vite.config.ts",
     "test": "vitest run",
     "dev": "tsx src/cli.ts",
+    "dev:web": "vite --config dashboard-web/vite.config.ts",
+    "typecheck:web": "tsc -p dashboard-web/tsconfig.json",
     "prepublishOnly": "npm test && npm run build"
   },
   "engines": {
@@ -24,9 +27,19 @@
     "commander": "^12.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.5",
+    "@types/node": "^22.5.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tsx": "^4.16.2",
-    "@types/node": "^22.5.0"
+    "typescript": "^5.5.4",
+    "vite": "^5.4.21",
+    "vitest": "^2.0.5"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
   }
 }

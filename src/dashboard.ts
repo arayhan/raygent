@@ -2,6 +2,7 @@ import http from 'node:http';
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { listProducts, type ProductEntry } from './products.js';
 import { readFinanceEntries, summarizeFinance, type FinanceSummary } from './finance.js';
 
@@ -221,6 +222,37 @@ function readBody(req: http.IncomingMessage): Promise<string> {
   });
 }
 
+// dist/dashboard.js -> ../dist-web (the built Vite SPA in dashboard-web/).
+// When absent (dev without a web build), the inline HTML fallback serves.
+function distWebDir(): string {
+  return path.resolve(fileURLToPath(new URL('..', import.meta.url)), 'dist-web');
+}
+
+const MIME: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.map': 'application/json',
+};
+
+async function serveStatic(pathname: string, res: http.ServerResponse): Promise<boolean> {
+  const root = distWebDir();
+  const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+  const filePath = path.resolve(root, rel);
+  if (!filePath.startsWith(root)) return false;
+  try {
+    const content = await fs.readFile(filePath);
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] ?? 'application/octet-stream' });
+    res.end(content);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -279,10 +311,13 @@ export function createDashboardServer(dataDir: string = defaultDataDir()): http.
       }
 
       if (url.pathname === '/') {
+        if (await serveStatic('/', res)) return;
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(renderDashboardHtml());
         return;
       }
+
+      if (req.method === 'GET' && (await serveStatic(url.pathname, res))) return;
 
       res.writeHead(404);
       res.end('not found');
