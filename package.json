@@ -8,23 +8,27 @@
   },
   "files": [
     "dist",
-    "dist-web"
+    "dist-web",
+    "vendor"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && vite build --config dashboard-web/vite.config.ts",
+    "build": "node scripts/bundle-scaffolder.mjs && tsc -p tsconfig.json && vite build --config dashboard-web/vite.config.ts",
     "test": "vitest run",
     "dev": "tsx src/cli.ts",
     "dev:web": "vite --config dashboard-web/vite.config.ts",
     "typecheck:web": "tsc -p dashboard-web/tsconfig.json",
-    "prepublishOnly": "npm test && npm run build"
+    "prepublishOnly": "npm test && npm run build",
+    "bundle:scaffolder": "node scripts/bundle-scaffolder.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "license": "MIT",
   "dependencies": {
+    "@clack/prompts": "^0.8.2",
     "@inquirer/prompts": "^7.0.0",
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "handlebars": "^4.7.8"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",

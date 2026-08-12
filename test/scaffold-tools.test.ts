@@ -1,6 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import path from 'node:path';
-import { supportsRealScaffold, resolveCcpBin } from '../src/scaffold-tools.js';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { supportsRealScaffold, resolveCcpBin, usingDevScaffolder } from '../src/scaffold-tools.js';
 
 describe('supportsRealScaffold', () => {
   it('is true for web + each real-scaffold framework', () => {
@@ -43,9 +45,28 @@ describe('resolveCcpBin', () => {
     expect(resolveCcpBin()).toBe('/custom/path/to/create.mjs');
   });
 
-  it('defaults to the sibling raygent-scaffolds layout when unset', () => {
+  it('resolves to a create.mjs that exists when RAYGENT_CCP_PATH is unset', () => {
     delete process.env.RAYGENT_CCP_PATH;
     const result = resolveCcpBin();
-    expect(result.endsWith(path.join('raygent-scaffolds', 'bin', 'create.mjs'))).toBe(true);
+    expect(result.endsWith(path.join('bin', 'create.mjs'))).toBe(true);
+    // The point of the fallback chain is that it lands on something real. Which
+    // source wins depends on whether this checkout has been built (bundled copy)
+    // or not (sibling checkout), so assert existence rather than a fixed path --
+    // pinning one source is what made this test assert the pre-bundling bug.
+    expect(existsSync(result)).toBe(true);
+  });
+
+  it('prefers the bundled copy over the sibling checkout once it has been built', () => {
+    delete process.env.RAYGENT_CCP_PATH;
+    const bundled = path.join(
+      fileURLToPath(new URL('..', import.meta.url)),
+      'vendor',
+      'scaffolder',
+      'bin',
+      'create.mjs'
+    );
+    if (!existsSync(bundled)) return; // not built yet in this checkout
+    expect(resolveCcpBin()).toBe(bundled);
+    expect(usingDevScaffolder()).toBe(false);
   });
 });
