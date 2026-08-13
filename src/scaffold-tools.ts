@@ -103,6 +103,7 @@ export interface RunClientProjectScaffoldOptions {
   monorepo?: string | null;
   type: string;
   stack?: Record<string, unknown>;
+  agentTools?: string[];
 }
 
 export async function runClientProjectScaffold(opts: RunClientProjectScaffoldOptions): Promise<void> {
@@ -138,6 +139,7 @@ export async function runClientProjectScaffold(opts: RunClientProjectScaffoldOpt
     monorepo: opts.monorepo ?? null,
     engagementType: opts.type,
     stack: opts.stack ?? {},
+    agentTools: opts.agentTools ?? [],
   };
 
   await new Promise<void>((resolve, reject) => {

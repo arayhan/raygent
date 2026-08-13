@@ -41,6 +41,7 @@ Options:
   --type <type>            product | client
   --kind <kind>            web only: app | landing (default app)
   --here                   generate into the current directory, not a new <name> folder
+  --agents <list>          comma-separated: claude-code, opencode, antigravity
   -f, --force              overwrite existing docs files (stub-doc path only)
 ```
 
@@ -78,6 +79,15 @@ stub set:
   DATABASE.md, PROGRESS.md, product-roadmap.md, DESIGN.html
 - **client**: PRD.md, scope.md, handoff.md, DESIGN.md, ANTISLOP.md,
   ARCHITECTURE.md, DATABASE.md, PROGRESS.md
+
+**Coding agents:** init asks which agent(s) will work in the project. `AGENTS.md`
+is written for all of them — it is the cross-tool convention, and opencode and
+Antigravity read it natively. Claude Code additionally gets a `CLAUDE.md` pointer
+and the `.claude/` layer (5 subagents, 2 skills, 3 hooks, settings.json), because
+it is the only one whose formats raygent can emit correctly rather than guess at.
+For the others the same agent roster is described in prose inside `AGENTS.md`,
+along with the first-run interview steps. Only `AGENTS.md` is ever edited, so the
+instructions cannot drift into two versions.
 
 **Landing pages (`platform web` only):** a landing page is a *kind*, not a
 framework — it is Next.js with a marketing starter (hero, features, CTA, email

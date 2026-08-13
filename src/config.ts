@@ -67,6 +67,7 @@ export interface Preset {
   mode?: string;
   skills?: string[];
   kind?: string;
+  agents?: string[];
   target?: string;
   backend?: string;
   monorepo?: boolean;
@@ -97,6 +98,7 @@ export async function loadPreset(name: string, configPath: string = defaultConfi
     mode: typeof p.mode === 'string' ? p.mode : undefined,
     skills: Array.isArray(p.skills) ? p.skills.filter((s): s is string => typeof s === 'string') : undefined,
     kind: typeof p.kind === 'string' ? p.kind : undefined,
+    agents: Array.isArray(p.agents) ? p.agents.filter((a): a is string => typeof a === 'string') : undefined,
     target: typeof p.target === 'string' ? p.target : undefined,
     backend: typeof p.backend === 'string' ? p.backend : undefined,
     monorepo: typeof p.monorepo === 'boolean' ? p.monorepo : undefined,

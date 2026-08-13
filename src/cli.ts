@@ -24,6 +24,7 @@ import {
   BACKEND_STACK_TOGGLE_OPTIONS,
   LANDING_STACK_TOGGLE_OPTIONS,
   KINDS,
+  AGENT_TOOLS,
   STYLING_CHOICES,
   FORM_CHOICES,
   ICON_CHOICES,
@@ -360,6 +361,7 @@ program
   .argument('[project-name]', 'name of the project folder to create')
   .option('--platform <platform>', 'web | mobile | cli | desktop | agent-skills')
   .option('--framework <framework>', 'frontend framework valid for the chosen --platform')
+  .option('--agents <list>', 'comma-separated coding agents: claude-code, opencode, antigravity')
   .option('--here', 'generate into the current directory instead of a new <name> folder')
   .option('--kind <kind>', 'web only: app | landing (default app)')
   .option('--target <target>', "web only: frontend | backend | fullstack (default frontend)")
@@ -377,6 +379,7 @@ program
         framework?: string;
         kind?: string;
         here?: boolean;
+        agents?: string;
         target?: string;
         backend?: string;
         monorepo?: boolean;
@@ -399,10 +402,24 @@ program
           opts.type ??= preset.type;
           opts.mode ??= preset.mode;
           opts.kind ??= preset.kind;
+          if (!opts.agents && preset.agents?.length) opts.agents = preset.agents.join(',');
           opts.target ??= preset.target;
           opts.backend ??= preset.backend;
           if (opts.monorepo === undefined) opts.monorepo = preset.monorepo;
         }
+        // Validate flags BEFORE any prompt: being told a flag is wrong after
+        // answering four questions is worse than being told immediately.
+        const validAgentTools = AGENT_TOOLS.map((t) => t.value) as readonly string[];
+        let agentsFromFlag: string[] | null = null;
+        if (opts.agents) {
+          agentsFromFlag = opts.agents.split(',').map((t) => t.trim()).filter(Boolean);
+          const unknown = agentsFromFlag.filter((t) => !validAgentTools.includes(t));
+          if (unknown.length > 0) {
+            throw new Error(`unknown agent(s) '${unknown.join(', ')}' (expected: ${validAgentTools.join(', ')})`);
+          }
+          if (agentsFromFlag.length === 0) agentsFromFlag = ['claude-code'];
+        }
+
         const presetStack = preset?.stack;
         // Where the project lands. Asked before the name, because the answer
         // changes what the name defaults to: generating in place, the folder you
@@ -540,6 +557,19 @@ program
           }
         }
 
+        let agentTools: string[];
+        if (agentsFromFlag) {
+          agentTools = agentsFromFlag;
+        } else {
+          agentTools = await checkbox({
+            message: 'Which coding agent(s) will work in this project?',
+            choices: AGENT_TOOLS.map((t) => ({ name: t.name, value: t.value, description: t.description, checked: t.value === 'claude-code' })),
+          });
+          // An empty selection would silently produce a project with no
+          // instruction file worth reading, so fall back rather than accept it.
+          if (agentTools.length === 0) agentTools = ['claude-code'];
+        }
+
         const type =
           opts.type ?? (await select({ message: 'Type:', choices: PROJECT_TYPES.map((t) => ({ name: t, value: t })) }));
 
@@ -580,6 +610,7 @@ program
             monorepo,
             type,
             stack,
+            agentTools,
           });
           const stackLabel = [framework, backend].filter(Boolean).join(' + ');
           console.log(`Scaffolded ${type} ${platform}/${stackLabel} project '${projectName}' at ${targetDir}`);

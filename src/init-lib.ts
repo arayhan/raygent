@@ -14,6 +14,16 @@ export type ProjectType = (typeof PROJECT_TYPES)[number];
 // template folder differs. It is a purpose, not a framework. Kept separate from
 // PROJECT_TYPES on purpose -- a landing page can be built for a client OR for
 // your own product, so collapsing the two would lose that distinction.
+// Which coding agent(s) the generated project targets. AGENTS.md is written for
+// all of them; only Claude Code additionally gets CLAUDE.md and the .claude/
+// process layer, because it is the only one whose subagent/skill/hook formats we
+// can emit correctly rather than guess at.
+export const AGENT_TOOLS = [
+  { value: 'claude-code', name: 'Claude Code', description: 'AGENTS.md + CLAUDE.md pointer + .claude/ agents, skills and hooks' },
+  { value: 'opencode', name: 'opencode', description: 'Reads AGENTS.md natively; roster described in prose there' },
+  { value: 'antigravity', name: 'Antigravity (agy)', description: 'Reads AGENTS.md natively; roster described in prose there' },
+] as const;
+
 export const KINDS = ['app', 'landing'] as const;
 export type Kind = (typeof KINDS)[number];
 
