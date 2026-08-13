@@ -112,6 +112,8 @@ export const DOC_SETS: Record<ProjectType, string[]> = {
 
 export interface InitOptions {
   projectName: string;
+  /** Generate into cwd itself instead of a new <projectName> subfolder. */
+  here?: boolean;
   platform: string;
   framework: string;
   type: string;
@@ -128,6 +130,26 @@ export function assertValidProjectName(name: string): void {
   ) {
     throw new Error(`invalid project name '${name}'`);
   }
+}
+
+/** True when `name` passes assertValidProjectName, without throwing. */
+export function isValidProjectName(name: string): boolean {
+  try {
+    assertValidProjectName(name);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Where the project is written. `here` generates into `cwd` itself rather than a
+ * new subfolder, for the `mkdir myapp && cd myapp && raygent init --here` flow.
+ * Both paths are guarded downstream: the scaffolder refuses a non-empty target,
+ * and initProject refuses to overwrite existing docs without --force.
+ */
+export function resolveTargetDir(projectName: string, cwd: string, here?: boolean): string {
+  return here ? cwd : path.join(cwd, projectName);
 }
 
 export function docTitle(filename: string): string {
@@ -165,7 +187,7 @@ export async function initProject(
     throw new Error(`invalid type '${opts.type}' (expected one of: ${PROJECT_TYPES.join(', ')})`);
   }
 
-  const targetDir = path.join(cwd, opts.projectName);
+  const targetDir = resolveTargetDir(opts.projectName, cwd, opts.here);
   const docsDir = path.join(targetDir, 'docs');
   const files = DOC_SETS[opts.type as ProjectType];
 

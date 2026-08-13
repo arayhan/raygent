@@ -42,6 +42,12 @@ Options:
   -f, --force              overwrite existing docs files (stub-doc path only)
 ```
 
+By default the project is created in a new `./<name>/` folder. `--here`
+generates straight into the current directory instead — for the
+`mkdir myapp && cd myapp && raygent init --here` flow, where the project name
+then defaults to the folder you are already in. The target must be empty either
+way; raygent will not write over existing files.
+
 Any missing argument is prompted for interactively. Framework choices depend on
 the platform:
 

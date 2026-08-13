@@ -10,6 +10,8 @@ import {
   initProject,
   installSelectedSkills,
   assertValidProjectName,
+  isValidProjectName,
+  resolveTargetDir,
   PLATFORMS,
   FRAMEWORKS_BY_PLATFORM,
   PROJECT_TYPES,
@@ -358,6 +360,7 @@ program
   .argument('[project-name]', 'name of the project folder to create')
   .option('--platform <platform>', 'web | mobile | cli | desktop | agent-skills')
   .option('--framework <framework>', 'frontend framework valid for the chosen --platform')
+  .option('--here', 'generate into the current directory instead of a new <name> folder')
   .option('--kind <kind>', 'web only: app | landing (default app)')
   .option('--target <target>', "web only: frontend | backend | fullstack (default frontend)")
   .option('--backend <backend>', 'web only: express | hono | nestjs')
@@ -373,6 +376,7 @@ program
         platform?: string;
         framework?: string;
         kind?: string;
+        here?: boolean;
         target?: string;
         backend?: string;
         monorepo?: boolean;
@@ -400,10 +404,35 @@ program
           if (opts.monorepo === undefined) opts.monorepo = preset.monorepo;
         }
         const presetStack = preset?.stack;
+        // Where the project lands. Asked before the name, because the answer
+        // changes what the name defaults to: generating in place, the folder you
+        // are already standing in has almost certainly got the right name.
+        const here =
+          opts.here ??
+          (await select({
+            message: 'Where should it go?',
+            choices: [
+              {
+                name: 'A new folder',
+                value: false,
+                description: `Creates ./<name>/ under ${process.cwd()}`,
+              },
+              {
+                name: 'This directory',
+                value: true,
+                description: `Generates straight into ${process.cwd()} — it must be empty`,
+              },
+            ],
+          }));
+
+        const cwdName = path.basename(process.cwd());
         const projectName =
           projectNameArg ??
           (await input({
             message: 'Project name:',
+            // Only offered as a default when generating in place AND the folder
+            // name is actually usable as a project name.
+            default: here && isValidProjectName(cwdName) ? cwdName : undefined,
             validate: (value) =>
               /^[A-Za-z0-9._-]+$/.test(value) && value !== '.' && value !== '..'
                 ? true
@@ -541,7 +570,7 @@ program
         let usedRealScaffold = false;
         if (frontendRealScaffold || backendRealScaffold) {
           assertValidProjectName(projectName);
-          targetDir = path.join(process.cwd(), projectName);
+          targetDir = resolveTargetDir(projectName, process.cwd(), here);
           usedRealScaffold = true;
           await runClientProjectScaffold({
             projectName,
@@ -557,6 +586,7 @@ program
         } else {
           const result = await initProject({
             projectName,
+            here,
             platform,
             framework: framework as string,
             type,
