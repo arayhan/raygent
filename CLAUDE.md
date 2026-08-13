@@ -6,7 +6,12 @@ interviews with optional AI review, and a local monitoring dashboard.
 
 ## Commit conventions
 
+- **Atomic**: one commit does one thing and the repo works at every commit. If the
+  subject needs an "and", it is two commits. Formatting never mixed with behaviour.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`), subject + body only.
+- **Every commit gets a body**, and it says *why* — the alternative rejected, the
+  constraint that forced the shape, what breaks if it is reverted. A body that
+  restates the diff is worse than none.
 - **No attribution trailers of any kind** — no `Co-Authored-By`, no
   `Generated with ...`, no AI/agent footers. This is a hard rule.
 
