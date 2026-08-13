@@ -39,6 +39,8 @@ Options:
   --backend <backend>      web only: express | hono | nestjs
   --monorepo               web fullstack only: use Turborepo
   --type <type>            product | client
+  --kind <kind>            web only: app | landing (default app)
+  --here                   generate into the current directory, not a new <name> folder
   -f, --force              overwrite existing docs files (stub-doc path only)
 ```
 
