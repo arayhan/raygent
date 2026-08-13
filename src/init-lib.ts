@@ -24,6 +24,22 @@ export const AGENT_TOOLS = [
   { value: 'antigravity', name: 'Antigravity (agy)', description: 'Reads AGENTS.md natively; roster described in prose there' },
 ] as const;
 
+// The coding-rule documents a generated project ships, under docs/rules/. Mirrors
+// RULE_FILES in raygent-scaffolds' registry.mjs -- that table also decides which
+// of these apply to a given stack, so a bare API is never offered a rule about
+// focus rings. Leaving the selection empty means "every one that applies", which
+// is what the scaffolder does with an absent list.
+export const RULE_FILE_OPTIONS = [
+  { value: 'code-style', name: 'code-style', description: 'Module naming, barrels, comment discipline' },
+  { value: 'testing', name: 'testing', description: 'What to test, where tests live, what to mock' },
+  { value: 'git-workflow', name: 'git-workflow', description: 'Commit conventions, when to commit, no attribution trailers' },
+  { value: 'api-conventions', name: 'api-conventions', description: 'Status codes, error envelope, DTO boundary (needs server code)' },
+  { value: 'sql-and-data', name: 'sql-and-data', description: 'Migrations, query discipline, transactions (needs server code)' },
+  { value: 'ui-styling', name: 'ui-styling', description: 'CSS convention and tokens; points at DESIGN.md (frontend only)' },
+  { value: 'security', name: 'security', description: 'Secrets, env prefixes, validation at the boundary' },
+  { value: 'accessibility', name: 'accessibility', description: 'Landmarks, focus, contrast, reduced motion (frontend only)' },
+] as const;
+
 export const KINDS = ['app', 'landing'] as const;
 export type Kind = (typeof KINDS)[number];
 

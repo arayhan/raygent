@@ -42,6 +42,7 @@ Options:
   --kind <kind>            web only: app | landing (default app)
   --here                   generate into the current directory, not a new <name> folder
   --agents <list>          comma-separated: claude-code, opencode, antigravity
+  --rules <list>           comma-separated docs/rules files (default: all applicable)
   -f, --force              overwrite existing docs files (stub-doc path only)
 ```
 
@@ -88,6 +89,24 @@ it is the only one whose formats raygent can emit correctly rather than guess at
 For the others the same agent roster is described in prose inside `AGENTS.md`,
 along with the first-run interview steps. Only `AGENTS.md` is ever edited, so the
 instructions cannot drift into two versions.
+
+**Coding rules (`docs/rules/`):** the rules themselves live in one file per
+concern — `code-style`, `testing`, `git-workflow`, `api-conventions`,
+`sql-and-data`, `ui-styling`, `security`, `accessibility` — and `AGENTS.md` and
+`docs/architecture.md` point at them rather than restating them. `architecture.md`
+keeps the *reasoning* (why a boundary is shaped that way); `docs/rules/` keeps the
+*rules*. They sit in `docs/` for every project, whichever coding agent it targets,
+because a human reads them too. `--rules` picks the set; the default is every file
+that applies to the chosen stack, so a bare API gets no `accessibility.md` and a
+static SPA gets no `sql-and-data.md`.
+
+**Agent-only tooling:** a generated project no longer ships an empty `scripts/`
+folder, and `db/migrations/` appears only for stacks that can reach a database.
+Tooling only the agent runs goes in `.claude/commands/<name>.md` (the slash-command
+prompt) plus `.claude/scripts/` for any executable it calls — never in
+`package.json`, where it would become a script every human developer scrolls past.
+Root `scripts/` is left for real product tooling, and is created by you when there
+is something to put in it.
 
 **Landing pages (`platform web` only):** a landing page is a *kind*, not a
 framework — it is Next.js with a marketing starter (hero, features, CTA, email

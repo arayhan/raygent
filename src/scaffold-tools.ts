@@ -104,6 +104,7 @@ export interface RunClientProjectScaffoldOptions {
   type: string;
   stack?: Record<string, unknown>;
   agentTools?: string[];
+  ruleFiles?: string[];
 }
 
 export async function runClientProjectScaffold(opts: RunClientProjectScaffoldOptions): Promise<void> {
@@ -140,6 +141,9 @@ export async function runClientProjectScaffold(opts: RunClientProjectScaffoldOpt
     engagementType: opts.type,
     stack: opts.stack ?? {},
     agentTools: opts.agentTools ?? [],
+    // Empty means "every rule that applies to this stack" on the scaffolder side,
+    // which is why no default is filled in here.
+    ruleFiles: opts.ruleFiles ?? [],
   };
 
   await new Promise<void>((resolve, reject) => {

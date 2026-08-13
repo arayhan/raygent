@@ -25,6 +25,7 @@ import {
   LANDING_STACK_TOGGLE_OPTIONS,
   KINDS,
   AGENT_TOOLS,
+  RULE_FILE_OPTIONS,
   STYLING_CHOICES,
   FORM_CHOICES,
   ICON_CHOICES,
@@ -362,6 +363,7 @@ program
   .option('--platform <platform>', 'web | mobile | cli | desktop | agent-skills')
   .option('--framework <framework>', 'frontend framework valid for the chosen --platform')
   .option('--agents <list>', 'comma-separated coding agents: claude-code, opencode, antigravity')
+  .option('--rules <list>', 'comma-separated docs/rules files (default: every one that applies to the stack)')
   .option('--here', 'generate into the current directory instead of a new <name> folder')
   .option('--kind <kind>', 'web only: app | landing (default app)')
   .option('--target <target>', "web only: frontend | backend | fullstack (default frontend)")
@@ -380,6 +382,7 @@ program
         kind?: string;
         here?: boolean;
         agents?: string;
+        rules?: string;
         target?: string;
         backend?: string;
         monorepo?: boolean;
@@ -403,6 +406,7 @@ program
           opts.mode ??= preset.mode;
           opts.kind ??= preset.kind;
           if (!opts.agents && preset.agents?.length) opts.agents = preset.agents.join(',');
+          if (!opts.rules && preset.rules?.length) opts.rules = preset.rules.join(',');
           opts.target ??= preset.target;
           opts.backend ??= preset.backend;
           if (opts.monorepo === undefined) opts.monorepo = preset.monorepo;
@@ -418,6 +422,20 @@ program
             throw new Error(`unknown agent(s) '${unknown.join(', ')}' (expected: ${validAgentTools.join(', ')})`);
           }
           if (agentsFromFlag.length === 0) agentsFromFlag = ['claude-code'];
+        }
+
+        const validRuleFiles = RULE_FILE_OPTIONS.map((r) => r.value) as readonly string[];
+        let rulesFromFlag: string[] | null = null;
+        if (opts.rules) {
+          rulesFromFlag = opts.rules.split(',').map((r) => r.trim()).filter(Boolean);
+          const unknownRules = rulesFromFlag.filter((r) => !validRuleFiles.includes(r));
+          if (unknownRules.length > 0) {
+            throw new Error(`unknown rule file(s) '${unknownRules.join(', ')}' (expected: ${validRuleFiles.join(', ')})`);
+          }
+          // An explicitly empty list would read as "no rules", but the scaffolder
+          // treats empty as "all applicable". Fall back to prompting rather than
+          // silently generating the opposite of what was typed.
+          if (rulesFromFlag.length === 0) rulesFromFlag = null;
         }
 
         const presetStack = preset?.stack;
@@ -570,6 +588,25 @@ program
           if (agentTools.length === 0) agentTools = ['claude-code'];
         }
 
+        // Which rule files land in docs/rules/. Every option is offered rather
+        // than pre-filtered by stack: the scaffolder's RULE_FILES table already
+        // decides what applies, and re-deriving that here would be a second copy
+        // of the rule -- the exact thing docs/rules/ exists to stop.
+        let ruleFiles: string[];
+        if (rulesFromFlag) {
+          ruleFiles = rulesFromFlag;
+        } else {
+          ruleFiles = await checkbox({
+            message: 'Which coding rules should docs/rules/ carry? (ones that do not fit the stack are skipped)',
+            choices: RULE_FILE_OPTIONS.map((r) => ({
+              name: r.name,
+              value: r.value,
+              description: r.description,
+              checked: true,
+            })),
+          });
+        }
+
         const type =
           opts.type ?? (await select({ message: 'Type:', choices: PROJECT_TYPES.map((t) => ({ name: t, value: t })) }));
 
@@ -611,6 +648,7 @@ program
             type,
             stack,
             agentTools,
+            ruleFiles,
           });
           const stackLabel = [framework, backend].filter(Boolean).join(' + ');
           console.log(`Scaffolded ${type} ${platform}/${stackLabel} project '${projectName}' at ${targetDir}`);
