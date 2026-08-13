@@ -8,8 +8,17 @@ export const PROJECT_TYPES = ['product', 'client'] as const;
 export type Platform = (typeof PLATFORMS)[number];
 export type ProjectType = (typeof PROJECT_TYPES)[number];
 
+// What KIND of web project, asked before anything else on that platform.
+// 'landing' used to sit in the framework list, which was wrong: its registry
+// entry is identical to nextjs in every framework-defining field, and only the
+// template folder differs. It is a purpose, not a framework. Kept separate from
+// PROJECT_TYPES on purpose -- a landing page can be built for a client OR for
+// your own product, so collapsing the two would lose that distinction.
+export const KINDS = ['app', 'landing'] as const;
+export type Kind = (typeof KINDS)[number];
+
 export const FRAMEWORKS_BY_PLATFORM: Record<Platform, readonly string[]> = {
-  web: ['nextjs', 'vite-react', 'tanstack-start', 'landing', 'remix'],
+  web: ['nextjs', 'vite-react', 'tanstack-start', 'remix'],
   mobile: ['react-native'],
   cli: ['node', 'python', 'rust'],
   desktop: ['electron'],
@@ -46,6 +55,14 @@ export const STACK_TOGGLE_OPTIONS: readonly { key: string; label: string }[] = [
 // The only two toggles that also apply on a bare backend root (no JSX/DOM).
 export const BACKEND_STACK_TOGGLE_OPTIONS: readonly { key: string; label: string }[] = [
   { key: 'validation', label: 'Zod (schema validation)' },
+  { key: 'dates', label: 'date-fns (dates)' },
+];
+
+// A landing page is one marketing surface: it has styling, icons and a form
+// (the email capture), but no client state, no server cache, no data grid and
+// no URL state. Offering those would be noise on every landing run.
+export const LANDING_STACK_TOGGLE_OPTIONS: readonly { key: string; label: string }[] = [
+  { key: 'validation', label: 'Zod (validate the email capture)' },
   { key: 'dates', label: 'date-fns (dates)' },
 ];
 

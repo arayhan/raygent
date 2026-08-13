@@ -9,8 +9,11 @@ import { spawn } from 'node:child_process';
 // (its registry.mjs FRONTENDS keys). A validated framework outside these lists
 // (e.g. web's 'remix') only gets raygent's own stub docs -- no real scaffold
 // exists for it yet.
+// 'landing' is absent on purpose: it is reached through `--kind landing`, not by
+// picking it as a framework. The CLI maps that kind to frontend: 'landing' when
+// it builds CCP_ANSWERS, so the scaffolder still receives the same template key.
 export const REAL_SCAFFOLD_FRAMEWORKS: Record<string, readonly string[]> = {
-  web: ['nextjs', 'vite-react', 'tanstack-start', 'landing'],
+  web: ['nextjs', 'vite-react', 'tanstack-start'],
   mobile: ['react-native'],
   desktop: ['electron'],
 };

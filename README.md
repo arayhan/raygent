@@ -47,13 +47,14 @@ the platform:
 
 | Platform     | Frameworks                              |
 | ------------ | ---------------------------------------- |
-| web          | nextjs, vite-react, tanstack-start, landing, remix |
+| web          | nextjs, vite-react, tanstack-start, remix |
 | mobile       | react-native                            |
 | cli          | node, python, rust                      |
 | desktop      | electron                                |
 | agent-skills | claude-code                             |
 
-**Real scaffolding vs stub docs:** `web` (`nextjs`/`vite-react`/`tanstack-start`/`landing`),
+**Real scaffolding vs stub docs:** `web` (`nextjs`/`vite-react`/`tanstack-start`,
+plus `--kind landing`),
 `mobile` (`react-native`, Expo-based) and `desktop` (`electron`) delegate to
 [`create-client-project`](../raygent-scaffolds)
 (a sibling tool) for a fully runnable project — real `package.json`, installed
@@ -69,6 +70,13 @@ stub set:
   DATABASE.md, PROGRESS.md, product-roadmap.md, DESIGN.html
 - **client**: PRD.md, scope.md, handoff.md, DESIGN.md, ANTISLOP.md,
   ARCHITECTURE.md, DATABASE.md, PROGRESS.md
+
+**Landing pages (`platform web` only):** a landing page is a *kind*, not a
+framework — it is Next.js with a marketing starter (hero, features, CTA, email
+capture, `/api/subscribe`). `--kind landing` skips the target and framework
+questions and offers a reduced stack: styling, icon pack, form library, plus Zod
+and date-fns. `--kind` stays independent of `--type`, so a landing page can be
+built for a client or for your own product.
 
 **Backend and fullstack (`platform web` only):** init first asks what you're
 building — frontend only, backend only (`express`/`hono`/`nestjs`), or

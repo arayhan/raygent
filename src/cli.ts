@@ -20,6 +20,8 @@ import {
   BACKEND_STACK_CAPABLE,
   STACK_TOGGLE_OPTIONS,
   BACKEND_STACK_TOGGLE_OPTIONS,
+  LANDING_STACK_TOGGLE_OPTIONS,
+  KINDS,
   STYLING_CHOICES,
   FORM_CHOICES,
   ICON_CHOICES,
@@ -303,7 +305,16 @@ program
     if (checks.some((c) => !c.ok)) process.exitCode = 1;
   });
 
-async function collectFrontendStack(framework: string): Promise<Record<string, unknown>> {
+/**
+ * Collects the stack answers for a frontend. `toggles` varies by surface: an app
+ * gets the full set, a landing page only the ones a marketing surface can use
+ * (see LANDING_STACK_TOGGLE_OPTIONS). Passing the list in rather than branching
+ * inside keeps the prompt order identical for both.
+ */
+async function collectFrontendStack(
+  framework: string,
+  toggles: readonly { key: string; label: string }[] = STACK_TOGGLE_OPTIONS
+): Promise<Record<string, unknown>> {
   const stack: Record<string, unknown> = {};
 
   stack.styling = await select({
@@ -313,7 +324,7 @@ async function collectFrontendStack(framework: string): Promise<Record<string, u
 
   const toggled = await checkbox({
     message: 'Tech stack add-ons (space to select, enter to confirm):',
-    choices: STACK_TOGGLE_OPTIONS.map((o) => ({ name: o.label, value: o.key })),
+    choices: toggles.map((o) => ({ name: o.label, value: o.key })),
   });
   for (const key of toggled) stack[key] = true;
 
@@ -347,6 +358,7 @@ program
   .argument('[project-name]', 'name of the project folder to create')
   .option('--platform <platform>', 'web | mobile | cli | desktop | agent-skills')
   .option('--framework <framework>', 'frontend framework valid for the chosen --platform')
+  .option('--kind <kind>', 'web only: app | landing (default app)')
   .option('--target <target>', "web only: frontend | backend | fullstack (default frontend)")
   .option('--backend <backend>', 'web only: express | hono | nestjs')
   .option('--monorepo', 'web fullstack only: use Turborepo')
@@ -360,6 +372,7 @@ program
       opts: {
         platform?: string;
         framework?: string;
+        kind?: string;
         target?: string;
         backend?: string;
         monorepo?: boolean;
@@ -381,6 +394,7 @@ program
           opts.framework ??= preset.framework;
           opts.type ??= preset.type;
           opts.mode ??= preset.mode;
+          opts.kind ??= preset.kind;
           opts.target ??= preset.target;
           opts.backend ??= preset.backend;
           if (opts.monorepo === undefined) opts.monorepo = preset.monorepo;
@@ -402,7 +416,40 @@ program
         let backend: string | null = opts.backend ?? null;
         let monorepo: string | null = opts.monorepo ? 'turborepo' : null;
 
+        let kind: string = opts.kind ?? 'app';
         if (platform === 'web') {
+          kind =
+            opts.kind ??
+            (await select({
+              message: 'What kind of web project?',
+              choices: [
+                {
+                  name: 'Application',
+                  value: 'app',
+                  description: 'App with routes and data. You pick the framework and stack next.',
+                },
+                {
+                  name: 'Landing page',
+                  value: 'landing',
+                  description:
+                    'Marketing page with hero, features, CTA and email capture. Next.js, no framework choice.',
+                },
+              ],
+            }));
+          if (!(KINDS as readonly string[]).includes(kind)) {
+            throw new Error(`invalid kind '${kind}' (expected one of: ${KINDS.join(', ')})`);
+          }
+        } else if (opts.kind && opts.kind !== 'app') {
+          throw new Error(`--kind ${opts.kind} is only valid for --platform web`);
+        }
+
+        // A landing page has one fixed shape: Next.js, frontend-only. Asking for
+        // a target or a framework here would be offering a choice that does not
+        // exist, so both prompts are skipped and the template key is set directly.
+        const isLanding = platform === 'web' && kind === 'landing';
+        if (isLanding) framework = 'landing';
+
+        if (platform === 'web' && !isLanding) {
           const target =
             opts.target ??
             (await select({
@@ -444,7 +491,7 @@ program
             const wantMonorepo = await confirm({ message: 'Use a monorepo (Turborepo)?', default: false });
             monorepo = wantMonorepo ? 'turborepo' : null;
           }
-        } else {
+        } else if (!isLanding) {
           const frameworkChoices = (FRAMEWORKS_BY_PLATFORM as Record<string, readonly string[]>)[platform] ?? [];
           framework =
             opts.framework ??
@@ -455,7 +502,9 @@ program
 
         let stack: Record<string, unknown> = presetStack ?? {};
         if (presetStack === undefined) {
-          if (framework && (STACK_CAPABLE_FRAMEWORKS as readonly string[]).includes(framework)) {
+          if (isLanding) {
+            stack = await collectFrontendStack('landing', LANDING_STACK_TOGGLE_OPTIONS);
+          } else if (framework && (STACK_CAPABLE_FRAMEWORKS as readonly string[]).includes(framework)) {
             stack = await collectFrontendStack(framework);
           } else if (backend && (BACKEND_STACK_CAPABLE as readonly string[]).includes(backend)) {
             stack = await collectBackendStack();
@@ -484,7 +533,8 @@ program
           answers = await runInterview(questionsForType(type), (q) => input({ message: q.message }));
         }
 
-        const frontendRealScaffold = Boolean(framework) && supportsRealScaffold(platform, framework as string);
+        const frontendRealScaffold =
+          isLanding || (Boolean(framework) && supportsRealScaffold(platform, framework as string));
         const backendRealScaffold = Boolean(backend) && supportsRealScaffoldBackend(backend as string);
 
         let targetDir: string;
