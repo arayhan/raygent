@@ -348,7 +348,9 @@ export function initSpecTemplate(filled?: InitSpec): string {
           .join(',\n')
       : [
           '    // Keys come from src/interview.ts: product and client have different sets.',
-          '    // Anything you leave out is still asked, unless mode is "quick".',
+          '    // Whatever you leave out stays a TODO in the generated docs -- it is NOT',
+          '    // asked, because --from means no prompts. Pass --fill-gaps to be asked',
+          '    // for the missing ones instead.',
           '    // "problem": "",',
           '    // "solution": ""',
         ].join('\n');
