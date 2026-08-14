@@ -30,6 +30,7 @@ export const AGENT_TOOLS = [
 // focus rings. Leaving the selection empty means "every one that applies", which
 // is what the scaffolder does with an absent list.
 export const RULE_FILE_OPTIONS = [
+  { value: 'principles', name: 'principles', description: "YAGNI, duplication thresholds, SRP and DIP in this stack's terms" },
   { value: 'code-style', name: 'code-style', description: 'Module naming, barrels, comment discipline' },
   { value: 'testing', name: 'testing', description: 'What to test, where tests live, what to mock' },
   { value: 'git-workflow', name: 'git-workflow', description: 'Commit conventions, when to commit, no attribution trailers' },

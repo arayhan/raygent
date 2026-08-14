@@ -91,7 +91,7 @@ along with the first-run interview steps. Only `AGENTS.md` is ever edited, so th
 instructions cannot drift into two versions.
 
 **Coding rules (`docs/rules/`):** the rules themselves live in one file per
-concern — `code-style`, `testing`, `git-workflow`, `api-conventions`,
+concern — `principles`, `code-style`, `testing`, `git-workflow`, `api-conventions`,
 `sql-and-data`, `ui-styling`, `security`, `accessibility` — and `AGENTS.md` and
 `docs/architecture.md` point at them rather than restating them. `architecture.md`
 keeps the *reasoning* (why a boundary is shaped that way); `docs/rules/` keeps the
