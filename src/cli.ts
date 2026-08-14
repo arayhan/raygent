@@ -15,6 +15,13 @@ import {
   titleCaseSlug,
 } from './init-lib.js';
 import {
+  parseInitSpec,
+  validateInitSpec,
+  formatSpecProblems,
+  initSpecTemplate,
+  type InitSpec,
+} from './init-spec.js';
+import {
   resolveTargetDir,
   PLATFORMS,
   FRAMEWORKS_BY_PLATFORM,
@@ -377,6 +384,9 @@ program
   .option('--type <type>', `product | client`)
   .option('--mode <mode>', 'guided (interview to pre-fill docs) | quick (stub docs)')
   .option('--preset <name>', 'apply a preset from ~/.raygent/config.json (flags still override)')
+  .option('--from <file>', 'read every answer from a JSON init spec — no prompts')
+  .option('--spec-template', 'print a fillable init spec to stdout and exit')
+  .option('--fill-gaps', 'with --from: prompt for missing fields instead of failing')
   .option('-f, --force', 'overwrite existing docs files')
   .action(
     async (
@@ -395,10 +405,42 @@ program
         type?: string;
         mode?: string;
         preset?: string;
+        from?: string;
+        specTemplate?: boolean;
+        fillGaps?: boolean;
         force?: boolean;
       }
     ) => {
       try {
+        // --spec-template prints a fillable file and exits. Nothing else runs.
+        if (opts.specTemplate) {
+          process.stdout.write(initSpecTemplate());
+          return;
+        }
+
+        // A spec is read and fully validated BEFORE the first prompt or any
+        // write, and reports every problem at once -- a five-field typo should
+        // cost one round trip, not five.
+        let spec: InitSpec | null = null;
+        if (opts.from) {
+          const specPath = path.resolve(opts.from);
+          let raw: string;
+          try {
+            raw = await fs.readFile(specPath, 'utf8');
+          } catch {
+            throw new Error(`cannot read spec '${specPath}'`);
+          }
+          spec = parseInitSpec(raw);
+          const problems = validateInitSpec(spec, { requireComplete: !opts.fillGaps });
+          if (problems.length > 0) {
+            console.error(formatSpecProblems(specPath, problems));
+            process.exitCode = 1;
+            return;
+          }
+          // A spec may name a preset for the stack half rather than repeating it.
+          opts.preset ??= spec.preset;
+        }
+
         const preset = opts.preset ? await loadPreset(opts.preset) : null;
         if (opts.preset && !preset) {
           throw new Error(
@@ -419,6 +461,39 @@ program
           if (opts.monorepo === undefined) opts.monorepo = preset.monorepo;
         }
 
+        // Spec values sit between flags and preset: an explicit flag still wins,
+        // so `--from spec.json --framework vite-react` does what it looks like.
+        // Assigned after the preset block so a spec overrides what a preset set.
+        if (spec) {
+          const sp = spec.project ?? {};
+          const st = spec.stack ?? {};
+          if (sp.type !== undefined) opts.type ??= sp.type;
+          if (sp.mode !== undefined) opts.mode ??= sp.mode;
+          if (sp.brand !== undefined) opts.brand ??= sp.brand;
+          // Absent means "a new folder", not "ask me". A spec that says nothing
+          // about location still has to reach zero prompts.
+          if (opts.here === undefined) opts.here = Boolean(sp.here);
+          // The folder name normally arrives as the positional argument; with a
+          // spec it comes from the file, and without this the name prompt fires.
+          if (sp.name !== undefined && projectNameArg === undefined) projectNameArg = sp.name;
+          if (st.platform !== undefined) opts.platform ??= st.platform;
+          if (st.framework !== undefined) opts.framework ??= st.framework;
+          if (st.kind !== undefined) opts.kind ??= st.kind;
+          if (st.target !== undefined) opts.target ??= st.target;
+          if (st.backend !== undefined && st.backend !== null) opts.backend ??= st.backend;
+          if (st.monorepo !== undefined && opts.monorepo === undefined) opts.monorepo = st.monorepo;
+          if (!opts.agents && spec.agents?.length) opts.agents = spec.agents.join(',');
+          if (!opts.rules && spec.rules?.length) opts.rules = spec.rules.join(',');
+          // An omitted key in a spec is an answer, not a gap: "no agents listed"
+          // means the default, "no rules listed" means every rule that applies.
+          // Falling through to a prompt would break the zero-prompt promise on
+          // any spec that did not spell out all nine fields.
+          opts.mode ??= 'guided';
+        }
+
+        // With a spec, every remaining prompt takes its default instead of
+        // asking. --fill-gaps is the opt-out, for a half-filled spec.
+        const unattended = spec !== null && !opts.fillGaps;
         // Validate flags BEFORE any prompt: being told a flag is wrong after
         // answering four questions is worse than being told immediately.
         const validAgentTools = AGENT_TOOLS.map((t) => t.value) as readonly string[];
@@ -446,7 +521,9 @@ program
           if (rulesFromFlag.length === 0) rulesFromFlag = null;
         }
 
-        const presetStack = preset?.stack;
+        // A spec's addons block is the same shape as a preset's stack, and both
+        // skip the tech-stack prompts entirely. The spec wins when both exist.
+        const presetStack = (spec?.stack?.addons as Record<string, unknown> | undefined) ?? preset?.stack;
         // Where the project lands. Asked before the name, because the answer
         // changes what the name defaults to: generating in place, the folder you
         // are already standing in has almost certainly got the right name.
@@ -553,6 +630,10 @@ program
         const isLanding = platform === 'web' && kind === 'landing';
         if (isLanding) framework = 'landing';
 
+        // Hoisted only so the run can be recorded into docs/raygent-init.json;
+        // the decision itself still belongs to the block below.
+        let resolvedTarget: string | undefined;
+
         if (platform === 'web' && !isLanding) {
           const target =
             opts.target ??
@@ -567,6 +648,7 @@ program
           if (!(TARGETS as readonly string[]).includes(target)) {
             throw new Error(`invalid target '${target}' (expected one of: ${TARGETS.join(', ')})`);
           }
+          resolvedTarget = target;
 
           if (target === 'frontend' || target === 'fullstack') {
             framework =
@@ -592,7 +674,7 @@ program
             supportsRealScaffold('web', framework) &&
             supportsRealScaffoldBackend(backend)
           ) {
-            const wantMonorepo = await confirm({ message: 'Use a monorepo (Turborepo)?', default: false });
+            const wantMonorepo = unattended ? false : await confirm({ message: 'Use a monorepo (Turborepo)?', default: false });
             monorepo = wantMonorepo ? 'turborepo' : null;
           }
         } else if (!isLanding) {
@@ -605,7 +687,9 @@ program
         }
 
         let stack: Record<string, unknown> = presetStack ?? {};
-        if (presetStack === undefined) {
+        // A spec with no addons block still answers the tech-stack questions:
+        // "none of them" is a legitimate answer and asking would be a prompt.
+        if (presetStack === undefined && !unattended) {
           if (isLanding) {
             stack = await collectFrontendStack('landing', LANDING_STACK_TOGGLE_OPTIONS);
           } else if (framework && (STACK_CAPABLE_FRAMEWORKS as readonly string[]).includes(framework)) {
@@ -618,6 +702,8 @@ program
         let agentTools: string[];
         if (agentsFromFlag) {
           agentTools = agentsFromFlag;
+        } else if (unattended) {
+          agentTools = ['claude-code'];
         } else {
           agentTools = await checkbox({
             message: 'Which coding agent(s) will work in this project?',
@@ -635,6 +721,9 @@ program
         let ruleFiles: string[];
         if (rulesFromFlag) {
           ruleFiles = rulesFromFlag;
+        } else if (unattended) {
+          // Empty means "every rule that applies to this stack" downstream.
+          ruleFiles = [];
         } else {
           ruleFiles = await checkbox({
             message: 'Which coding rules should docs/rules/ carry? (ones that do not fit the stack are skipped)',
@@ -665,8 +754,24 @@ program
 
         let answers: InterviewAnswers | null = null;
         if (mode === 'guided') {
-          console.log('Guided setup — press Enter on any question to skip it.');
-          answers = await runInterview(questionsForType(type), (q) => input({ message: q.message }));
+          const fromSpec = spec?.interview ?? null;
+          if (fromSpec) {
+            // The whole point of a spec: the interview is the long part, so a
+            // spec that carries answers must not re-ask them. --fill-gaps still
+            // prompts for the questions the spec left out.
+            const questions = questionsForType(type);
+            const missing = questions.filter((q) => !fromSpec[q.key]);
+            answers = Object.fromEntries(questions.map((q) => [q.key, fromSpec[q.key] ?? '']));
+            if (opts.fillGaps && missing.length > 0) {
+              console.log(`Spec answered ${questions.length - missing.length}/${questions.length}. Asking the rest.`);
+              for (const q of missing) answers[q.key] = (await input({ message: q.message })).trim();
+            } else {
+              console.log(`Interview answered from the spec (${questions.length - missing.length}/${questions.length}).`);
+            }
+          } else {
+            console.log('Guided setup — press Enter on any question to skip it.');
+            answers = await runInterview(questionsForType(type), (q) => input({ message: q.message }));
+          }
         }
 
         const frontendRealScaffold =
@@ -785,7 +890,23 @@ program
 
         const roots = defaultRoots();
 
-        if (preset?.skills && preset.skills.length > 0) {
+        // A spec's skills list is authoritative, including an explicit empty
+        // list: "install nothing" is an answer, and re-showing the checklist
+        // would break the zero-prompt promise.
+        const specSkills = spec?.skills;
+        if (specSkills !== undefined) {
+          if (specSkills.length > 0) {
+            await installSelectedSkills({
+              targetDir,
+              skillsRoot: roots.skillsRoot,
+              agentSkillsDir: roots.agentSkillsDir,
+              globalAgentSkillsDir: roots.globalAgentSkillsDir,
+              personalSkillNames: [],
+              builtinSkillNames: specSkills,
+            });
+            console.log(`Installed skills from spec: ${specSkills.join(', ')}`);
+          }
+        } else if (preset?.skills && preset.skills.length > 0) {
           // Preset skills skip the checklist: attempt a real install for each,
           // unresolvable names land in .claude/skills.json as reminders.
           await installSelectedSkills({
@@ -830,10 +951,12 @@ program
           }
         }
 
-        const mcpSelected = await checkbox({
-          message: 'MCP servers to configure in .mcp.json (space to select, enter to confirm):',
-          choices: MCP_CATALOG.map((s) => ({ name: s.label, value: s.id })),
-        });
+        const mcpSelected =
+          spec?.mcp ??
+          (await checkbox({
+            message: 'MCP servers to configure in .mcp.json (space to select, enter to confirm):',
+            choices: MCP_CATALOG.map((s) => ({ name: s.label, value: s.id })),
+          }));
         if (mcpSelected.length > 0) {
           const { needsEnv } = await writeMcpConfig(targetDir, mcpSelected);
           console.log(`Configured MCP servers in ${path.join(targetDir, '.mcp.json')}: ${mcpSelected.join(', ')}`);
@@ -842,6 +965,36 @@ program
           }
         }
 
+        // Record exactly what this run was given. Copy it, change the two names,
+        // and `raygent init --from` reproduces the setup with no prompts -- which
+        // is how the format gets discovered without anyone reading the docs.
+        try {
+          const usedSpec: InitSpec = {
+            version: 1,
+            project: { name: projectName, brand: brandName, type, here: Boolean(here), mode },
+            stack: {
+              platform,
+              kind: isLanding ? 'landing' : 'app',
+              framework: framework ?? undefined,
+              target: resolvedTarget,
+              backend: backend ?? null,
+              monorepo: Boolean(monorepo),
+              addons: stack,
+            },
+            agents: agentTools,
+            rules: ruleFiles,
+            skills: specSkills ?? preset?.skills ?? [],
+            mcp: mcpSelected,
+            interview: answers ?? {},
+          };
+          const docsDir = path.join(targetDir, 'docs');
+          await fs.mkdir(docsDir, { recursive: true });
+          const specOut = path.join(docsDir, 'raygent-init.json');
+          await fs.writeFile(specOut, initSpecTemplate(usedSpec));
+          console.log(`Init spec saved to ${specOut} — reuse it with: raygent init --from <file>`);
+        } catch {
+          // Recording the spec is a convenience; never fail a good init over it.
+        }
       } catch (err) {
         if (err instanceof Error && err.name === 'ExitPromptError') {
           process.exitCode = 130;

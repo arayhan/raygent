@@ -44,8 +44,55 @@ Options:
   --agents <list>          comma-separated: claude-code, opencode, antigravity
   --rules <list>           comma-separated docs/rules files (default: all applicable)
   --brand <name>           display name shown to users (default: project name, title-cased)
+  --from <file>            read every answer from a JSON init spec — no prompts
+  --spec-template          print a fillable init spec to stdout and exit
+  --fill-gaps              with --from: prompt for missing fields instead of failing
   -f, --force              overwrite existing docs files (stub-doc path only)
 ```
+
+### Init specs — fill one file, generate with zero prompts
+
+A full `raygent init` asks a lot: stack, agents, rules, names, then a 14-question
+interview, then two checklists. Fine once, tedious by the fifth landing page. An
+**init spec** is one JSON file holding every answer:
+
+```bash
+raygent init --spec-template > rocsteer.json   # fillable, with comments
+$EDITOR rocsteer.json
+raygent init --from rocsteer.json              # asks nothing
+```
+
+It covers identity, stack, add-ons, agents, rules, the interview answers, and the
+skill and MCP checklists — the checklists are prompts too, so leaving them out
+would mean "zero prompts" still had two. Comments are stripped on read, so the
+explanations in the template stay in your filled file.
+
+**You never have to write the first one by hand.** Every init writes
+`docs/raygent-init.json` recording exactly what it was given. Run init once
+interactively, copy that file, change the two names, and `--from` reproduces the
+setup.
+
+A spec may name a `"preset"` to inherit the stack half rather than repeating it.
+Precedence is one rule: **explicit flag > spec > preset > prompt > default.**
+
+**A bad spec fails before anything is written**, and reports every problem at
+once rather than one per run:
+
+```
+rocsteer.json has 3 problems:
+  project.name     "Rocsteer Landing Page" cannot be a folder name — use letters,
+                   digits, ".", "_", "-" (the brand goes in project.brand)
+  stack.framework  "nextjs14" is not valid (nextjs, vite-react, tanstack-start,
+                   remix). Did you mean "nextjs"?
+  rules[1]         "style" is not valid (...). Did you mean "code-style"?
+
+Nothing was generated.
+```
+
+`--fill-gaps` prompts for fields the spec omits. It never downgrades an invalid
+value to a question — a typo must fail, not become a prompt.
+
+By default the project is created in a new `./<name>/` folder. `--here`
 
 **Two names, on purpose.** The **brand name** is what a visitor reads — headings,
 the browser tab, the logo, the OG card. The **project name** is what npm and the
