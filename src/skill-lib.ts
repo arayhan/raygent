@@ -5,7 +5,7 @@ import type { Roots } from './paths.js';
 export interface SkillInfo {
   name: string;
   installed: boolean;
-  source: 'personal' | 'project' | 'global';
+  source: 'personal' | 'project' | 'global' | 'bundled';
 }
 
 function assertValidSkillName(name: string): void {
@@ -30,7 +30,12 @@ async function exists(target: string): Promise<boolean> {
   }
 }
 
-async function readSkillDirNames(dir: string): Promise<string[]> {
+async function readSkillDirNames(dir: string | undefined): Promise<string[]> {
+  // An absent root means "no skills there", not a crash. Roots is built by hand
+  // in several places and tests are outside the typecheck (tsconfig includes
+  // only src/), so a missing field surfaces at runtime rather than at compile
+  // time -- adding bundledSkillsDir broke 15 tests exactly this way.
+  if (!dir) return [];
   let entries;
   try {
     entries = await fs.readdir(dir, { withFileTypes: true });
@@ -45,9 +50,13 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   const personalNames = await readSkillDirNames(roots.skillsRoot);
   const projectNames = await readSkillDirNames(roots.agentSkillsDir);
   const globalNames = await readSkillDirNames(roots.globalAgentSkillsDir);
+  const bundledNames = await readSkillDirNames(roots.bundledSkillsDir);
 
-  // precedence on name collision: personal > project > global
-  const bySource = new Map<string, 'personal' | 'project' | 'global'>();
+  // precedence on name collision: personal > project > global > bundled.
+  // Bundled is last so raygent's own copy never shadows one the user wrote,
+  // matching the candidate order in addSkill.
+  const bySource = new Map<string, SkillInfo['source']>();
+  for (const name of bundledNames) bySource.set(name, 'bundled');
   for (const name of globalNames) bySource.set(name, 'global');
   for (const name of projectNames) bySource.set(name, 'project');
   for (const name of personalNames) bySource.set(name, 'personal');
@@ -79,10 +88,14 @@ export async function addSkill(
     }
   }
 
+  // Order is precedence. The bundled copy is LAST so a user's own version of a
+  // skill with the same name always wins -- shipping one inside the package must
+  // not quietly override something they wrote.
   const candidateDirs = [
     path.join(roots.skillsRoot, name),
     path.join(roots.agentSkillsDir, name),
     path.join(roots.globalAgentSkillsDir, name),
+    path.join(roots.bundledSkillsDir, name),
   ];
 
   let sourceDir: string | undefined;

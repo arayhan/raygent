@@ -9,6 +9,7 @@ let skillsRoot: string;
 let projectSkillsDir: string;
 let agentSkillsDir: string;
 let globalAgentSkillsDir: string;
+let bundledSkillsDir: string;
 let roots: Roots;
 
 beforeEach(() => {
@@ -16,7 +17,10 @@ beforeEach(() => {
   projectSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-project-'));
   agentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-agent-'));
   globalAgentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-global-agent-'));
-  roots = { skillsRoot, projectSkillsDir, agentSkillsDir, globalAgentSkillsDir };
+  // Pointed at a temp dir rather than the real bundle, so these tests assert on
+  // what they create and are not perturbed by whatever raygent ships.
+  bundledSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-bundled-'));
+  roots = { skillsRoot, projectSkillsDir, agentSkillsDir, globalAgentSkillsDir, bundledSkillsDir };
 });
 
 afterEach(() => {
@@ -24,6 +28,7 @@ afterEach(() => {
   fs.rmSync(projectSkillsDir, { recursive: true, force: true });
   fs.rmSync(agentSkillsDir, { recursive: true, force: true });
   fs.rmSync(globalAgentSkillsDir, { recursive: true, force: true });
+  fs.rmSync(bundledSkillsDir, { recursive: true, force: true });
 });
 
 describe('listSkills', () => {

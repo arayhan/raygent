@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { addSkill } from './skill-lib.js';
+import { bundledSkillsDir } from './paths.js';
 
 export const PLATFORMS = ['web', 'mobile', 'cli', 'desktop', 'agent-skills'] as const;
 export const PROJECT_TYPES = ['product', 'client'] as const;
@@ -291,6 +292,9 @@ export async function installSelectedSkills(opts: InstallSelectedSkillsOptions):
     projectSkillsDir,
     agentSkillsDir: opts.agentSkillsDir,
     globalAgentSkillsDir: opts.globalAgentSkillsDir,
+    // So a generated project can pick up raygent's own skill from the checklist
+    // like any other, rather than only via `raygent skills install`.
+    bundledSkillsDir: bundledSkillsDir(),
   };
 
   // force: the user just confirmed each skill in the checklist

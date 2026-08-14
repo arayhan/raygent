@@ -9,7 +9,8 @@
   "files": [
     "dist",
     "dist-web",
-    "vendor"
+    "vendor",
+    "skills"
   ],
   "scripts": {
     "build": "node scripts/bundle-scaffolder.mjs && tsc -p tsconfig.json && vite build --config dashboard-web/vite.config.ts",

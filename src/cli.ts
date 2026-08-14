@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { Command } from 'commander';
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
-import { listSkills, addSkill, removeSkill } from './skill-lib.js';
+import { listSkills, addSkill, removeSkill, type SkillInfo } from './skill-lib.js';
 import {
   initProject,
   installSelectedSkills,
@@ -97,8 +97,8 @@ skill
       const roots = defaultRoots();
       let skills = await listSkills(roots);
       if (opts.source) {
-        if (!['personal', 'project', 'global'].includes(opts.source)) {
-          throw new Error(`invalid source '${opts.source}' (expected one of: personal, project, global)`);
+        if (!['personal', 'project', 'global', 'bundled'].includes(opts.source)) {
+          throw new Error(`invalid source '${opts.source}' (expected one of: personal, project, global, bundled)`);
         }
         skills = skills.filter((s) => s.source === opts.source);
       }
@@ -124,6 +124,47 @@ skill
       const roots = defaultRoots();
       await removeSkill(name, roots);
       console.log(`Removed skill '${name}' from ${path.join(roots.projectSkillsDir, name)}`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+const skills = program.command('skills').description("Install raygent's own agent skills into this project");
+
+skills
+  .command('install [name]')
+  .description('Copy raygent\'s bundled skills into ./.claude/skills (default: all of them)')
+  .option('-f, --force', 'overwrite if already installed')
+  .action(async (name: string | undefined, opts: { force?: boolean }) => {
+    try {
+      const roots = defaultRoots();
+      // Read the bundle directly rather than through listSkills: this command is
+      // specifically about what raygent ships, and a same-named personal skill
+      // would otherwise win and install something else entirely.
+      let available: string[];
+      try {
+        available = (await fs.readdir(roots.bundledSkillsDir, { withFileTypes: true }))
+          .filter((e) => e.isDirectory())
+          .map((e) => e.name);
+      } catch {
+        throw new Error(
+          `no bundled skills found at ${roots.bundledSkillsDir} — if this is a published install, "skills" is missing from the package files list`
+        );
+      }
+      if (available.length === 0) throw new Error(`no bundled skills found at ${roots.bundledSkillsDir}`);
+
+      const wanted = name ? [name] : available;
+      const unknown = wanted.filter((n) => !available.includes(n));
+      if (unknown.length > 0) {
+        throw new Error(`unknown bundled skill '${unknown.join(', ')}' (available: ${available.join(', ')})`);
+      }
+
+      for (const skillName of wanted) {
+        await addSkill(skillName, roots, { force: opts.force });
+        console.log(`Installed '${skillName}' to ${path.join(roots.projectSkillsDir, skillName)}`);
+      }
+      console.log(`Try: /${wanted[0]} init`);
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;
@@ -919,7 +960,10 @@ program
           });
           console.log(`Installed preset skills: ${preset.skills.join(', ')}`);
         } else {
-          const skillChoices: { name: string; value: { source: 'builtin' | 'personal' | 'project' | 'global'; name: string } }[] = [
+          const skillChoices: {
+            name: string;
+            value: { source: 'builtin' | SkillInfo['source']; name: string };
+          }[] = [
             ...relevantCatalogSkills(type, platform).map((s) => ({
               name: `${s.name} (built-in)`,
               value: { source: 'builtin' as const, name: s.name },

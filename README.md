@@ -24,6 +24,31 @@ raygent skill list            # list available skills and their install status
 raygent skill remove <name>   # remove an installed skill from the current project
 ```
 
+### The raygent skill — `/raygent init`
+
+raygent ships an agent skill of its own. Install it into a project and your
+coding agent can run the whole setup as a conversation:
+
+```bash
+npx raygent skills install    # -> .claude/skills/raygent/
+# then, in your agent:
+/raygent init
+```
+
+`raygent init` on its own asks fourteen questions and accepts every answer. The
+skill does what a fixed form cannot: it follows up on thin answers, argues with
+the plan (riskiest assumption, whether the target user is really "everyone",
+whether this is a feature rather than a product), helps cut scope into phases,
+picks a stack and says why, then writes an init spec, shows it for approval, and
+runs `raygent init --from` with it.
+
+The critique posture is the one behind the optional AI review — except your own
+agent does it, so it needs no API key and no config.
+
+`raygent skill add raygent` installs the same thing through the skill command
+family. A skill of the same name in `~/.raygent/skills/` always wins, so the
+bundled copy can never shadow one you wrote.
+
 ### Init
 
 Scaffolds a new project, then offers a checklist of recommended skills to
