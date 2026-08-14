@@ -1,0 +1,64 @@
+# Question bank
+
+The keys below are exactly the ones `interview` accepts in a spec. Use them
+verbatim — a mistyped key is rejected by `validateInitSpec`, and an answer under
+the wrong key never reaches the docs.
+
+Two sets. `product` for something you own, `client` for work delivered to
+someone else. The `type` in the spec decides which applies; do not mix them.
+
+This is a bank, not a script. Ask what the conversation needs, in the order the
+conversation wants, and stop when you have enough to write honest docs.
+
+## product
+
+| Key | What it is really asking | Follow up when |
+|---|---|---|
+| `problem` | The problem, and whose it is | It describes a solution instead of a pain |
+| `solution` | What the thing does, in a sentence or two | You could not explain it back to a stranger |
+| `insight` | Why them, why now — the unfair advantage | The answer is effort or enthusiasm rather than an advantage |
+| `vision` | Where this goes if it works | It is the same as `solution` |
+| `targetUsers` | The **first** user, specifically | It could be read as "everyone" |
+| `market` | Rough size or reachable users | The number is invented and presented as known |
+| `competitors` | Named alternatives **and the do-nothing option** | Nobody is named, or "no competitors" |
+| `differentiation` | Why pick this over those | The answer is "better UX" |
+| `businessModel` | How it makes money, who pays | Monetisation is deferred on a project whose goal is income |
+| `successMetrics` | Measurable outcomes for 6-12 months | You could not tell later whether it happened |
+| `roadmap` | Phases — what is in v1, what waits | v1 is everything |
+| `riskiestAssumption` | The unproven thing everything rests on | Nothing sounds risky |
+| `nonGoals` | What is explicitly out of scope | Empty. This is the one people skip |
+| `designDirection` | Look, feel, brand adjectives, references | Only for projects with a UI |
+
+## client
+
+| Key | What it is really asking | Follow up when |
+|---|---|---|
+| `clientName` | Client or company | — |
+| `projectDescription` | The project in one or two sentences | — |
+| `requirements` | What the client actually needs | It is a feature list with no priority |
+| `inScope` | What is explicitly included | — |
+| `outOfScope` | What is explicitly excluded | Empty — this is what protects the engagement |
+| `deliverables` | Concrete artifacts handed over | They are activities rather than things |
+| `timeline` | Milestones and deadlines | A deadline exists with no milestones before it |
+| `budget` | Fixed-price or time-and-materials, if known | Fixed-price with vague scope — say something |
+| `decisionMaker` | Who signs off | The answer is a committee with no name |
+| `integrations` | Existing systems, APIs, hosting constraints | — |
+| `successCriteria` | How the client judges done | Acceptance is undefined on a fixed-price job |
+| `designDirection` | Brand guidelines, references, look and feel | — |
+
+## How to ask
+
+**Batch.** Use one `AskUserQuestion` with several related questions rather than
+fourteen prompts in a row. Attention is finite and the later answers get thinner.
+
+**Choices as choices.** Where the answer is one of a few known options — engagement
+type, phase count, whether there is a UI — offer options rather than an open box.
+Where it is a paragraph, just ask.
+
+**Skipping is allowed, inventing is not.** An unknown answer stays unknown and
+becomes a `TODO(content)` in the generated docs. That marker is a prompt for a
+real answer later; a plausible fabrication is a lie nobody will question, and it
+ends up in a PRD someone builds from.
+
+**Never re-ask.** If `docs/interview.json` or `docs/raygent-init.json` already
+answers something, it is answered.
