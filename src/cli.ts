@@ -385,7 +385,7 @@ program
   .option('--mode <mode>', 'guided (interview to pre-fill docs) | quick (stub docs)')
   .option('--preset <name>', 'apply a preset from ~/.raygent/config.json (flags still override)')
   .option('--from <file>', 'read every answer from a JSON init spec — no prompts')
-  .option('--spec-template', 'print a fillable init spec to stdout and exit')
+  .option('--template', 'print a fillable init spec to stdout and exit')
   .option('--fill-gaps', 'with --from: prompt for missing fields instead of failing')
   .option('-f, --force', 'overwrite existing docs files')
   .action(
@@ -406,14 +406,14 @@ program
         mode?: string;
         preset?: string;
         from?: string;
-        specTemplate?: boolean;
+        template?: boolean;
         fillGaps?: boolean;
         force?: boolean;
       }
     ) => {
       try {
-        // --spec-template prints a fillable file and exits. Nothing else runs.
-        if (opts.specTemplate) {
+        // --template prints a fillable file and exits. Nothing else runs.
+        if (opts.template) {
           process.stdout.write(initSpecTemplate());
           return;
         }

@@ -45,7 +45,7 @@ Options:
   --rules <list>           comma-separated docs/rules files (default: all applicable)
   --brand <name>           display name shown to users (default: project name, title-cased)
   --from <file>            read every answer from a JSON init spec — no prompts
-  --spec-template          print a fillable init spec to stdout and exit
+  --template               print a fillable init spec to stdout and exit
   --fill-gaps              with --from: prompt for missing fields instead of failing
   -f, --force              overwrite existing docs files (stub-doc path only)
 ```
@@ -57,7 +57,7 @@ interview, then two checklists. Fine once, tedious by the fifth landing page. An
 **init spec** is one JSON file holding every answer:
 
 ```bash
-raygent init --spec-template > rocsteer.json   # fillable, with comments
+raygent init --template > rocsteer.json   # fillable, with comments
 $EDITOR rocsteer.json
 raygent init --from rocsteer.json              # asks nothing
 ```
