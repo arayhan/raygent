@@ -11,6 +11,10 @@ import {
   installSelectedSkills,
   assertValidProjectName,
   isValidProjectName,
+  slugifyProjectName,
+  titleCaseSlug,
+} from './init-lib.js';
+import {
   resolveTargetDir,
   PLATFORMS,
   FRAMEWORKS_BY_PLATFORM,
@@ -364,6 +368,7 @@ program
   .option('--framework <framework>', 'frontend framework valid for the chosen --platform')
   .option('--agents <list>', 'comma-separated coding agents: claude-code, opencode, antigravity')
   .option('--rules <list>', 'comma-separated docs/rules files (default: every one that applies to the stack)')
+  .option('--brand <name>', 'display name shown to users (default: the project name, title-cased)')
   .option('--here', 'generate into the current directory instead of a new <name> folder')
   .option('--kind <kind>', 'web only: app | landing (default app)')
   .option('--target <target>', "web only: frontend | backend | fullstack (default frontend)")
@@ -383,6 +388,7 @@ program
         here?: boolean;
         agents?: string;
         rules?: string;
+        brand?: string;
         target?: string;
         backend?: string;
         monorepo?: boolean;
@@ -407,10 +413,12 @@ program
           opts.kind ??= preset.kind;
           if (!opts.agents && preset.agents?.length) opts.agents = preset.agents.join(',');
           if (!opts.rules && preset.rules?.length) opts.rules = preset.rules.join(',');
+          opts.brand ??= preset.brand;
           opts.target ??= preset.target;
           opts.backend ??= preset.backend;
           if (opts.monorepo === undefined) opts.monorepo = preset.monorepo;
         }
+
         // Validate flags BEFORE any prompt: being told a flag is wrong after
         // answering four questions is worse than being told immediately.
         const validAgentTools = AGENT_TOOLS.map((t) => t.value) as readonly string[];
@@ -461,18 +469,50 @@ program
           }));
 
         const cwdName = path.basename(process.cwd());
+
+        // Two names, because they are two different things. The brand is what a
+        // visitor reads -- headings, the browser tab, the logo. The project name
+        // is what npm and the filesystem need. Asking only for the second is what
+        // put "rocsteer-landing-page" in a page title: the strict validator
+        // rejected "Rocsteer Landing Page", and the slug typed in its place then
+        // became the display name everywhere.
+        //
+        // Brand is asked FIRST so the folder name can be derived from it. Skipped
+        // entirely when the folder name came from an argument and a brand from a
+        // flag or preset.
+        const brandFromFlag = opts.brand?.trim() || undefined;
+        const needsBrandPrompt = !brandFromFlag && !projectNameArg;
+        const brandAnswer = needsBrandPrompt
+          ? await input({
+              message: 'Brand name (shown to users):',
+              default: here ? titleCaseSlug(cwdName) : undefined,
+              validate: (value) => (value.trim() !== '' ? true : 'enter a name'),
+            })
+          : undefined;
+
         const projectName =
           projectNameArg ??
           (await input({
-            message: 'Project name:',
-            // Only offered as a default when generating in place AND the folder
-            // name is actually usable as a project name.
-            default: here && isValidProjectName(cwdName) ? cwdName : undefined,
+            message: 'Folder / package name:',
+            // Derived from the brand just entered. Still editable: a brand of
+            // "Rocsteer" may well belong in a folder called rocsteer-landing.
+            // The --here case wins, since that folder already exists.
+            default:
+              here && isValidProjectName(cwdName)
+                ? cwdName
+                : brandAnswer
+                  ? slugifyProjectName(brandAnswer)
+                  : undefined,
             validate: (value) =>
               /^[A-Za-z0-9._-]+$/.test(value) && value !== '.' && value !== '..'
                 ? true
                 : 'use only letters, digits, ".", "_", "-"',
           }));
+
+        // Explicit flag beats the prompt beats a title-cased slug. The last of
+        // those is what stops a preset or a scripted `raygent init <name>` from
+        // shipping a kebab-case <h1>.
+        const brandName = brandFromFlag ?? brandAnswer?.trim() ?? titleCaseSlug(projectName);
         const platform =
           opts.platform ?? (await select({ message: 'Platform:', choices: PLATFORMS.map((p) => ({ name: p, value: p })) }));
 
@@ -641,6 +681,7 @@ program
           usedRealScaffold = true;
           await runClientProjectScaffold({
             projectName,
+            brandName,
             targetDir,
             frontend: frontendRealScaffold ? (framework as string) : null,
             backend: backendRealScaffold ? backend : null,
@@ -667,7 +708,8 @@ program
 
         try {
           await registerProduct({
-            name: projectName,
+            // The dashboard lists products to a person, so it gets the brand.
+            name: brandName,
             platform,
             framework: framework ?? backend ?? undefined,
             type,
@@ -681,7 +723,7 @@ program
         if (answers) {
           const docsDir = path.join(targetDir, 'docs');
           await fs.mkdir(docsDir, { recursive: true });
-          await writeInterviewJson(docsDir, { projectName, platform, framework, type }, answers);
+          await writeInterviewJson(docsDir, { projectName: brandName, platform, framework, type }, answers);
 
           if (usedRealScaffold) {
             const { filled, missed } = await applyInterviewToScaffoldDocs(targetDir, type, answers);
@@ -692,14 +734,14 @@ program
               );
             }
           } else {
-            await applyInterviewToStubDocs(docsDir, type, answers, projectName);
+            await applyInterviewToStubDocs(docsDir, type, answers, brandName);
             console.log('Docs pre-filled from your answers (skipped questions stay as TODOs).');
           }
           console.log(`Raw answers saved to ${path.join(docsDir, 'interview.json')}`);
 
           const aiConfig = await loadAiConfig();
           if (aiConfig) {
-            const meta: ProjectMeta = { projectName, platform, framework, type };
+            const meta: ProjectMeta = { projectName: brandName, platform, framework, type };
             const wantFeedback = await confirm({ message: 'Want AI feedback on your plan?', default: true });
             if (wantFeedback) {
               try {
@@ -799,6 +841,7 @@ program
             console.log(`Set these env vars before Claude Code can use them: ${needsEnv.join(', ')}`);
           }
         }
+
       } catch (err) {
         if (err instanceof Error && err.name === 'ExitPromptError') {
           process.exitCode = 130;

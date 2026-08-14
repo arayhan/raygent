@@ -97,6 +97,8 @@ export function usingDevScaffolder(): boolean {
 
 export interface RunClientProjectScaffoldOptions {
   projectName: string;
+  /** Display name for headings, titles and the logo. Falls back to the project name, title-cased. */
+  brandName?: string;
   targetDir: string;
   frontend: string | null;
   backend?: string | null;
@@ -134,6 +136,9 @@ export async function runClientProjectScaffold(opts: RunClientProjectScaffoldOpt
 
   const answers = {
     projectName: opts.projectName,
+    // Empty means "title-case the project name" on the scaffolder side, which is
+    // why no default is filled in here.
+    brandName: opts.brandName ?? '',
     targetDir: opts.targetDir,
     frontend: opts.frontend,
     backend: opts.backend ?? null,

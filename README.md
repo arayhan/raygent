@@ -43,8 +43,17 @@ Options:
   --here                   generate into the current directory, not a new <name> folder
   --agents <list>          comma-separated: claude-code, opencode, antigravity
   --rules <list>           comma-separated docs/rules files (default: all applicable)
+  --brand <name>           display name shown to users (default: project name, title-cased)
   -f, --force              overwrite existing docs files (stub-doc path only)
 ```
+
+**Two names, on purpose.** The **brand name** is what a visitor reads — headings,
+the browser tab, the logo, the OG card. The **project name** is what npm and the
+filesystem need. Init asks for the brand first and derives the project name from
+it (`Rocsteer Landing Page` → `rocsteer-landing-page`), offering that as an
+editable default; nothing forces them to match. Given only a project name, the
+brand is title-cased from it, so a preset or a scripted run never ships a
+kebab-case page title. `--brand` overrides that for names title-casing gets wrong.
 
 By default the project is created in a new `./<name>/` folder. `--here`
 generates straight into the current directory instead — for the
