@@ -54,6 +54,7 @@ import { MCP_CATALOG } from './mcp-catalog.js';
 import { writeMcpConfig } from './mcp-lib.js';
 import { supportsRealScaffold, supportsRealScaffoldBackend, runClientProjectScaffold } from './scaffold-tools.js';
 import { questionsForType, runInterview, type InterviewAnswers } from './interview.js';
+import { renderBrief } from './brief.js';
 import { writeInterviewJson, applyInterviewToScaffoldDocs, applyInterviewToStubDocs } from './doc-fill.js';
 import {
   loadAiConfig,
@@ -227,6 +228,41 @@ skill
       const scope = opts.local ? 'project' : 'global';
       await removeSkill(name, roots, { scope });
       console.log(`Removed skill '${name}' from ${path.join(skillDestDir(roots, scope), name)}`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command('brief')
+  .description('Print a fillable Markdown brief to pour your idea into')
+  .option('--type <type>', 'product | client', 'product')
+  .option('--out <file>', 'write to a file instead of stdout')
+  .option('-f, --force', 'overwrite an existing --out file')
+  .action(async (opts: { type: string; out?: string; force?: boolean }) => {
+    try {
+      if (opts.type !== 'product' && opts.type !== 'client') {
+        throw new Error(`invalid type '${opts.type}' (expected one of: product, client)`);
+      }
+      const markdown = renderBrief(opts.type);
+      if (!opts.out) {
+        // Default to stdout so `raygent brief > IDEA.md` works, and so it can be
+        // piped or previewed without leaving a file behind.
+        process.stdout.write(markdown);
+        return;
+      }
+      const target = path.resolve(opts.out);
+      if (!opts.force) {
+        const exists = await fs
+          .access(target)
+          .then(() => true)
+          .catch(() => false);
+        if (exists) throw new Error(`${target} already exists (use --force to overwrite)`);
+      }
+      await fs.writeFile(target, markdown);
+      console.log(`Brief written to ${target}`);
+      console.log('Fill it in, then run /raygent init in this folder.');
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;
