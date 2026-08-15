@@ -46,6 +46,35 @@ conversation wants, and stop when you have enough to write honest docs.
 | `successCriteria` | How the client judges done | Acceptance is undefined on a fixed-price job |
 | `designDirection` | Brand guidelines, references, look and feel | — |
 
+## Adopting existing docs
+
+Where an answer usually hides, when someone arrives with documents already
+written. These are starting points for reading, not rules — a document answers a
+key when its *content* does, whatever the heading says.
+
+| Source file | Usually answers |
+|---|---|
+| `PRD.md`, `SPEC.md` | `problem`, `solution`, `requirements`, `inScope`, `outOfScope`, `successCriteria` |
+| `PRODUCT.md`, `BRIEF.md` | `problem`, `solution`, `targetUsers`, `vision`, `differentiation` |
+| `ROADMAP.md`, `TASKS.md` | `roadmap`, `nonGoals`, `timeline`, `deliverables` |
+| `DECISIONS.md`, an ADR folder | `insight`, `riskiestAssumption`, `nonGoals` — the *reasons* are the valuable part |
+| `README.md` | `solution` at best. Usually written for a different reader; trust it least |
+| A single `idea.md` / `notes.md` | `problem`, `solution`, `targetUsers`, and rarely more |
+| `docs/interview.json` | Any key directly — it is already in this shape |
+
+Three things that go wrong:
+
+- **A heading lies.** "Problem" sections routinely describe the solution. Map on
+  content.
+- **Scope is stated as features, not as boundaries.** A feature list answers
+  `requirements`; it does not answer `nonGoals`, which is what is deliberately
+  *not* being built. Absence of a non-goals section is a gap, not an empty one.
+- **A roadmap is not phases.** "Q3: payments" is a wish. `roadmap` wants what
+  ships first and what waits, which usually needs the conversation in step 4.
+
+What almost never appears in a written doc, and so is almost always a gap worth
+asking: `market`, `businessModel`, `successMetrics`, `riskiestAssumption`.
+
 ## How to ask
 
 **Batch.** Use one `AskUserQuestion` with several related questions rather than

@@ -28,20 +28,52 @@ tell you the thing you described is a feature rather than a product. You can.
 Seven steps, in order. Do not skip to step 7 because the user sounds decided —
 the whole point is what happens between 2 and 4.
 
-### 1. Read before asking
+### 1. Adopt what already exists
 
-Look for prior answers before opening your mouth:
+Most people arrive with something written. Read it before asking anything.
 
-- `docs/interview.json` — raw answers from a previous guided run
-- `docs/raygent-init.json` — a full spec from a previous init
-- `PRODUCT.md`, `docs/PRODUCT.md`, `README.md` in or near the working directory
+**Scan**, do not assume a fixed list. At the working directory root and one level
+into `docs/`, anything product-shaped:
 
-If any exist, read them and **ask only about gaps**. Re-asking a question the
-user already answered is the fastest way to lose their attention, and they will
-answer the rest more thinly because of it.
+```
+PRD*  PRODUCT*  ROADMAP*  TASKS*  DECISIONS*  SPEC*  BRIEF*  NOTES*  README*
+docs/interview.json      previous guided run
+docs/raygent-init.json   previous init spec
+```
 
-Also check whether `raygent` is on PATH (`raygent --version`). If it is not, say
-so now rather than at step 7, and offer `npx raygent`.
+If the directory holds a single markdown file and little else, that is the whole
+idea in one file — read it.
+
+**Map what you find onto the interview keys** in `reference/questions.md`, and
+remember which file each answer came from. `reference/questions.md` has a section
+on which source usually answers which key.
+
+**Show the extraction before you use it:**
+
+```
+Adopted 9 of 14 from your docs:
+  problem          Brokers quote in spreadsheets…        PRD.md
+  targetUsers      2-10 person freight brokerages        PRD.md
+  roadmap          3 phases                              ROADMAP.md
+  riskiestAssumption  Carriers will accept API quotes    DECISIONS.md
+  …
+Not found: market, businessModel, successMetrics, differentiation, insight
+
+Anything wrong there?
+```
+
+Silently mis-reading someone's PRD is the failure that matters here, and it is
+invisible unless you show your work. Ask before continuing.
+
+**Never invent.** A key with nothing behind it in the documents stays a gap. A
+plausible-sounding fill lands in `docs/PRODUCT.md` and nobody questions it again;
+an unanswered question gets asked in step 2, which is the whole point.
+
+**A heading is a hint, not proof.** A section called "Problem" that actually
+describes a solution answers `solution`, not `problem`. Read the content.
+
+Then check `raygent --version`. If it is not on PATH, say so now rather than at
+step 7, and offer `npx raygent`.
 
 ### 2. Interview, as a conversation
 
@@ -51,6 +83,9 @@ list.
 
 Rules for this step:
 
+- **Only the gaps.** Anything step 1 adopted is answered. Re-asking it is the
+  fastest way to lose someone's attention, and they answer the rest more thinly
+  once they think you were not listening.
 - **Batch related questions**, do not serialise fourteen prompts. Use
   `AskUserQuestion` where the answer is a choice; use plain conversation where it
   is a paragraph.
@@ -65,6 +100,10 @@ Rules for this step:
 Read `reference/critique.md` and apply it. The posture is an experienced
 partner in office hours: direct, specific, on the user's side, and unwilling to
 nod along.
+
+**An adopted plan gets more of this, not less.** A written PRD reads as settled,
+which is exactly why nobody has argued with it. Being already typed up is not
+evidence that a target user is real or that the riskiest assumption was found.
 
 At minimum, say something real about:
 
