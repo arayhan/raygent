@@ -1,9 +1,9 @@
 ---
 name: raygent
-description: Use when starting a new project from an idea — scaffolding, "start a new project", "raygent init", "help me plan this product", or turning a rough idea into a real repo with docs. Interviews the user, argues with the plan, cuts scope into phases, then generates the project with raygent. Not for editing an existing project's code.
-version: 1.0.0
+description: Use when starting a new project from an idea — scaffolding, "start a new project", "raygent init", "help me plan this product", or turning a rough idea into a real repo with docs. Also "raygent bootstrap" — filling a freshly generated raygent project's docs and TODO(content) markers. Interviews the user, argues with the plan, cuts scope into phases, then generates the project with raygent. Not for editing an existing project's code.
+version: 1.1.0
 user-invocable: true
-argument-hint: "[init] [idea]"
+argument-hint: "[init|bootstrap] [idea]"
 allowed-tools:
   - Bash(raygent *)
   - Bash(npx raygent *)
@@ -199,6 +199,26 @@ valid ones.
 
 Then tell them, briefly: where the project is, that `docs/` is pre-filled from
 the conversation, and what the first real task is.
+
+## `/raygent bootstrap`
+
+Fills a generated project's remaining `TODO(content)` markers. This command is a
+**router, not a second implementation** — every generated project ships its own
+copy of the bootstrap flow, pinned to the doc shapes that generation actually
+produced, and that copy is authoritative.
+
+1. **Find the project's own skill:**
+   `.claude/skills/bootstrap-project/SKILL.md` at the repo root. If you are in a
+   subfolder, walk up to the git root first.
+2. **Found → read it and follow it exactly, starting at its Step 0 re-entry
+   guard.** Do not paraphrase, reorder, or "improve" it. A newer idea of the flow
+   applied to an older project is version skew, which is precisely what
+   delegating avoids.
+3. **Not found, but `AGENTS.md` has a "First run" section** → this project was
+   generated for a non-Claude agent. Follow those steps; they are the same
+   interview in prose.
+4. **Neither** → this does not look like a raygent-generated project. Say so, and
+   offer `/raygent init` if what they actually want is to start one.
 
 ## Other commands
 

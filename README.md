@@ -137,6 +137,9 @@ What lands:
 It interviews for exactly the remaining `TODO(content)` markers and refuses to
 re-run over a finished project. Done when `rg "TODO\(content\)"` comes back empty.
 
+`/raygent bootstrap` is the same step routed through the global skill — it finds
+the project's own copy and follows it, so both spellings do one thing.
+
 ### 8. Break the phase into work orders
 
 Hand phase 1 to **`engineering-lead`**. It writes `docs/tasks/`, one file per unit
@@ -255,6 +258,10 @@ the plan (riskiest assumption, whether the target user is really "everyone",
 whether this is a feature rather than a product), helps cut scope into phases,
 picks a stack and says why, then writes an init spec, shows it for approval, and
 runs `raygent init --from` with it.
+
+`/raygent bootstrap` routes to a generated project's own `/bootstrap-project`
+skill — the project copy stays authoritative, so an old project is bootstrapped
+by the flow its generation shipped, not by whatever newer skill is installed.
 
 The critique posture is the one behind the optional AI review — except your own
 agent does it, so it needs no API key and no config.

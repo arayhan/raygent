@@ -52,6 +52,19 @@ describe('bundled skills', () => {
     expect(skillMd).toMatch(/^user-invocable: true$/m);
   });
 
+  it('offers bootstrap as a subcommand', async () => {
+    const skillMd = await fs.readFile(path.join(bundledSkillsDir(), 'raygent', 'SKILL.md'), 'utf8');
+    expect(skillMd).toMatch(/^argument-hint: .*bootstrap/m);
+  });
+
+  it('delegates bootstrap to the path the scaffolder actually writes', async () => {
+    // The router names a literal path inside generated projects. If the
+    // in-project skill is ever renamed in raygent-scaffolds, this pin fails here
+    // instead of the router silently finding nothing at runtime.
+    const skillMd = await fs.readFile(path.join(bundledSkillsDir(), 'raygent', 'SKILL.md'), 'utf8');
+    expect(skillMd).toContain('.claude/skills/bootstrap-project/SKILL.md');
+  });
+
   it('references only files that exist', async () => {
     // A SKILL.md pointing at a missing reference file is a dead instruction the
     // agent follows into nothing.
