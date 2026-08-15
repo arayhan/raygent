@@ -10,6 +10,7 @@ let projectSkillsDir: string;
 let agentSkillsDir: string;
 let globalAgentSkillsDir: string;
 let bundledSkillsDir: string;
+let globalSkillsDir: string;
 let roots: Roots;
 
 beforeEach(() => {
@@ -20,7 +21,15 @@ beforeEach(() => {
   // Pointed at a temp dir rather than the real bundle, so these tests assert on
   // what they create and are not perturbed by whatever raygent ships.
   bundledSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-bundled-'));
-  roots = { skillsRoot, projectSkillsDir, agentSkillsDir, globalAgentSkillsDir, bundledSkillsDir };
+  globalSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-global-skills-'));
+  roots = {
+    skillsRoot,
+    projectSkillsDir,
+    agentSkillsDir,
+    globalAgentSkillsDir,
+    bundledSkillsDir,
+    globalSkillsDir,
+  };
 });
 
 afterEach(() => {
@@ -29,6 +38,7 @@ afterEach(() => {
   fs.rmSync(agentSkillsDir, { recursive: true, force: true });
   fs.rmSync(globalAgentSkillsDir, { recursive: true, force: true });
   fs.rmSync(bundledSkillsDir, { recursive: true, force: true });
+  fs.rmSync(globalSkillsDir, { recursive: true, force: true });
 });
 
 describe('listSkills', () => {
@@ -41,8 +51,8 @@ describe('listSkills', () => {
 
     expect(result).toEqual(
       expect.arrayContaining([
-        { name: 'skill-a', installed: true, source: 'personal' },
-        { name: 'skill-b', installed: false, source: 'personal' },
+        { name: 'skill-a', installed: true, installedGlobally: false, source: 'personal' },
+        { name: 'skill-b', installed: false, installedGlobally: false, source: 'personal' },
       ])
     );
     expect(result).toHaveLength(2);
@@ -59,7 +69,7 @@ describe('listSkills', () => {
 
     const result = await listSkills(roots);
 
-    expect(result).toEqual([{ name: 'project-only', installed: false, source: 'project' }]);
+    expect(result).toEqual([{ name: 'project-only', installed: false, installedGlobally: false, source: 'project' }]);
   });
 
   it('includes skills found only in globalAgentSkillsDir, tagged source global', async () => {
@@ -67,7 +77,7 @@ describe('listSkills', () => {
 
     const result = await listSkills(roots);
 
-    expect(result).toEqual([{ name: 'global-only', installed: false, source: 'global' }]);
+    expect(result).toEqual([{ name: 'global-only', installed: false, installedGlobally: false, source: 'global' }]);
   });
 
   it('when a name exists in personal and project dirs, lists it once with source personal', async () => {
@@ -76,7 +86,7 @@ describe('listSkills', () => {
 
     const result = await listSkills(roots);
 
-    expect(result).toEqual([{ name: 'shared', installed: false, source: 'personal' }]);
+    expect(result).toEqual([{ name: 'shared', installed: false, installedGlobally: false, source: 'personal' }]);
   });
 
   it('precedence personal > project > global on a three-way name collision', async () => {
@@ -86,7 +96,7 @@ describe('listSkills', () => {
 
     const result = await listSkills(roots);
 
-    expect(result).toEqual([{ name: 'shared', installed: false, source: 'personal' }]);
+    expect(result).toEqual([{ name: 'shared', installed: false, installedGlobally: false, source: 'personal' }]);
   });
 
   it('project wins over global when personal has no entry', async () => {
@@ -95,7 +105,7 @@ describe('listSkills', () => {
 
     const result = await listSkills(roots);
 
-    expect(result).toEqual([{ name: 'shared', installed: false, source: 'project' }]);
+    expect(result).toEqual([{ name: 'shared', installed: false, installedGlobally: false, source: 'project' }]);
   });
 
   it('does not throw when agentSkillsDir or globalAgentSkillsDir does not exist', async () => {
@@ -105,7 +115,7 @@ describe('listSkills', () => {
 
     const result = await listSkills(roots);
 
-    expect(result).toEqual([{ name: 'skill-a', installed: false, source: 'personal' }]);
+    expect(result).toEqual([{ name: 'skill-a', installed: false, installedGlobally: false, source: 'personal' }]);
   });
 });
 

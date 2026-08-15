@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { bundledSkillsDir, defaultRoots } from '../src/paths.js';
-import { addSkill, listSkills } from '../src/skill-lib.js';
+import { addSkill, listSkills, removeSkill } from '../src/skill-lib.js';
 
 let tmp: string;
 
@@ -15,7 +15,11 @@ afterEach(async () => {
   await fs.rm(tmp, { recursive: true, force: true });
 });
 
-/** Roots pointed at empty temp dirs, so only the bundle is a real source. */
+/**
+ * Roots pointed at empty temp dirs, so only the bundle is a real source. The
+ * global destination is a temp dir too: no test may write into the real
+ * ~/.claude/skills.
+ */
 function isolatedRoots(overrides: Partial<ReturnType<typeof defaultRoots>> = {}) {
   return {
     skillsRoot: path.join(tmp, 'personal'),
@@ -23,8 +27,16 @@ function isolatedRoots(overrides: Partial<ReturnType<typeof defaultRoots>> = {})
     agentSkillsDir: path.join(tmp, 'agent'),
     globalAgentSkillsDir: path.join(tmp, 'global'),
     bundledSkillsDir: bundledSkillsDir(),
+    globalSkillsDir: path.join(tmp, 'home', '.claude', 'skills'),
     ...overrides,
   };
+}
+
+async function exists(p: string): Promise<boolean> {
+  return fs
+    .access(p)
+    .then(() => true)
+    .catch(() => false);
 }
 
 describe('bundled skills', () => {
@@ -77,6 +89,54 @@ describe('bundled skills', () => {
     await addSkill('raygent', roots);
     const installed = await fs.readFile(path.join(roots.projectSkillsDir, 'raygent', 'SKILL.md'), 'utf8');
     expect(installed).toContain('MINE');
+  });
+
+  it('installs globally when asked, and not into the project', async () => {
+    const roots = isolatedRoots();
+    await addSkill('raygent', roots, { scope: 'global' });
+    expect(await exists(path.join(roots.globalSkillsDir, 'raygent', 'SKILL.md'))).toBe(true);
+    expect(await exists(path.join(roots.projectSkillsDir, 'raygent'))).toBe(false);
+  });
+
+  it('does not create a project skills directory during a global install', async () => {
+    // A global install used to mkdir ./.claude/skills in whatever directory you
+    // happened to be standing in, leaving an empty folder behind.
+    const roots = isolatedRoots();
+    await addSkill('raygent', roots, { scope: 'global' });
+    expect(await exists(roots.projectSkillsDir)).toBe(false);
+  });
+
+  it('scope project and the default produce the same tree', async () => {
+    const a = isolatedRoots({ projectSkillsDir: path.join(tmp, 'a') });
+    const b = isolatedRoots({ projectSkillsDir: path.join(tmp, 'b') });
+    await addSkill('raygent', a);
+    await addSkill('raygent', b, { scope: 'project' });
+    const listOf = async (root: string) => (await fs.readdir(path.join(root, 'raygent'))).sort();
+    expect(await listOf(path.join(tmp, 'a'))).toEqual(await listOf(path.join(tmp, 'b')));
+  });
+
+  it('removeSkill undoes the scope it was given', async () => {
+    const roots = isolatedRoots();
+    await addSkill('raygent', roots, { scope: 'global' });
+    await addSkill('raygent', roots, { scope: 'project' });
+
+    await removeSkill('raygent', roots, { scope: 'global' });
+    expect(await exists(path.join(roots.globalSkillsDir, 'raygent'))).toBe(false);
+    expect(await exists(path.join(roots.projectSkillsDir, 'raygent'))).toBe(true);
+
+    await removeSkill('raygent', roots, { scope: 'project' });
+    expect(await exists(path.join(roots.projectSkillsDir, 'raygent'))).toBe(false);
+  });
+
+  it('reports both install locations independently', async () => {
+    const roots = isolatedRoots();
+    const find = async () => (await listSkills(roots)).find((s) => s.name === 'raygent');
+
+    expect(await find()).toMatchObject({ installed: false, installedGlobally: false });
+    await addSkill('raygent', roots, { scope: 'global' });
+    expect(await find()).toMatchObject({ installed: false, installedGlobally: true });
+    await addSkill('raygent', roots, { scope: 'project' });
+    expect(await find()).toMatchObject({ installed: true, installedGlobally: true });
   });
 
   it('lists the bundled skill with source "bundled"', async () => {

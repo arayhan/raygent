@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { Command } from 'commander';
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
-import { listSkills, addSkill, removeSkill, type SkillInfo } from './skill-lib.js';
+import { listSkills, addSkill, removeSkill, skillDestDir, type SkillInfo } from './skill-lib.js';
 import {
   initProject,
   installSelectedSkills,
@@ -72,14 +72,74 @@ program
 
 const skill = program.command('skill').description('Manage Claude Code skills');
 
+/** Bundled skill names, or a clear error explaining an empty bundle. */
+async function bundledSkillNames(dir: string): Promise<string[]> {
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    throw new Error(
+      `no bundled skills found at ${dir} — if this is a published install, "skills" is missing from the package files list`
+    );
+  }
+  const names = entries.filter((e) => e.isDirectory()).map((e) => e.name);
+  if (names.length === 0) throw new Error(`no bundled skills found at ${dir}`);
+  return names;
+}
+
 skill
-  .command('add <name>')
-  .description('Install a skill from ~/.raygent/skills into ./.claude/skills')
+  .command('install [name]')
+  .description('Install a skill into ~/.claude/skills (no name: every skill raygent ships)')
+  .option('--local', 'install into ./.claude/skills instead, for this project only')
+  .option('-f, --force', 'overwrite if already installed')
+  .action(async (name: string | undefined, opts: { local?: boolean; force?: boolean }) => {
+    try {
+      const roots = defaultRoots();
+      // Global by default because /raygent init is used BEFORE a project exists,
+      // often in an empty directory. A project-local install of the skill that
+      // creates projects is unreachable exactly when you need it.
+      const scope = opts.local ? 'project' : 'global';
+
+      let wanted: string[];
+      if (name) {
+        wanted = [name];
+      } else {
+        wanted = await bundledSkillNames(roots.bundledSkillsDir);
+      }
+
+      for (const skillName of wanted) {
+        try {
+          await addSkill(skillName, roots, { force: opts.force, scope });
+        } catch (err) {
+          // A name that resolves nowhere should say what DOES exist rather than
+          // print four absolute paths, the same courtesy --rules and --agents give.
+          if (/not found in/.test((err as Error).message)) {
+            const available = await bundledSkillNames(roots.bundledSkillsDir).catch(() => []);
+            throw new Error(
+              `skill '${skillName}' not found` +
+                (available.length > 0 ? ` (raygent ships: ${available.join(', ')})` : '') +
+                `; personal skills go in ${roots.skillsRoot}`
+            );
+          }
+          throw err;
+        }
+        console.log(`Installed '${skillName}' to ${path.join(skillDestDir(roots, scope), skillName)}`);
+      }
+      if (!name) console.log(`Try: /${wanted[0]} init`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+skill
+  .command('add <name>', { hidden: true })
+  .description('Deprecated alias for `skill install <name> --local`')
   .option('-f, --force', 'overwrite if already installed')
   .action(async (name: string, opts: { force?: boolean }) => {
     try {
       const roots = defaultRoots();
-      await addSkill(name, roots, { force: opts.force });
+      await addSkill(name, roots, { force: opts.force, scope: 'project' });
       console.log(`Installed skill '${name}' to ${path.join(roots.projectSkillsDir, name)}`);
     } catch (err) {
       console.error((err as Error).message);
@@ -89,9 +149,9 @@ skill
 
 skill
   .command('list')
-  .description('List available skills and whether they are installed in this project')
-  .option('--source <source>', 'filter by source: personal | project | global')
-  .option('--installed', 'only show skills installed in this project')
+  .description('List available skills and where each one is installed')
+  .option('--source <source>', 'filter by source: personal | project | global | bundled')
+  .option('--installed', 'only show skills installed somewhere')
   .action(async (opts: { source?: string; installed?: boolean }) => {
     try {
       const roots = defaultRoots();
@@ -102,13 +162,21 @@ skill
         }
         skills = skills.filter((s) => s.source === opts.source);
       }
-      if (opts.installed) skills = skills.filter((s) => s.installed);
+      if (opts.installed) skills = skills.filter((s) => s.installed || s.installedGlobally);
       if (skills.length === 0) {
         console.log('No skills matched.');
         return;
       }
+      // A table, because "is /raygent going to work here?" is the question this
+      // command exists to answer, and a flat installed/available flag stopped
+      // being able to answer it once installs could be global.
+      const where = (s: (typeof skills)[number]) =>
+        [s.installedGlobally ? 'global' : null, s.installed ? 'project' : null].filter(Boolean).join(', ') || '-';
+      const nameWidth = Math.max(5, ...skills.map((s) => s.name.length));
+      const sourceWidth = Math.max(6, ...skills.map((s) => s.source.length));
+      console.log(`${'SKILL'.padEnd(nameWidth)}  ${'SOURCE'.padEnd(sourceWidth)}  INSTALLED`);
       for (const s of skills) {
-        console.log(`${s.installed ? '[installed]' : '[available]'} ${s.name} (${s.source})`);
+        console.log(`${s.name.padEnd(nameWidth)}  ${s.source.padEnd(sourceWidth)}  ${where(s)}`);
       }
     } catch (err) {
       console.error((err as Error).message);
@@ -118,53 +186,15 @@ skill
 
 skill
   .command('remove <name>')
-  .description('Remove a skill from ./.claude/skills in this project')
-  .action(async (name: string) => {
+  .description('Remove a skill from ~/.claude/skills (--local: from this project)')
+  .option('--local', 'remove from ./.claude/skills instead')
+  .action(async (name: string, opts: { local?: boolean }) => {
     try {
       const roots = defaultRoots();
-      await removeSkill(name, roots);
-      console.log(`Removed skill '${name}' from ${path.join(roots.projectSkillsDir, name)}`);
-    } catch (err) {
-      console.error((err as Error).message);
-      process.exitCode = 1;
-    }
-  });
-
-const skills = program.command('skills').description("Install raygent's own agent skills into this project");
-
-skills
-  .command('install [name]')
-  .description('Copy raygent\'s bundled skills into ./.claude/skills (default: all of them)')
-  .option('-f, --force', 'overwrite if already installed')
-  .action(async (name: string | undefined, opts: { force?: boolean }) => {
-    try {
-      const roots = defaultRoots();
-      // Read the bundle directly rather than through listSkills: this command is
-      // specifically about what raygent ships, and a same-named personal skill
-      // would otherwise win and install something else entirely.
-      let available: string[];
-      try {
-        available = (await fs.readdir(roots.bundledSkillsDir, { withFileTypes: true }))
-          .filter((e) => e.isDirectory())
-          .map((e) => e.name);
-      } catch {
-        throw new Error(
-          `no bundled skills found at ${roots.bundledSkillsDir} — if this is a published install, "skills" is missing from the package files list`
-        );
-      }
-      if (available.length === 0) throw new Error(`no bundled skills found at ${roots.bundledSkillsDir}`);
-
-      const wanted = name ? [name] : available;
-      const unknown = wanted.filter((n) => !available.includes(n));
-      if (unknown.length > 0) {
-        throw new Error(`unknown bundled skill '${unknown.join(', ')}' (available: ${available.join(', ')})`);
-      }
-
-      for (const skillName of wanted) {
-        await addSkill(skillName, roots, { force: opts.force });
-        console.log(`Installed '${skillName}' to ${path.join(roots.projectSkillsDir, skillName)}`);
-      }
-      console.log(`Try: /${wanted[0]} init`);
+      // Mirrors install's default, so the two are inverses.
+      const scope = opts.local ? 'project' : 'global';
+      await removeSkill(name, roots, { scope });
+      console.log(`Removed skill '${name}' from ${path.join(skillDestDir(roots, scope), name)}`);
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;

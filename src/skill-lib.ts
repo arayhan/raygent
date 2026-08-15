@@ -4,8 +4,21 @@ import type { Roots } from './paths.js';
 
 export interface SkillInfo {
   name: string;
+  /** Present in this project's .claude/skills. */
   installed: boolean;
+  /** Present in ~/.claude/skills, where it works from any directory. */
+  installedGlobally: boolean;
   source: 'personal' | 'project' | 'global' | 'bundled';
+}
+
+/**
+ * Where an install lands. Global is ~/.claude/skills and works everywhere;
+ * project is ./.claude/skills and works only here.
+ */
+export type SkillScope = 'global' | 'project';
+
+export function skillDestDir(roots: Roots, scope: SkillScope): string {
+  return scope === 'global' ? roots.globalSkillsDir : roots.projectSkillsDir;
 }
 
 function assertValidSkillName(name: string): void {
@@ -64,7 +77,10 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   const skills: SkillInfo[] = [];
   for (const [name, source] of bySource) {
     const installed = await exists(path.join(roots.projectSkillsDir, name));
-    skills.push({ name, installed, source });
+    const installedGlobally = roots.globalSkillsDir
+      ? await exists(path.join(roots.globalSkillsDir, name))
+      : false;
+    skills.push({ name, installed, installedGlobally, source });
   }
   skills.sort((a, b) => a.name.localeCompare(b.name));
   return skills;
@@ -73,11 +89,15 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
 export async function addSkill(
   name: string,
   roots: Roots,
-  opts: { force?: boolean } = {}
+  opts: { force?: boolean; scope?: SkillScope } = {}
 ): Promise<void> {
   assertValidSkillName(name);
 
-  const destDir = path.join(roots.projectSkillsDir, name);
+  // Defaults to project so every existing caller keeps its behaviour --
+  // installSelectedSkills writes into a freshly generated project and must not
+  // start scattering skills into the user's home directory. Only the CLI's
+  // install command asks for global.
+  const destDir = path.join(skillDestDir(roots, opts.scope ?? 'project'), name);
 
   async function isDir(dir: string): Promise<boolean> {
     try {
@@ -114,7 +134,10 @@ export async function addSkill(
     throw new Error(`skill '${name}' is already installed at ${destDir} (use --force to overwrite)`);
   }
 
-  await fs.mkdir(roots.projectSkillsDir, { recursive: true });
+  // The destination's parent, not the project's. Using projectSkillsDir here
+  // meant a global install created an empty ./.claude/skills in whatever
+  // directory you happened to be standing in.
+  await fs.mkdir(path.dirname(destDir), { recursive: true });
   if (destExists) {
     // copy fully into a temp sibling first so a failed copy never destroys the
     // existing install
@@ -132,12 +155,18 @@ export async function addSkill(
   }
 }
 
-export async function removeSkill(name: string, roots: Roots): Promise<void> {
+export async function removeSkill(
+  name: string,
+  roots: Roots,
+  opts: { scope?: SkillScope } = {}
+): Promise<void> {
   assertValidSkillName(name);
 
-  const destDir = path.join(roots.projectSkillsDir, name);
+  // Same default as addSkill, so remove undoes what add did.
+  const scopeDir = skillDestDir(roots, opts.scope ?? 'project');
+  const destDir = path.join(scopeDir, name);
   if (!(await exists(destDir))) {
-    throw new Error(`skill '${name}' is not installed in ${roots.projectSkillsDir}`);
+    throw new Error(`skill '${name}' is not installed in ${scopeDir}`);
   }
   await fs.rm(destDir, { recursive: true, force: true });
 }

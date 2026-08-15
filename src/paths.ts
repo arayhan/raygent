@@ -9,6 +9,13 @@ export interface Roots {
   globalAgentSkillsDir: string;
   /** Skills shipped inside this package (skills/ at the package root). */
   bundledSkillsDir: string;
+  /**
+   * Where Claude Code reads personal skills from, and the default install
+   * DESTINATION. Deliberately separate from globalAgentSkillsDir (~/.agents/
+   * skills), which is a source this reads from -- collapsing the two would write
+   * skills to a directory Claude Code never looks in.
+   */
+  globalSkillsDir: string;
 }
 
 /**
@@ -23,6 +30,11 @@ export function bundledSkillsDir(): string {
   return path.join(fileURLToPath(new URL('..', import.meta.url)), 'skills');
 }
 
+/** Where Claude Code reads personal skills from — the default install target. */
+export function globalSkillsDir(): string {
+  return path.join(os.homedir(), '.claude', 'skills');
+}
+
 export function defaultRoots(cwd: string = process.cwd()): Roots {
   return {
     skillsRoot: path.join(os.homedir(), '.raygent', 'skills'),
@@ -30,5 +42,6 @@ export function defaultRoots(cwd: string = process.cwd()): Roots {
     agentSkillsDir: path.join(cwd, '.agent', 'skills'),
     globalAgentSkillsDir: path.join(os.homedir(), '.agents', 'skills'),
     bundledSkillsDir: bundledSkillsDir(),
+    globalSkillsDir: globalSkillsDir(),
   };
 }

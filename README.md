@@ -15,13 +15,23 @@ Requires Node.js >= 20.
 
 ### Skills
 
-Skills live in `~/.raygent/skills/<name>/` and are installed per-project into
-`./.claude/skills/<name>/`.
+Your own skills live in `~/.raygent/skills/<name>/`. raygent also ships one of its
+own (see below). Installs go to `~/.claude/skills/` by default, where they work
+from any directory; `--local` targets `./.claude/skills/` instead.
 
 ```bash
-raygent skill add <name>      # copy a skill into the current project (-f to overwrite)
-raygent skill list            # list available skills and their install status
-raygent skill remove <name>   # remove an installed skill from the current project
+raygent skill list                  # what exists, and where each one is installed
+raygent skill install               # every skill raygent ships -> ~/.claude/skills
+raygent skill install <name>        # one skill, from any source (-f to overwrite)
+raygent skill install <name> --local  # into this project instead
+raygent skill remove <name>         # --local to remove the project copy
+```
+
+```
+SKILL       SOURCE    INSTALLED
+raygent     bundled   global
+my-notes    personal  project
+spec        personal  global, project
 ```
 
 ### The raygent skill — `/raygent init`
@@ -30,10 +40,15 @@ raygent ships an agent skill of its own. Install it into a project and your
 coding agent can run the whole setup as a conversation:
 
 ```bash
-npx raygent skills install    # -> .claude/skills/raygent/
+npx raygent skill install     # -> ~/.claude/skills/raygent/
 # then, in your agent:
 /raygent init
 ```
+
+**Global by default**, because `/raygent init` is used *before* a project exists —
+often in an empty directory. A project-local copy of the skill that creates
+projects is unreachable exactly when you need it. `--local` installs into
+`./.claude/skills/` instead, for a project that wants its own pinned copy.
 
 `raygent init` on its own asks fourteen questions and accepts every answer. The
 skill does what a fixed form cannot: it follows up on thin answers, argues with
@@ -45,9 +60,8 @@ runs `raygent init --from` with it.
 The critique posture is the one behind the optional AI review — except your own
 agent does it, so it needs no API key and no config.
 
-`raygent skill add raygent` installs the same thing through the skill command
-family. A skill of the same name in `~/.raygent/skills/` always wins, so the
-bundled copy can never shadow one you wrote.
+A skill of the same name in `~/.raygent/skills/` always wins, so the bundled copy
+can never shadow one you wrote.
 
 ### Init
 
