@@ -21,6 +21,14 @@ export function skillDestDir(roots: Roots, scope: SkillScope): string {
   return scope === 'global' ? roots.globalSkillsDir : roots.projectSkillsDir;
 }
 
+/** The directory a listed skill was discovered in, for reading its SKILL.md. */
+export function skillSourceDir(roots: Roots, source: SkillInfo['source']): string {
+  if (source === 'personal') return roots.skillsRoot;
+  if (source === 'project') return roots.agentSkillsDir;
+  if (source === 'global') return roots.globalAgentSkillsDir;
+  return roots.bundledSkillsDir;
+}
+
 function assertValidSkillName(name: string): void {
   if (
     !/^[A-Za-z0-9._-]+$/.test(name) ||

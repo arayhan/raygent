@@ -5,7 +5,15 @@ import { createRequire } from 'node:module';
 import { Command } from 'commander';
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
-import { listSkills, addSkill, removeSkill, skillDestDir, type SkillInfo } from './skill-lib.js';
+import { listSkills, addSkill, removeSkill, skillDestDir, skillSourceDir, type SkillInfo } from './skill-lib.js';
+import {
+  enrichSkills,
+  groupByCategory,
+  condenseDescription,
+  wrapText,
+  SKILL_CATEGORIES,
+  type EnrichedSkill,
+} from './skill-meta.js';
 import {
   initProject,
   installSelectedSkills,
@@ -152,7 +160,8 @@ skill
   .description('List available skills and where each one is installed')
   .option('--source <source>', 'filter by source: personal | project | global | bundled')
   .option('--installed', 'only show skills installed somewhere')
-  .action(async (opts: { source?: string; installed?: boolean }) => {
+  .option('--category <category>', 'filter by function: product | design | motion | code | writing | research | agent | other')
+  .action(async (opts: { source?: string; installed?: boolean; category?: string }) => {
     try {
       const roots = defaultRoots();
       let skills = await listSkills(roots);
@@ -163,21 +172,44 @@ skill
         skills = skills.filter((s) => s.source === opts.source);
       }
       if (opts.installed) skills = skills.filter((s) => s.installed || s.installedGlobally);
-      if (skills.length === 0) {
+
+      let enriched = await enrichSkills(skills, (s) => path.join(skillSourceDir(roots, s.source), s.name));
+
+      if (opts.category) {
+        const valid = SKILL_CATEGORIES as readonly string[];
+        if (!valid.includes(opts.category)) {
+          throw new Error(`invalid category '${opts.category}' (expected one of: ${valid.join(', ')})`);
+        }
+        enriched = enriched.filter((s) => s.category === opts.category);
+      }
+      if (enriched.length === 0) {
         console.log('No skills matched.');
         return;
       }
-      // A table, because "is /raygent going to work here?" is the question this
-      // command exists to answer, and a flat installed/available flag stopped
-      // being able to answer it once installs could be global.
-      const where = (s: (typeof skills)[number]) =>
+
+      // Grouped rather than one 90-row table: with this many skills the category
+      // is what you scan by, and repeating it as a column on every line makes it
+      // harder to see, not easier.
+      const groups = groupByCategory(enriched);
+      const width = Math.max(60, process.stdout.columns ?? 100);
+      const nameWidth = Math.max(4, ...enriched.map((s) => s.name.length));
+      const where = (s: EnrichedSkill) =>
         [s.installedGlobally ? 'global' : null, s.installed ? 'project' : null].filter(Boolean).join(', ') || '-';
-      const nameWidth = Math.max(5, ...skills.map((s) => s.name.length));
-      const sourceWidth = Math.max(6, ...skills.map((s) => s.source.length));
-      console.log(`${'SKILL'.padEnd(nameWidth)}  ${'SOURCE'.padEnd(sourceWidth)}  INSTALLED`);
-      for (const s of skills) {
-        console.log(`${s.name.padEnd(nameWidth)}  ${s.source.padEnd(sourceWidth)}  ${where(s)}`);
+      const whereWidth = Math.max(9, ...enriched.map((s) => where(s).length));
+      const indent = 2 + nameWidth + 2 + whereWidth + 2;
+
+      for (const [category, group] of groups) {
+        console.log(`\n${category.toUpperCase()} (${group.length})`);
+        for (const s of group) {
+          const head = `  ${s.name.padEnd(nameWidth)}  ${where(s).padEnd(whereWidth)}  `;
+          const body = condenseDescription(s.description) || '—';
+          const lines = wrapText(body, width - indent, 0);
+          console.log(head + (lines[0] ?? ''));
+          for (const line of lines.slice(1)) console.log(' '.repeat(indent) + line);
+          if (s.tags.length > 0) console.log(`${' '.repeat(indent)}tags: ${s.tags.join(', ')}`);
+        }
       }
+      console.log(`\n${enriched.length} skill(s). Filter with --category <${SKILL_CATEGORIES.join('|')}>.`);
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;

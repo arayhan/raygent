@@ -20,19 +20,41 @@ own (see below). Installs go to `~/.claude/skills/` by default, where they work
 from any directory; `--local` targets `./.claude/skills/` instead.
 
 ```bash
-raygent skill list                  # what exists, and where each one is installed
+raygent skill list                  # grouped by what each skill is for
+raygent skill list --category design  # one group
+raygent skill list --installed      # only what is installed
 raygent skill install               # every skill raygent ships -> ~/.claude/skills
 raygent skill install <name>        # one skill, from any source (-f to overwrite)
 raygent skill install <name> --local  # into this project instead
 raygent skill remove <name>         # --local to remove the project copy
 ```
 
+`list` groups by function — `product`, `design`, `motion`, `code`, `writing`,
+`research`, `agent`, `other` — and shows where each one is installed plus a
+condensed description and tags:
+
 ```
-SKILL       SOURCE    INSTALLED
-raygent     bundled   global
-my-notes    personal  project
-spec        personal  global, project
+DESIGN (16)
+  impeccable        global   Design, redesign, shape, or otherwise improve a
+                             frontend interface. Covers websites, landing pages,
+                             dashboards, and empty states.
+                             tags: ui, ux, critique, frontend
+
+AGENT (7)
+  orchestration     global   Use Orca orchestration for structured multi-agent
+                             coordination: threaded messages, blocking ask/reply
+                             flows, task dispatch.
+                             tags: multi-agent, coordination
 ```
+
+Categories come from a curated table for skills raygent knows, then a prefix rule
+for whole families (`firecrawl-*`, `remotion-*`), then keywords in the name and
+description. Anything that matches none of those lands in `other` rather than
+being guessed — a wrong category hides a skill in a group nobody opens.
+
+Descriptions are condensed, not truncated: the `Use when the user wants to…`
+lead-in is dropped, long trigger enumerations are collapsed, and whole sentences
+are kept up to a budget, so a line never ends mid-thought.
 
 ### The raygent skill — `/raygent init`
 
