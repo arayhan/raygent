@@ -11,6 +11,153 @@ npm install -g raygent
 
 Requires Node.js >= 20.
 
+## Tutorial: from scratch to product-ready
+
+An idea and an empty folder, through to a built phase 1 you can watch in a
+dashboard. Every step names what it produces, so you can tell it worked without
+waiting for an error.
+
+### 1. Install and check the environment
+
+```bash
+npm install -g raygent
+raygent doctor          # node, pnpm, git, scaffolder, skills, AI endpoint
+```
+
+`doctor` failing here is cheaper than `init` failing at step 6.
+
+### 2. Install the raygent skill, once per machine
+
+```bash
+raygent skill install   # -> ~/.claude/skills/raygent/
+```
+
+Global on purpose: you use it *before* a project exists, so a project-local copy
+would be unreachable exactly when you need it.
+
+### 3. Start the conversation
+
+```bash
+mkdir my-idea && cd my-idea
+```
+
+Then in your agent: **`/raygent init`**
+
+**3b — if you already have docs.** Run it in the folder that holds them instead.
+It scans for `PRD*`, `PRODUCT*`, `ROADMAP*`, `TASKS*`, `DECISIONS*`, `SPEC*`,
+`BRIEF*`, `NOTES*` or a lone markdown file, maps them onto the interview
+questions, and **shows you what it took and from where** before using any of it:
+
+```
+Adopted 9 of 14 from your docs:
+  problem             Brokers quote in spreadsheets…     PRD.md
+  roadmap             3 phases                           ROADMAP.md
+  riskiestAssumption  Carriers will accept API quotes    DECISIONS.md
+Not found: market, businessModel, successMetrics, differentiation, insight
+```
+
+Correct anything wrong. It does not invent: a question your docs do not answer
+stays a gap and gets asked in step 4.
+
+### 4. Answer the questions, and expect an argument
+
+It asks what it does not already know — problem, users, market, model, metrics —
+then pushes back. Name the riskiest assumption. Say who the *first* user is, by a
+description specific enough to find ten of them this week. Hear it out if it says
+the thing you described is a feature inside somebody else's product.
+
+It disagrees once, clearly, then builds what you asked for.
+
+### 5. Cut phase 1, pick the stack
+
+Phase 1 is what ships first, not everything, and the **non-goals** get said out
+loud — that is the half people skip, and it is what stops phase 1 growing until
+it never ships.
+
+The stack is inferred from the conversation with a reason stated per choice, so
+you can push back on it.
+
+### 6. Approve the spec, then generate
+
+It writes `raygent-init.json` and shows it. Nothing exists yet; this is the last
+cheap moment to change anything. On approval it runs:
+
+```bash
+raygent init --from raygent-init.json     # zero prompts
+```
+
+What lands:
+
+| Artifact | What |
+|---|---|
+| `AGENTS.md` | How to work in this repo — the file every agent reads |
+| `docs/PRODUCT.md`, `docs/PRD.md` | Pre-filled from the conversation |
+| `docs/architecture.md` | Folder map, import rules, and why they are shaped that way |
+| `docs/rules/` | Coding rules, gated by your stack |
+| `docs/tasks/` | Where the work breakdown goes, with its conventions |
+| `docs/raygent-init.json` | This exact run, replayable with `--from` |
+| `.claude/` | Agents, skills, hooks (Claude Code only) |
+
+### 7. Fill what the conversation could not answer
+
+```
+/bootstrap-project
+```
+
+It interviews for exactly the remaining `TODO(content)` markers and refuses to
+re-run over a finished project. Done when `rg "TODO\(content\)"` comes back empty.
+
+### 8. Break the phase into work orders
+
+Hand phase 1 to **`engineering-lead`**. It writes `docs/tasks/`, one file per unit
+of work, distinguishing a **step** (an agent does it) from a **gate** (you
+decide). Read `docs/tasks/README.md` for the naming convention.
+
+### 9. Build it
+
+**`software-engineer`** builds, bound by `docs/rules/` and by ESLint
+`no-restricted-imports` zones that fail the build on a crossed module boundary —
+the architecture is enforced, not just written down. **`ui-designer`** owns
+`docs/DESIGN.md`, the tokens and the visual verdict.
+
+```bash
+pnpm install && pnpm dev
+```
+
+### 10. Verify, then review
+
+```
+/verify              # lint, test, build — quotes the decisive line of each
+```
+
+Then **`code-reviewer`** for an APPROVE or FIX-FIRST verdict. It is read-only by
+design: a reviewer that fixes what it finds stops reporting.
+
+### 11. Ship it, then watch it
+
+**Deploying is yours.** raygent has no ship or deploy command — it takes you to a
+built, verified phase 1 and stops there.
+
+Once it is live:
+
+```bash
+raygent product add my-idea               # only if init did not register it
+raygent dashboard                         # http://localhost:4321
+raygent finance add my-idea 49 "first sale"
+raygent finance summary
+```
+
+Point the project's `NEXT_PUBLIC_ANALYTICS_URL` at the dashboard's `/api/ingest`
+and its `track()` calls start showing up.
+
+### What is not automatic
+
+The interview is a conversation you have to actually have — the output is only as
+good as what you put in. Adoption in step 3b is a proposal to correct, not a
+conversion. Unanswered questions stay `TODO(content)` on purpose: that marker is a
+prompt for a real answer, and an invented one would never be questioned again.
+And nothing here deploys.
+
 ## Commands
 
 ### Skills
@@ -84,80 +231,6 @@ agent does it, so it needs no API key and no config.
 
 A skill of the same name in `~/.raygent/skills/` always wins, so the bundled copy
 can never shadow one you wrote.
-
-### From an existing idea to a running project
-
-The common starting point is not a blank page — it is a folder with a `PRD.md`, a
-`ROADMAP.md`, some `DECISIONS.md`, or one file holding the whole idea. The full
-path from there to `pnpm dev`:
-
-**1. Install the skill, once per machine.**
-
-```bash
-npx raygent skill install        # -> ~/.claude/skills/raygent/
-```
-
-**2. Run `/raygent init` in the folder holding your docs.**
-
-It scans for anything product-shaped (`PRD*`, `PRODUCT*`, `ROADMAP*`, `TASKS*`,
-`DECISIONS*`, `SPEC*`, `BRIEF*`, `NOTES*`, a lone markdown file) and maps it onto
-the interview questions.
-
-**3. Correct the extraction.** It shows what it took and from where before using
-any of it:
-
-```
-Adopted 9 of 14 from your docs:
-  problem             Brokers quote in spreadsheets…     PRD.md
-  roadmap             3 phases                           ROADMAP.md
-  riskiestAssumption  Carriers will accept API quotes    DECISIONS.md
-Not found: market, businessModel, successMetrics, differentiation, insight
-```
-
-Anything it could not find stays a gap. It does not invent — a plausible answer
-written into `docs/PRODUCT.md` is one nobody questions later.
-
-**4. Answer the gaps, and expect an argument.** It asks only what is missing, then
-pushes back: the riskiest assumption, whether the target user is really
-"everyone", whether this is a feature rather than a product. An already-written
-PRD gets *more* of this, not less — being typed up is not evidence anyone
-challenged it.
-
-**5. Approve the spec.** It writes `raygent-init.json` and shows it. Nothing has
-been generated yet; this is the last cheap moment to change anything.
-
-**6. It generates.** `raygent init --from raygent-init.json`, zero prompts. You get:
-
-| Artifact | What |
-|---|---|
-| `AGENTS.md` | How to work in the repo — the file every agent reads |
-| `docs/PRODUCT.md`, `docs/PRD.md` | Pre-filled from the conversation |
-| `docs/rules/` | The nine coding rules, gated by your stack |
-| `docs/architecture.md` | Folder map, import rules, the reasoning |
-| `docs/raygent-init.json` | This exact run, replayable with `--from` |
-| `.claude/` | Agents, skills, hooks (Claude Code only) |
-
-**7. Fill what is left.** Whatever the conversation could not answer is a
-`TODO(content)` marker. In the new project:
-
-```
-/bootstrap-project
-```
-
-It interviews for exactly those gaps and refuses to re-run over a finished
-project. When `rg "TODO\(content\)"` comes back empty, the docs are done.
-
-**8. Build.**
-
-```bash
-pnpm install && pnpm dev
-```
-
-`/verify` runs lint, tests and build and quotes the decisive line of each.
-
-**What is not automatic:** the adoption in step 3 is a proposal to correct, not a
-conversion. Unanswered questions stay `TODO(content)` by design — that marker is
-a prompt for a real answer, and it is why step 7 exists.
 
 ### Init
 
