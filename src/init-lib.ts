@@ -162,7 +162,7 @@ export function assertValidProjectName(name: string): void {
 
 /**
  * A human brand name to the folder/package name derived from it:
- * "Rocsteer Landing Page" -> "rocsteer-landing-page".
+ * "Acme Landing Page" -> "acme-landing-page".
  *
  * Deliberately the same shape as slugify() in raygent-scaffolds' plan.mjs. The
  * two packages share no code, so this is a duplicate on purpose and a test pins
@@ -178,7 +178,7 @@ export function slugifyProjectName(brand: string): string {
 
 /**
  * The reverse, for when only a folder name was supplied:
- * "rocsteer-landing-page" -> "Rocsteer Landing Page".
+ * "acme-landing-page" -> "Acme Landing Page".
  *
  * Without this a preset or a positional-arg run ships a kebab-case string as the
  * project's <h1>, browser tab title and logo text.

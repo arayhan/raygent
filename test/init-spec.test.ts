@@ -76,7 +76,7 @@ describe('validateInitSpec', () => {
   it('points a brand-shaped project name at the brand field', () => {
     // The exact mistake that motivated the brand/name split: a human name typed
     // where the folder name goes.
-    const [problem] = validateInitSpec({ ...complete, project: { name: 'Rocsteer Landing Page', type: 'product' } });
+    const [problem] = validateInitSpec({ ...complete, project: { name: 'Acme Landing Page', type: 'product' } });
     expect(problem.path).toBe('project.name');
     expect(problem.message).toMatch(/project\.brand/);
   });

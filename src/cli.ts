@@ -653,8 +653,8 @@ program
         // Two names, because they are two different things. The brand is what a
         // visitor reads -- headings, the browser tab, the logo. The project name
         // is what npm and the filesystem need. Asking only for the second is what
-        // put "rocsteer-landing-page" in a page title: the strict validator
-        // rejected "Rocsteer Landing Page", and the slug typed in its place then
+        // put "acme-landing-page" in a page title: the strict validator
+        // rejected "Acme Landing Page", and the slug typed in its place then
         // became the display name everywhere.
         //
         // Brand is asked FIRST so the folder name can be derived from it. Skipped
@@ -675,7 +675,7 @@ program
           (await input({
             message: 'Folder / package name:',
             // Derived from the brand just entered. Still editable: a brand of
-            // "Rocsteer" may well belong in a folder called rocsteer-landing.
+            // "Acme" may well belong in a folder called acme-landing.
             // The --here case wins, since that folder already exists.
             default:
               here && isValidProjectName(cwdName)
