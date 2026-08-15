@@ -85,6 +85,80 @@ agent does it, so it needs no API key and no config.
 A skill of the same name in `~/.raygent/skills/` always wins, so the bundled copy
 can never shadow one you wrote.
 
+### From an existing idea to a running project
+
+The common starting point is not a blank page — it is a folder with a `PRD.md`, a
+`ROADMAP.md`, some `DECISIONS.md`, or one file holding the whole idea. The full
+path from there to `pnpm dev`:
+
+**1. Install the skill, once per machine.**
+
+```bash
+npx raygent skill install        # -> ~/.claude/skills/raygent/
+```
+
+**2. Run `/raygent init` in the folder holding your docs.**
+
+It scans for anything product-shaped (`PRD*`, `PRODUCT*`, `ROADMAP*`, `TASKS*`,
+`DECISIONS*`, `SPEC*`, `BRIEF*`, `NOTES*`, a lone markdown file) and maps it onto
+the interview questions.
+
+**3. Correct the extraction.** It shows what it took and from where before using
+any of it:
+
+```
+Adopted 9 of 14 from your docs:
+  problem             Brokers quote in spreadsheets…     PRD.md
+  roadmap             3 phases                           ROADMAP.md
+  riskiestAssumption  Carriers will accept API quotes    DECISIONS.md
+Not found: market, businessModel, successMetrics, differentiation, insight
+```
+
+Anything it could not find stays a gap. It does not invent — a plausible answer
+written into `docs/PRODUCT.md` is one nobody questions later.
+
+**4. Answer the gaps, and expect an argument.** It asks only what is missing, then
+pushes back: the riskiest assumption, whether the target user is really
+"everyone", whether this is a feature rather than a product. An already-written
+PRD gets *more* of this, not less — being typed up is not evidence anyone
+challenged it.
+
+**5. Approve the spec.** It writes `raygent-init.json` and shows it. Nothing has
+been generated yet; this is the last cheap moment to change anything.
+
+**6. It generates.** `raygent init --from raygent-init.json`, zero prompts. You get:
+
+| Artifact | What |
+|---|---|
+| `AGENTS.md` | How to work in the repo — the file every agent reads |
+| `docs/PRODUCT.md`, `docs/PRD.md` | Pre-filled from the conversation |
+| `docs/rules/` | The nine coding rules, gated by your stack |
+| `docs/architecture.md` | Folder map, import rules, the reasoning |
+| `docs/raygent-init.json` | This exact run, replayable with `--from` |
+| `.claude/` | Agents, skills, hooks (Claude Code only) |
+
+**7. Fill what is left.** Whatever the conversation could not answer is a
+`TODO(content)` marker. In the new project:
+
+```
+/bootstrap-project
+```
+
+It interviews for exactly those gaps and refuses to re-run over a finished
+project. When `rg "TODO\(content\)"` comes back empty, the docs are done.
+
+**8. Build.**
+
+```bash
+pnpm install && pnpm dev
+```
+
+`/verify` runs lint, tests and build and quotes the decisive line of each.
+
+**What is not automatic:** the adoption in step 3 is a proposal to correct, not a
+conversion. Unanswered questions stay `TODO(content)` by design — that marker is
+a prompt for a real answer, and it is why step 7 exists.
+
 ### Init
 
 Scaffolds a new project, then offers a checklist of recommended skills to
@@ -118,9 +192,9 @@ interview, then two checklists. Fine once, tedious by the fifth landing page. An
 **init spec** is one JSON file holding every answer:
 
 ```bash
-raygent init --template > rocsteer.json   # fillable, with comments
-$EDITOR rocsteer.json
-raygent init --from rocsteer.json              # asks nothing
+raygent init --template > acme.json   # fillable, with comments
+$EDITOR acme.json
+raygent init --from acme.json         # asks nothing
 ```
 
 It covers identity, stack, add-ons, agents, rules, the interview answers, and the
@@ -140,8 +214,8 @@ Precedence is one rule: **explicit flag > spec > preset > prompt > default.**
 once rather than one per run:
 
 ```
-rocsteer.json has 3 problems:
-  project.name     "Rocsteer Landing Page" cannot be a folder name — use letters,
+acme.json has 3 problems:
+  project.name     "Acme Landing Page" cannot be a folder name — use letters,
                    digits, ".", "_", "-" (the brand goes in project.brand)
   stack.framework  "nextjs14" is not valid (nextjs, vite-react, tanstack-start,
                    remix). Did you mean "nextjs"?
@@ -153,12 +227,10 @@ Nothing was generated.
 `--fill-gaps` prompts for fields the spec omits. It never downgrades an invalid
 value to a question — a typo must fail, not become a prompt.
 
-By default the project is created in a new `./<name>/` folder. `--here`
-
 **Two names, on purpose.** The **brand name** is what a visitor reads — headings,
 the browser tab, the logo, the OG card. The **project name** is what npm and the
 filesystem need. Init asks for the brand first and derives the project name from
-it (`Rocsteer Landing Page` → `rocsteer-landing-page`), offering that as an
+it (`Acme Landing Page` → `acme-landing-page`), offering that as an
 editable default; nothing forces them to match. Given only a project name, the
 brand is title-cased from it, so a preset or a scripted run never ships a
 kebab-case page title. `--brand` overrides that for names title-casing gets wrong.
