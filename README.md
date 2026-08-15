@@ -59,6 +59,36 @@ Not found: market, businessModel, successMetrics, differentiation, insight
 Correct anything wrong. It does not invent: a question your docs do not answer
 stays a gap and gets asked in step 4.
 
+**Formats it can read:** `.md`, `.txt`, `.pdf`. **`.docx` it cannot** — export to
+PDF, Markdown or plain text first (Word: *Save As*; Google Docs: *Download →
+Markdown*). It says so rather than failing quietly.
+
+**3c — if you would rather write than talk.** Get a template and fill it in:
+
+```bash
+raygent brief > IDEA.md          # --type client for client work
+$EDITOR IDEA.md
+```
+
+Then `/raygent init` in that folder. The brief has a hidden comment under each
+heading naming the interview field, so adoption is exact rather than inferred —
+and a section you leave blank is unambiguously a gap:
+
+```markdown
+## Who it is for
+<!-- targetUsers -->
+
+_The *first* user, specific enough to find ten of them this week._
+
+> Example: Two-to-ten person freight brokerages that still quote in spreadsheets.
+```
+
+**Do you ever have to write JSON?** No, not on this path. `docs/raygent-init.json`
+is written *for* you and shown for approval at step 6. Hand-writing a spec is only
+for the no-agent route — CI, a script, or the fifth identical landing page — where
+`raygent init --template` gives you the JSON and `--from` runs it with zero
+prompts and no conversation.
+
 ### 4. Answer the questions, and expect an argument
 
 It asks what it does not already know — problem, users, market, model, metrics —
