@@ -41,8 +41,36 @@ docs/interview.json      previous guided run
 docs/raygent-init.json   previous init spec
 ```
 
-If the directory holds a single markdown file and little else, that is the whole
-idea in one file — read it.
+If the directory holds a single document and little else, that is the whole idea
+in one file — read it, whatever it is called.
+
+**Formats you can read:** `.md`, `.txt`, `.pdf`. For a PDF, `Read` takes a
+`pages` parameter and requires it past 10 pages.
+
+**`.docx` you cannot read.** Do not try, and do not attempt a conversion — there
+is no converter to rely on. Say so and ask for an export:
+
+```
+Found my-idea.docx — I can't read that format directly.
+
+Export it first:
+  Word          File > Save As > PDF, or Plain Text (.txt)
+  Google Docs   File > Download > Markdown (.md)
+
+Then run /raygent init again.
+```
+
+**A brief from `raygent brief` is authoritative.** It carries an HTML comment
+holding the interview key directly under each heading. Map by that marker and
+skip inference entirely — that is what the markers are for. A section whose body
+is empty or still holds the `> Example:` line is a **gap**, not an answer.
+
+If the directory has nothing to adopt and the user would rather write than talk,
+offer it:
+
+```bash
+raygent brief > IDEA.md          # --type client for client work
+```
 
 **Map what you find onto the interview keys** in `reference/questions.md`, and
 remember which file each answer came from. `reference/questions.md` has a section
