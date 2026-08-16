@@ -116,6 +116,7 @@ export const ICON_CHOICES = [
 
 export const DOC_SETS: Record<ProjectType, string[]> = {
   product: [
+    'STATE.md',
     'PRD.md',
     'VISION.md',
     'ARCHITECTURE.md',
@@ -127,6 +128,7 @@ export const DOC_SETS: Record<ProjectType, string[]> = {
     'DESIGN.html',
   ],
   client: [
+    'STATE.md',
     'PRD.md',
     'scope.md',
     'handoff.md',
@@ -213,6 +215,7 @@ export function resolveTargetDir(projectName: string, cwd: string, here?: boolea
 
 export function docTitle(filename: string): string {
   const base = filename.replace(/\.(md|html)$/, '');
+  if (base === 'STATE') return 'State';
   return base
     .split('-')
     .map((segment) => (segment === segment.toUpperCase() ? segment : segment[0].toUpperCase() + segment.slice(1)))

@@ -30,6 +30,18 @@ export function bundledSkillsDir(): string {
   return path.join(fileURLToPath(new URL('..', import.meta.url)), 'skills');
 }
 
+/**
+ * The assets/ folder shipped with raygent itself, holding template assets like
+ * project/STATE.md, commands/start.md, commands/wrap.md, etc.
+ * dist/paths.js -> package root is one level up.
+ *
+ * Only reachable in a published install if "assets" is in package.json's files
+ * array. Leaving it out fails silently: everything works from a dev checkout.
+ */
+export function bundledAssetsDir(): string {
+  return path.join(fileURLToPath(new URL('..', import.meta.url)), 'assets');
+}
+
 /** Where Claude Code reads personal skills from — the default install target. */
 export function globalSkillsDir(): string {
   return path.join(os.homedir(), '.claude', 'skills');

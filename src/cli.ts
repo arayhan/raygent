@@ -56,6 +56,7 @@ import { supportsRealScaffold, supportsRealScaffoldBackend, runClientProjectScaf
 import { questionsForType, runInterview, type InterviewAnswers } from './interview.js';
 import { renderBrief } from './brief.js';
 import { writeInterviewJson, applyInterviewToScaffoldDocs, applyInterviewToStubDocs } from './doc-fill.js';
+import { emitProjectState } from './project-emit.js';
 import {
   loadAiConfig,
   loadConfig,
@@ -977,9 +978,29 @@ program
                 `Left as TODO (skipped or unmatched — update client-project-scaffold if sections are missed):\n  ${missed.join('\n  ')}`
               );
             }
+            const emitResult = await emitProjectState({
+              targetDir,
+              hasClaudeCode: agentTools.includes('claude-code'),
+              force: Boolean(opts.force),
+            });
+            if (emitResult.failed.length > 0) {
+              console.log(
+                `Left as TODO (state emit failed — update client-project-scaffold if anchors are missed):\n  ${emitResult.failed.join('\n  ')}`
+              );
+            }
           } else {
             await applyInterviewToStubDocs(docsDir, type, answers, brandName);
             console.log('Docs pre-filled from your answers (skipped questions stay as TODOs).');
+            const emitResult = await emitProjectState({
+              targetDir,
+              hasClaudeCode: agentTools.includes('claude-code'),
+              force: Boolean(opts.force),
+            });
+            if (emitResult.failed.length > 0) {
+              console.log(
+                `Left as TODO (state emit failed):\n  ${emitResult.failed.join('\n  ')}`
+              );
+            }
           }
           console.log(`Raw answers saved to ${path.join(docsDir, 'interview.json')}`);
 
@@ -1024,6 +1045,17 @@ program
                 console.error(`AI step failed: ${(aiErr as Error).message} — continuing.`);
               }
             }
+          }
+        } else {
+          const emitResult = await emitProjectState({
+            targetDir,
+            hasClaudeCode: agentTools.includes('claude-code'),
+            force: Boolean(opts.force),
+          });
+          if (emitResult.failed.length > 0) {
+            console.log(
+              `State emit failed:\n  ${emitResult.failed.join('\n  ')}`
+            );
           }
         }
 

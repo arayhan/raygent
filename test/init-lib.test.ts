@@ -16,6 +16,7 @@ afterEach(() => {
 
 describe('docTitle', () => {
   it('derives titles from filenames', () => {
+    expect(docTitle('STATE.md')).toBe('State');
     expect(docTitle('PRD.md')).toBe('PRD');
     expect(docTitle('product-roadmap.md')).toBe('Product Roadmap');
     expect(docTitle('handoff.md')).toBe('Handoff');
@@ -23,7 +24,7 @@ describe('docTitle', () => {
 });
 
 describe('initProject', () => {
-  it('creates the 9 product docs, including DESIGN.html', async () => {
+  it('creates the 10 product docs, including DESIGN.html', async () => {
     const { docsDir } = await initProject(
       { projectName: 'demo', platform: 'web', framework: 'nextjs', type: 'product' },
       cwd
@@ -39,6 +40,7 @@ describe('initProject', () => {
         'DESIGN.md',
         'PRD.md',
         'PROGRESS.md',
+        'STATE.md',
         'VISION.md',
         'product-roadmap.md',
       ].sort()
@@ -46,7 +48,7 @@ describe('initProject', () => {
     expect(fs.readFileSync(path.join(docsDir, 'PRD.md'), 'utf8')).toContain('# PRD');
   });
 
-  it('creates the 8 client docs, without DESIGN.html', async () => {
+  it('creates the 9 client docs, without DESIGN.html', async () => {
     const { docsDir } = await initProject(
       { projectName: 'demo', platform: 'cli', framework: 'node', type: 'client' },
       cwd
@@ -54,7 +56,7 @@ describe('initProject', () => {
 
     const files = fs.readdirSync(docsDir).sort();
     expect(files).toEqual(
-      ['ANTISLOP.md', 'ARCHITECTURE.md', 'DATABASE.md', 'DESIGN.md', 'PRD.md', 'PROGRESS.md', 'handoff.md', 'scope.md'].sort()
+      ['ANTISLOP.md', 'ARCHITECTURE.md', 'DATABASE.md', 'DESIGN.md', 'PRD.md', 'PROGRESS.md', 'STATE.md', 'handoff.md', 'scope.md'].sort()
     );
     expect(files).not.toContain('DESIGN.html');
   });

@@ -10,6 +10,8 @@ import {
   renderStubDoc,
   applyInterviewToStubDocs,
   writeInterviewJson,
+  insertStateDocInAgentsMd,
+  STATE_DOC_ROW,
 } from '../src/doc-fill.js';
 import type { InterviewAnswers } from '../src/interview.js';
 import { CLIENT_QUESTIONS, PRODUCT_QUESTIONS } from '../src/interview.js';
@@ -317,3 +319,57 @@ describe('writeInterviewJson', () => {
     expect(parsed.answers.solution).toBe('');
   });
 });
+
+describe('insertStateDocInAgentsMd', () => {
+  const sampleAgentsMd = [
+    '# Test Project',
+    '',
+    '## Docs (read in this order)',
+    '',
+    '| Doc | Content |',
+    '|---|---|',
+    '| [docs/PRODUCT.md](docs/PRODUCT.md) | Product truth |',
+    '| [docs/PRD.md](docs/PRD.md) | Product spec |',
+    '| [docs/architecture.md](docs/architecture.md) | System diagram |',
+    '| [docs/PROGRESS.md](docs/PROGRESS.md) | Decision/progress log |',
+    '',
+    '## Coding rules',
+  ].join('\n');
+
+  it('inserts STATE.md row immediately before the PROGRESS.md row', () => {
+    const { text, didInsert } = insertStateDocInAgentsMd(sampleAgentsMd);
+    expect(didInsert).toBe(true);
+    expect(text).toContain(
+      `${STATE_DOC_ROW}\n| [docs/PROGRESS.md](docs/PROGRESS.md) | Decision/progress log |`
+    );
+  });
+
+  it('is idempotent and leaves text unchanged if STATE.md is already present', () => {
+    const alreadyInserted = [
+      '| [docs/PRODUCT.md](docs/PRODUCT.md) | Product truth |',
+      STATE_DOC_ROW,
+      '| [docs/PROGRESS.md](docs/PROGRESS.md) | Decision/progress log |',
+    ].join('\n');
+
+    const { text, didInsert } = insertStateDocInAgentsMd(alreadyInserted);
+    expect(didInsert).toBe(true);
+    expect(text).toBe(alreadyInserted);
+  });
+
+  it('returns didInsert=false when PROGRESS.md row is not found (fails loudly)', () => {
+    const brokenDocsTable = [
+      '# Test Project',
+      '',
+      '## Docs (read in this order)',
+      '',
+      '| Doc | Content |',
+      '|---|---|',
+      '| [docs/PRODUCT.md](docs/PRODUCT.md) | Product truth |',
+    ].join('\n');
+
+    const { text, didInsert } = insertStateDocInAgentsMd(brokenDocsTable);
+    expect(didInsert).toBe(false);
+    expect(text).toBe(brokenDocsTable);
+  });
+});
+

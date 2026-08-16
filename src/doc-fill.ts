@@ -354,3 +354,28 @@ export async function applyInterviewToStubDocs(
     await fs.writeFile(path.join(docsDir, filename), rendered);
   }
 }
+
+export const STATE_DOC_ROW =
+  '| [docs/STATE.md](docs/STATE.md) | Where the project is right now — phase, next task, blockers. Read first, every session |';
+
+/**
+ * Insert the STATE.md row into the Docs table of AGENTS.md right before the
+ * PROGRESS.md row. If the table already mentions STATE.md, this is a no-op and
+ * didInsert is true. If the PROGRESS.md row is not found, didInsert is false
+ * so callers can fail loudly.
+ */
+export function insertStateDocInAgentsMd(markdown: string): { text: string; didInsert: boolean } {
+  if (markdown.includes('[docs/STATE.md](docs/STATE.md)')) {
+    return { text: markdown, didInsert: true };
+  }
+
+  const lines = markdown.split('\n');
+  const progressIndex = lines.findIndex((line) => line.includes('[docs/PROGRESS.md](docs/PROGRESS.md)'));
+  if (progressIndex === -1) {
+    return { text: markdown, didInsert: false };
+  }
+
+  const next = [...lines.slice(0, progressIndex), STATE_DOC_ROW, ...lines.slice(progressIndex)];
+  return { text: next.join('\n'), didInsert: true };
+}
+
