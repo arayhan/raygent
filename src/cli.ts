@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { Command } from 'commander';
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
-import { listSkills, addSkill, removeSkill, skillDestDir, skillSourceDir, type SkillInfo } from './skill-lib.js';
+import { listSkills, addSkill, removeSkill, skillDestDir, skillDestDirs, skillSourceDir, type SkillInfo } from './skill-lib.js';
 import {
   enrichSkills,
   groupByCategory,
@@ -133,7 +133,9 @@ skill
           }
           throw err;
         }
-        console.log(`Installed '${skillName}' to ${path.join(skillDestDir(roots, scope), skillName)}`);
+        for (const dest of skillDestDirs(roots, scope)) {
+          console.log(`Installed '${skillName}' to ${path.join(dest, skillName)}`);
+        }
       }
       if (!name) console.log(`Try: /${wanted[0]} init`);
     } catch (err) {
@@ -150,7 +152,9 @@ skill
     try {
       const roots = defaultRoots();
       await addSkill(name, roots, { force: opts.force, scope: 'project' });
-      console.log(`Installed skill '${name}' to ${path.join(roots.projectSkillsDir, name)}`);
+      for (const dest of skillDestDirs(roots, 'project')) {
+        console.log(`Installed skill '${name}' to ${path.join(dest, name)}`);
+      }
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;

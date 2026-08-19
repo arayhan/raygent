@@ -108,7 +108,9 @@ describe('bundled skills', () => {
     const roots = isolatedRoots();
     await addSkill('raygent', roots, { scope: 'global' });
     expect(await exists(path.join(roots.globalSkillsDir, 'raygent', 'SKILL.md'))).toBe(true);
+    expect(await exists(path.join(roots.globalAgentSkillsDir, 'raygent', 'SKILL.md'))).toBe(true);
     expect(await exists(path.join(roots.projectSkillsDir, 'raygent'))).toBe(false);
+    expect(await exists(path.join(roots.agentSkillsDir, 'raygent'))).toBe(false);
   });
 
   it('does not create a project skills directory during a global install', async () => {
@@ -117,6 +119,7 @@ describe('bundled skills', () => {
     const roots = isolatedRoots();
     await addSkill('raygent', roots, { scope: 'global' });
     expect(await exists(roots.projectSkillsDir)).toBe(false);
+    expect(await exists(roots.agentSkillsDir)).toBe(false);
   });
 
   it('scope project and the default produce the same tree', async () => {

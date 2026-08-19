@@ -12,10 +12,27 @@ export interface SkillInfo {
 }
 
 /**
- * Where an install lands. Global is ~/.claude/skills and works everywhere;
- * project is ./.claude/skills and works only here.
+ * Where an install lands. Global is ~/.claude/skills and ~/.agents/skills;
+ * project is ./.claude/skills and ./.agent/skills.
  */
 export type SkillScope = 'global' | 'project';
+
+export function skillDestDirs(roots: Roots, scope: SkillScope): string[] {
+  if (scope === 'global') {
+    const dirs: string[] = [];
+    if (roots.globalSkillsDir) dirs.push(roots.globalSkillsDir);
+    if (roots.globalAgentSkillsDir && !dirs.includes(roots.globalAgentSkillsDir)) {
+      dirs.push(roots.globalAgentSkillsDir);
+    }
+    return dirs;
+  }
+  const dirs: string[] = [];
+  if (roots.projectSkillsDir) dirs.push(roots.projectSkillsDir);
+  if (roots.agentSkillsDir && !dirs.includes(roots.agentSkillsDir)) {
+    dirs.push(roots.agentSkillsDir);
+  }
+  return dirs;
+}
 
 export function skillDestDir(roots: Roots, scope: SkillScope): string {
   return scope === 'global' ? roots.globalSkillsDir : roots.projectSkillsDir;
@@ -101,11 +118,9 @@ export async function addSkill(
 ): Promise<void> {
   assertValidSkillName(name);
 
-  // Defaults to project so every existing caller keeps its behaviour --
-  // installSelectedSkills writes into a freshly generated project and must not
-  // start scattering skills into the user's home directory. Only the CLI's
-  // install command asks for global.
-  const destDir = path.join(skillDestDir(roots, opts.scope ?? 'project'), name);
+  const scope = opts.scope ?? 'project';
+  const primaryDestDir = path.join(skillDestDir(roots, scope), name);
+  const allDestDirs = skillDestDirs(roots, scope).map((d) => path.join(d, name));
 
   async function isDir(dir: string): Promise<boolean> {
     try {
@@ -137,29 +152,32 @@ export async function addSkill(
     throw new Error(`skill '${name}' not found in ${candidateDirs.join(', ')}`);
   }
 
-  const destExists = await exists(destDir);
-  if (destExists && !opts.force) {
-    throw new Error(`skill '${name}' is already installed at ${destDir} (use --force to overwrite)`);
+  const primaryExists = await exists(primaryDestDir);
+  if (primaryExists && !opts.force) {
+    throw new Error(`skill '${name}' is already installed at ${primaryDestDir} (use --force to overwrite)`);
   }
 
-  // The destination's parent, not the project's. Using projectSkillsDir here
-  // meant a global install created an empty ./.claude/skills in whatever
-  // directory you happened to be standing in.
-  await fs.mkdir(path.dirname(destDir), { recursive: true });
-  if (destExists) {
-    // copy fully into a temp sibling first so a failed copy never destroys the
-    // existing install
-    const tmpDir = `${destDir}.raygent-tmp`;
-    await fs.rm(tmpDir, { recursive: true, force: true });
-    try {
-      await fs.cp(sourceDir, tmpDir, { recursive: true });
-      await fs.rm(destDir, { recursive: true, force: true });
-      await fs.rename(tmpDir, destDir);
-    } finally {
-      await fs.rm(tmpDir, { recursive: true, force: true });
+  for (const destDir of allDestDirs) {
+    if (path.resolve(destDir) === path.resolve(sourceDir)) {
+      continue;
     }
-  } else {
-    await fs.cp(sourceDir, destDir, { recursive: true });
+    await fs.mkdir(path.dirname(destDir), { recursive: true });
+    const destExists = await exists(destDir);
+    if (destExists) {
+      // copy fully into a temp sibling first so a failed copy never destroys the
+      // existing install
+      const tmpDir = `${destDir}.raygent-tmp`;
+      await fs.rm(tmpDir, { recursive: true, force: true });
+      try {
+        await fs.cp(sourceDir, tmpDir, { recursive: true });
+        await fs.rm(destDir, { recursive: true, force: true });
+        await fs.rename(tmpDir, destDir);
+      } finally {
+        await fs.rm(tmpDir, { recursive: true, force: true });
+      }
+    } else {
+      await fs.cp(sourceDir, destDir, { recursive: true });
+    }
   }
 }
 
@@ -170,11 +188,19 @@ export async function removeSkill(
 ): Promise<void> {
   assertValidSkillName(name);
 
-  // Same default as addSkill, so remove undoes what add did.
-  const scopeDir = skillDestDir(roots, opts.scope ?? 'project');
-  const destDir = path.join(scopeDir, name);
-  if (!(await exists(destDir))) {
+  const scope = opts.scope ?? 'project';
+  const destDirs = skillDestDirs(roots, scope).map((d) => path.join(d, name));
+  let removed = 0;
+
+  for (const destDir of destDirs) {
+    if (await exists(destDir)) {
+      await fs.rm(destDir, { recursive: true, force: true });
+      removed++;
+    }
+  }
+
+  if (removed === 0) {
+    const scopeDir = skillDestDir(roots, scope);
     throw new Error(`skill '${name}' is not installed in ${scopeDir}`);
   }
-  await fs.rm(destDir, { recursive: true, force: true });
 }

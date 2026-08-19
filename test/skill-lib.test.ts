@@ -120,14 +120,28 @@ describe('listSkills', () => {
 });
 
 describe('addSkill', () => {
-  it('copies a skill from skillsRoot to projectSkillsDir', async () => {
+  it('copies a skill from skillsRoot to projectSkillsDir and agentSkillsDir', async () => {
     fs.mkdirSync(path.join(skillsRoot, 'my-skill'));
     fs.writeFileSync(path.join(skillsRoot, 'my-skill', 'SKILL.md'), '# my-skill');
 
     await addSkill('my-skill', roots);
 
-    const copied = fs.readFileSync(path.join(projectSkillsDir, 'my-skill', 'SKILL.md'), 'utf8');
-    expect(copied).toBe('# my-skill');
+    const copiedClaude = fs.readFileSync(path.join(projectSkillsDir, 'my-skill', 'SKILL.md'), 'utf8');
+    expect(copiedClaude).toBe('# my-skill');
+    const copiedAgent = fs.readFileSync(path.join(agentSkillsDir, 'my-skill', 'SKILL.md'), 'utf8');
+    expect(copiedAgent).toBe('# my-skill');
+  });
+
+  it('copies a skill globally to globalSkillsDir and globalAgentSkillsDir', async () => {
+    fs.mkdirSync(path.join(skillsRoot, 'global-skill'));
+    fs.writeFileSync(path.join(skillsRoot, 'global-skill', 'SKILL.md'), '# global-skill');
+
+    await addSkill('global-skill', roots, { scope: 'global' });
+
+    const copiedClaude = fs.readFileSync(path.join(globalSkillsDir, 'global-skill', 'SKILL.md'), 'utf8');
+    expect(copiedClaude).toBe('# global-skill');
+    const copiedAgent = fs.readFileSync(path.join(globalAgentSkillsDir, 'global-skill', 'SKILL.md'), 'utf8');
+    expect(copiedAgent).toBe('# global-skill');
   });
 
   it('throws when the source skill does not exist in any location', async () => {
