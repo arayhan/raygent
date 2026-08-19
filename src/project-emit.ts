@@ -1,12 +1,31 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { bundledAssetsDir } from './paths.js';
-import { insertStateDocInAgentsMd } from './doc-fill.js';
+import { insertStateDocInAgentsMd, insertPhaseZeroInAgentsMd } from './doc-fill.js';
+
+export interface ProjectDataLayerOptions {
+  platform?: string;
+  kind?: string;
+  target?: string;
+}
+
+/**
+ * Determines if a project includes a data layer.
+ * CLI projects and landing pages do not have a data layer.
+ */
+export function projectHasDataLayer(opts: ProjectDataLayerOptions): boolean {
+  if (opts.platform === 'cli') return false;
+  if (opts.kind === 'landing') return false;
+  return true;
+}
 
 export interface EmitOptions {
   targetDir: string;
   hasClaudeCode: boolean;
   force: boolean;
+  platform?: string;
+  kind?: string;
+  target?: string;
 }
 
 export interface EmitResult {
@@ -74,15 +93,70 @@ export async function emitProjectState(opts: EmitOptions): Promise<EmitResult> {
     }
   }
 
-  // 3. Update AGENTS.md Docs table (if AGENTS.md exists)
+  // 3. Emit docs/tasks/0-*.md
+  const tasksDir = path.join(opts.targetDir, 'docs', 'tasks');
+  const hasDataLayer = projectHasDataLayer(opts);
+
+  const taskFiles = [
+    '0-step-01-scaffold.md',
+    '0-step-02-verify-loop.md',
+    ...(hasDataLayer ? ['0-step-03-data-round-trip.md'] : []),
+    '0-gate-deploy.md',
+  ];
+
+  try {
+    await fs.mkdir(tasksDir, { recursive: true });
+    for (const taskFile of taskFiles) {
+      const relPath = `docs/tasks/${taskFile}`;
+      const srcPath = path.join(assetsDir, 'project', 'tasks', taskFile);
+      const destPath = path.join(tasksDir, taskFile);
+
+      try {
+        const content = await fs.readFile(srcPath, 'utf8');
+        try {
+          await fs.writeFile(destPath, content, { flag });
+          result.written.push(relPath);
+        } catch (err) {
+          if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+            result.skipped.push(relPath);
+          } else {
+            result.failed.push(`${relPath}: ${(err as Error).message}`);
+          }
+        }
+      } catch (err) {
+        result.failed.push(`${relPath}: asset template not found at ${srcPath}`);
+      }
+    }
+  } catch (err) {
+    result.failed.push(`docs/tasks: ${(err as Error).message}`);
+  }
+
+  // 4. Update AGENTS.md Docs table and Phases table (if AGENTS.md exists)
   const agentsMdPath = path.join(opts.targetDir, 'AGENTS.md');
   try {
-    const agentsContent = await fs.readFile(agentsMdPath, 'utf8');
-    const { text, didInsert } = insertStateDocInAgentsMd(agentsContent);
-    if (!didInsert) {
+    let agentsContent = await fs.readFile(agentsMdPath, 'utf8');
+    let modified = false;
+
+    // Docs table insert
+    const stateDocRes = insertStateDocInAgentsMd(agentsContent);
+    if (!stateDocRes.didInsert) {
       result.failed.push('AGENTS.md: Docs table (PROGRESS.md row not found — update client-project-scaffold template)');
-    } else if (text !== agentsContent) {
-      await fs.writeFile(agentsMdPath, text);
+    } else if (stateDocRes.text !== agentsContent) {
+      agentsContent = stateDocRes.text;
+      modified = true;
+    }
+
+    // Phases table insert (Phase 0)
+    const phaseZeroRes = insertPhaseZeroInAgentsMd(agentsContent);
+    if (!phaseZeroRes.didInsert) {
+      result.failed.push('AGENTS.md: Phases table (Phase 1 row not found — update client-project-scaffold template)');
+    } else if (phaseZeroRes.text !== agentsContent) {
+      agentsContent = phaseZeroRes.text;
+      modified = true;
+    }
+
+    if (modified) {
+      await fs.writeFile(agentsMdPath, agentsContent);
     }
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {

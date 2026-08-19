@@ -38,6 +38,35 @@ describe('bundled assets', () => {
     expect(wrapMd).toContain('docs/rules/git-workflow.md');
     expect(wrapMd).toContain('docs/LESSONS.md');
   });
+
+  it('ships Phase 0 step task files with goal, deliverables, acceptance criteria, and handoff', async () => {
+    const tasksDir = path.join(bundledAssetsDir(), 'project', 'tasks');
+    const stepFiles = [
+      '0-step-01-scaffold.md',
+      '0-step-02-verify-loop.md',
+      '0-step-03-data-round-trip.md',
+    ];
+    for (const f of stepFiles) {
+      const content = await fs.readFile(path.join(tasksDir, f), 'utf8');
+      expect(content).toContain('## Goal');
+      expect(content).toContain('## Deliverables');
+      expect(content).toContain('## Acceptance Criteria');
+      expect(content).toMatch(/(?:\*\*handoff:\*\*|handoff:)\s*\w+/);
+    }
+  });
+
+  it('ships 0-gate-deploy.md as a gate without runnable acceptance criteria or handoff line', async () => {
+    const gateMd = await fs.readFile(
+      path.join(bundledAssetsDir(), 'project', 'tasks', '0-gate-deploy.md'),
+      'utf8'
+    );
+    expect(gateMd).toContain('# 0-gate-deploy');
+    expect(gateMd).toContain('## Decision Maker');
+    expect(gateMd).toContain('## Unblocks');
+    expect(gateMd).toContain('## Questions');
+    expect(gateMd).toContain('## Sign-off');
+    expect(gateMd).not.toContain('handoff:');
+  });
 });
 
 describe('packaging', () => {
@@ -51,5 +80,9 @@ describe('packaging', () => {
     await expect(fs.access(path.join(bundledAssetsDir(), 'project', 'STATE.md'))).resolves.toBeUndefined();
     await expect(fs.access(path.join(bundledAssetsDir(), 'project', 'commands', 'start.md'))).resolves.toBeUndefined();
     await expect(fs.access(path.join(bundledAssetsDir(), 'project', 'commands', 'wrap.md'))).resolves.toBeUndefined();
+    await expect(fs.access(path.join(bundledAssetsDir(), 'project', 'tasks', '0-step-01-scaffold.md'))).resolves.toBeUndefined();
+    await expect(fs.access(path.join(bundledAssetsDir(), 'project', 'tasks', '0-step-02-verify-loop.md'))).resolves.toBeUndefined();
+    await expect(fs.access(path.join(bundledAssetsDir(), 'project', 'tasks', '0-step-03-data-round-trip.md'))).resolves.toBeUndefined();
+    await expect(fs.access(path.join(bundledAssetsDir(), 'project', 'tasks', '0-gate-deploy.md'))).resolves.toBeUndefined();
   });
 });

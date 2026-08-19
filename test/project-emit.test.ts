@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { emitProjectState } from '../src/project-emit.js';
-import { STATE_DOC_ROW } from '../src/doc-fill.js';
+import { emitProjectState, projectHasDataLayer } from '../src/project-emit.js';
+import { STATE_DOC_ROW, PHASE_ZERO_ROW } from '../src/doc-fill.js';
 
 let tmp: string;
 
@@ -22,6 +22,21 @@ async function exists(p: string): Promise<boolean> {
     .catch(() => false);
 }
 
+describe('projectHasDataLayer', () => {
+  it('returns true for web applications with data layers', () => {
+    expect(projectHasDataLayer({ platform: 'web', kind: 'app' })).toBe(true);
+    expect(projectHasDataLayer({ platform: 'web' })).toBe(true);
+  });
+
+  it('returns false for CLI projects', () => {
+    expect(projectHasDataLayer({ platform: 'cli' })).toBe(false);
+  });
+
+  it('returns false for landing pages', () => {
+    expect(projectHasDataLayer({ platform: 'web', kind: 'landing' })).toBe(false);
+  });
+});
+
 describe('emitProjectState', () => {
   const sampleAgentsMd = [
     '# Test Project',
@@ -33,21 +48,34 @@ describe('emitProjectState', () => {
     '| [docs/PRODUCT.md](docs/PRODUCT.md) | Product truth |',
     '| [docs/PROGRESS.md](docs/PROGRESS.md) | Decision log |',
     '',
+    '## Phases',
+    '',
+    '| Phase | Scope | Status |',
+    '|---|---|---|',
+    '| 1 | MVP features | Build now |',
+    '| 2 | Polish | After 1 |',
+    '',
   ].join('\n');
 
-  it('emits STATE.md and .claude/commands when hasClaudeCode is true', async () => {
+  it('emits STATE.md, .claude/commands, and 4 Phase 0 tasks for web apps', async () => {
     await fs.writeFile(path.join(tmp, 'AGENTS.md'), sampleAgentsMd);
 
     const result = await emitProjectState({
       targetDir: tmp,
       hasClaudeCode: true,
       force: false,
+      platform: 'web',
+      kind: 'app',
     });
 
     expect(result.written).toEqual([
       'docs/STATE.md',
       '.claude/commands/start.md',
       '.claude/commands/wrap.md',
+      'docs/tasks/0-step-01-scaffold.md',
+      'docs/tasks/0-step-02-verify-loop.md',
+      'docs/tasks/0-step-03-data-round-trip.md',
+      'docs/tasks/0-gate-deploy.md',
     ]);
     expect(result.skipped).toEqual([]);
     expect(result.failed).toEqual([]);
@@ -55,45 +83,91 @@ describe('emitProjectState', () => {
     expect(await exists(path.join(tmp, 'docs', 'STATE.md'))).toBe(true);
     expect(await exists(path.join(tmp, '.claude', 'commands', 'start.md'))).toBe(true);
     expect(await exists(path.join(tmp, '.claude', 'commands', 'wrap.md'))).toBe(true);
+    expect(await exists(path.join(tmp, 'docs', 'tasks', '0-step-01-scaffold.md'))).toBe(true);
+    expect(await exists(path.join(tmp, 'docs', 'tasks', '0-step-02-verify-loop.md'))).toBe(true);
+    expect(await exists(path.join(tmp, 'docs', 'tasks', '0-step-03-data-round-trip.md'))).toBe(true);
+    expect(await exists(path.join(tmp, 'docs', 'tasks', '0-gate-deploy.md'))).toBe(true);
 
     const stateContent = await fs.readFile(path.join(tmp, 'docs', 'STATE.md'), 'utf8');
     expect(stateContent.startsWith('# State\n')).toBe(true);
 
     const agentsContent = await fs.readFile(path.join(tmp, 'AGENTS.md'), 'utf8');
     expect(agentsContent).toContain(STATE_DOC_ROW);
+    expect(agentsContent).toContain(PHASE_ZERO_ROW);
   });
 
-  it('emits STATE.md but does NOT create .claude/ directory when hasClaudeCode is false', async () => {
+  it('skips 0-step-03-data-round-trip for landing pages (emits 3 tasks)', async () => {
     const result = await emitProjectState({
       targetDir: tmp,
       hasClaudeCode: false,
       force: false,
+      platform: 'web',
+      kind: 'landing',
     });
 
-    expect(result.written).toEqual(['docs/STATE.md']);
-    expect(result.skipped).toEqual([]);
-    expect(result.failed).toEqual([]);
+    expect(result.written).toEqual([
+      'docs/STATE.md',
+      'docs/tasks/0-step-01-scaffold.md',
+      'docs/tasks/0-step-02-verify-loop.md',
+      'docs/tasks/0-gate-deploy.md',
+    ]);
+    expect(await exists(path.join(tmp, 'docs', 'tasks', '0-step-03-data-round-trip.md'))).toBe(false);
+  });
 
-    expect(await exists(path.join(tmp, 'docs', 'STATE.md'))).toBe(true);
-    expect(await exists(path.join(tmp, '.claude'))).toBe(false);
+  it('skips 0-step-03-data-round-trip for CLI projects (emits 3 tasks)', async () => {
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: false,
+      force: false,
+      platform: 'cli',
+    });
+
+    expect(result.written).toEqual([
+      'docs/STATE.md',
+      'docs/tasks/0-step-01-scaffold.md',
+      'docs/tasks/0-step-02-verify-loop.md',
+      'docs/tasks/0-gate-deploy.md',
+    ]);
+    expect(await exists(path.join(tmp, 'docs', 'tasks', '0-step-03-data-round-trip.md'))).toBe(false);
+  });
+
+  it('creates docs/tasks directory when it does not exist (stub path)', async () => {
+    expect(await exists(path.join(tmp, 'docs', 'tasks'))).toBe(false);
+
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: false,
+      force: false,
+      platform: 'cli',
+    });
+
+    expect(result.failed).toEqual([]);
+    expect(await exists(path.join(tmp, 'docs', 'tasks'))).toBe(true);
   });
 
   it('skips existing files when force is false, leaving existing content intact', async () => {
     const docsDir = path.join(tmp, 'docs');
-    await fs.mkdir(docsDir, { recursive: true });
+    const tasksDir = path.join(docsDir, 'tasks');
+    await fs.mkdir(tasksDir, { recursive: true });
     await fs.writeFile(path.join(docsDir, 'STATE.md'), 'EXISTING_STATE');
+    await fs.writeFile(path.join(tasksDir, '0-step-01-scaffold.md'), 'EXISTING_TASK');
 
     const result = await emitProjectState({
       targetDir: tmp,
       hasClaudeCode: true,
       force: false,
+      platform: 'web',
+      kind: 'app',
     });
 
     expect(result.skipped).toContain('docs/STATE.md');
+    expect(result.skipped).toContain('docs/tasks/0-step-01-scaffold.md');
     expect(result.written).not.toContain('docs/STATE.md');
 
     const content = await fs.readFile(path.join(docsDir, 'STATE.md'), 'utf8');
     expect(content).toBe('EXISTING_STATE');
+    const taskContent = await fs.readFile(path.join(tasksDir, '0-step-01-scaffold.md'), 'utf8');
+    expect(taskContent).toBe('EXISTING_TASK');
   });
 
   it('overwrites existing files when force is true', async () => {
@@ -105,6 +179,8 @@ describe('emitProjectState', () => {
       targetDir: tmp,
       hasClaudeCode: false,
       force: true,
+      platform: 'web',
+      kind: 'app',
     });
 
     expect(result.written).toContain('docs/STATE.md');
@@ -130,10 +206,42 @@ describe('emitProjectState', () => {
       targetDir: tmp,
       hasClaudeCode: true,
       force: false,
+      platform: 'web',
+      kind: 'app',
     });
 
     expect(result.failed.length).toBeGreaterThan(0);
-    expect(result.failed[0]).toContain('AGENTS.md: Docs table (PROGRESS.md row not found');
+    expect(result.failed.some((f) => f.includes('PROGRESS.md row not found'))).toBe(true);
+  });
+
+  it('fails loudly when AGENTS.md exists but has no Phase 1 anchor', async () => {
+    const brokenPhasesAgentsMd = [
+      '# Test Project',
+      '',
+      '## Docs (read in this order)',
+      '',
+      '| Doc | Content |',
+      '|---|---|',
+      '| [docs/PRODUCT.md](docs/PRODUCT.md) | Product truth |',
+      '| [docs/PROGRESS.md](docs/PROGRESS.md) | Decision log |',
+      '',
+      '## Phases',
+      '',
+      '| Phase | Scope | Status |',
+      '|---|---|---|',
+    ].join('\n');
+    await fs.writeFile(path.join(tmp, 'AGENTS.md'), brokenPhasesAgentsMd);
+
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: true,
+      force: false,
+      platform: 'web',
+      kind: 'app',
+    });
+
+    expect(result.failed.length).toBeGreaterThan(0);
+    expect(result.failed.some((f) => f.includes('Phase 1 row not found'))).toBe(true);
   });
 
   it('handles missing AGENTS.md without errors (stub projects)', async () => {
@@ -141,9 +249,11 @@ describe('emitProjectState', () => {
       targetDir: tmp,
       hasClaudeCode: false,
       force: false,
+      platform: 'cli',
     });
 
     expect(result.failed).toEqual([]);
     expect(result.written).toContain('docs/STATE.md');
+    expect(result.written).toContain('docs/tasks/0-step-01-scaffold.md');
   });
 });

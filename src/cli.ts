@@ -982,6 +982,9 @@ program
               targetDir,
               hasClaudeCode: agentTools.includes('claude-code'),
               force: Boolean(opts.force),
+              platform,
+              kind: isLanding ? 'landing' : 'app',
+              target: resolvedTarget,
             });
             if (emitResult.failed.length > 0) {
               console.log(
@@ -995,6 +998,9 @@ program
               targetDir,
               hasClaudeCode: agentTools.includes('claude-code'),
               force: Boolean(opts.force),
+              platform,
+              kind: isLanding ? 'landing' : 'app',
+              target: resolvedTarget,
             });
             if (emitResult.failed.length > 0) {
               console.log(
@@ -1051,6 +1057,9 @@ program
             targetDir,
             hasClaudeCode: agentTools.includes('claude-code'),
             force: Boolean(opts.force),
+            platform,
+            kind: isLanding ? 'landing' : 'app',
+            target: resolvedTarget,
           });
           if (emitResult.failed.length > 0) {
             console.log(

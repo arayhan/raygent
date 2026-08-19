@@ -379,3 +379,27 @@ export function insertStateDocInAgentsMd(markdown: string): { text: string; didI
   return { text: next.join('\n'), didInsert: true };
 }
 
+export const PHASE_ZERO_ROW = '| 0 | Walking skeleton + deploy | Build first |';
+
+/**
+ * Insert the Phase 0 row into the Phases table of AGENTS.md right before the
+ * Phase 1 row. If the table already mentions Phase 0, this is a no-op and
+ * didInsert is true. If the Phase 1 row is not found, didInsert is false
+ * so callers can fail loudly.
+ */
+export function insertPhaseZeroInAgentsMd(markdown: string): { text: string; didInsert: boolean } {
+  if (/^\|\s*0\s*\|/m.test(markdown)) {
+    return { text: markdown, didInsert: true };
+  }
+
+  const lines = markdown.split('\n');
+  const phase1Index = lines.findIndex((line) => /^\|\s*1\s*\|/.test(line));
+  if (phase1Index === -1) {
+    return { text: markdown, didInsert: false };
+  }
+
+  const next = [...lines.slice(0, phase1Index), PHASE_ZERO_ROW, ...lines.slice(phase1Index)];
+  return { text: next.join('\n'), didInsert: true };
+}
+
+

@@ -12,6 +12,8 @@ import {
   writeInterviewJson,
   insertStateDocInAgentsMd,
   STATE_DOC_ROW,
+  insertPhaseZeroInAgentsMd,
+  PHASE_ZERO_ROW,
 } from '../src/doc-fill.js';
 import type { InterviewAnswers } from '../src/interview.js';
 import { CLIENT_QUESTIONS, PRODUCT_QUESTIONS } from '../src/interview.js';
@@ -372,4 +374,56 @@ describe('insertStateDocInAgentsMd', () => {
     expect(text).toBe(brokenDocsTable);
   });
 });
+
+describe('insertPhaseZeroInAgentsMd', () => {
+  const sampleAgentsMd = [
+    '# Test Project',
+    '',
+    '## Phases',
+    '',
+    '| Phase | Scope | Status |',
+    '|---|---|---|',
+    '| 1 | MVP features | Build now |',
+    '| 2 | Polish | After 1 |',
+    '',
+  ].join('\n');
+
+  it('inserts Phase 0 row immediately before the Phase 1 row', () => {
+    const { text, didInsert } = insertPhaseZeroInAgentsMd(sampleAgentsMd);
+    expect(didInsert).toBe(true);
+    expect(text).toContain(
+      `${PHASE_ZERO_ROW}\n| 1 | MVP features | Build now |`
+    );
+  });
+
+  it('is idempotent and leaves text unchanged if Phase 0 is already present', () => {
+    const alreadyInserted = [
+      '| Phase | Scope | Status |',
+      '|---|---|---|',
+      PHASE_ZERO_ROW,
+      '| 1 | MVP features | Build now |',
+    ].join('\n');
+
+    const { text, didInsert } = insertPhaseZeroInAgentsMd(alreadyInserted);
+    expect(didInsert).toBe(true);
+    expect(text).toBe(alreadyInserted);
+  });
+
+  it('returns didInsert=false when Phase 1 row is not found (fails loudly)', () => {
+    const brokenPhasesTable = [
+      '# Test Project',
+      '',
+      '## Phases',
+      '',
+      '| Phase | Scope | Status |',
+      '|---|---|---|',
+      '| 2 | Polish | After 1 |',
+    ].join('\n');
+
+    const { text, didInsert } = insertPhaseZeroInAgentsMd(brokenPhasesTable);
+    expect(didInsert).toBe(false);
+    expect(text).toBe(brokenPhasesTable);
+  });
+});
+
 
