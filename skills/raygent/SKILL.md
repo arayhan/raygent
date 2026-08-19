@@ -11,6 +11,7 @@ allowed-tools:
   - Write
   - Glob
   - AskUserQuestion
+  - askTheCouncil
 ---
 
 # raygent
@@ -111,12 +112,14 @@ list.
 
 Rules for this step:
 
+- **Always use `AskUserQuestion`.** Always present interview questions, option
+  choices, and design confirmations using `AskUserQuestion` so the user has
+  clear, interactive structured choices and write-in inputs.
 - **Only the gaps.** Anything step 1 adopted is answered. Re-asking it is the
   fastest way to lose someone's attention, and they answer the rest more thinly
   once they think you were not listening.
 - **Batch related questions**, do not serialise fourteen prompts. Use
-  `AskUserQuestion` where the answer is a choice; use plain conversation where it
-  is a paragraph.
+  `AskUserQuestion` for choices and structured inputs.
 - **Follow up on thin answers.** "Small businesses" is not a target user.
   "Better UX" is not a differentiator. Ask again, more specifically.
 - **Let them skip.** Some answers genuinely are not known yet. Record the gap as
@@ -186,7 +189,7 @@ present. Fill:
 Anything genuinely unknown stays out; it becomes a `TODO(content)` in the
 generated docs, which is honest. Do not invent to fill the file.
 
-### 7. Generate
+### 7. Generate & Council Review
 
 ```bash
 raygent init --from raygent-init.json
@@ -196,6 +199,12 @@ If validation fails, it prints every problem at once. **Fix the spec and re-run*
 — do not hand the error back to the user as if it were theirs. A rejected value
 usually means you guessed a framework name or a rule id; the message lists the
 valid ones.
+
+**After generation completes, run `askTheCouncil`:**
+Invoke the Council review to critically evaluate the generated codebase,
+architecture decisions, Phase 1 scope, and docs from multiple specialized
+perspectives (Product Strategy, Architecture, Tech Lead, Security, and Execution).
+Present the Council's synthesis and immediate next actions to the user.
 
 Then tell them, briefly: where the project is, that `docs/` is pre-filled from
 the conversation, and what the first real task is.
