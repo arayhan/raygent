@@ -7,6 +7,7 @@ export interface Roots {
   projectSkillsDir: string;
   agentSkillsDir: string;
   globalAgentSkillsDir: string;
+  globalGeminiSkillsDir?: string;
   /** Skills shipped inside this package (skills/ at the package root). */
   bundledSkillsDir: string;
   /**
@@ -53,6 +54,7 @@ export function defaultRoots(cwd: string = process.cwd()): Roots {
     projectSkillsDir: path.join(cwd, '.claude', 'skills'),
     agentSkillsDir: path.join(cwd, '.agent', 'skills'),
     globalAgentSkillsDir: path.join(os.homedir(), '.agents', 'skills'),
+    globalGeminiSkillsDir: path.join(os.homedir(), '.gemini', 'skills'),
     bundledSkillsDir: bundledSkillsDir(),
     globalSkillsDir: globalSkillsDir(),
   };

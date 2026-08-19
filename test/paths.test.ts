@@ -10,6 +10,7 @@ describe('defaultRoots', () => {
     expect(roots.projectSkillsDir).toBe(path.join('/tmp/some-project', '.claude', 'skills'));
     expect(roots.agentSkillsDir).toBe(path.join('/tmp/some-project', '.agent', 'skills'));
     expect(roots.globalAgentSkillsDir).toBe(path.join(os.homedir(), '.agents', 'skills'));
+    expect(roots.globalGeminiSkillsDir).toBe(path.join(os.homedir(), '.gemini', 'skills'));
   });
 
   it('defaults cwd to process.cwd() when not given', () => {

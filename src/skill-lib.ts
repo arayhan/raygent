@@ -24,6 +24,9 @@ export function skillDestDirs(roots: Roots, scope: SkillScope): string[] {
     if (roots.globalAgentSkillsDir && !dirs.includes(roots.globalAgentSkillsDir)) {
       dirs.push(roots.globalAgentSkillsDir);
     }
+    if (roots.globalGeminiSkillsDir && !dirs.includes(roots.globalGeminiSkillsDir)) {
+      dirs.push(roots.globalGeminiSkillsDir);
+    }
     return dirs;
   }
   const dirs: string[] = [];
@@ -88,6 +91,7 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   const personalNames = await readSkillDirNames(roots.skillsRoot);
   const projectNames = await readSkillDirNames(roots.agentSkillsDir);
   const globalNames = await readSkillDirNames(roots.globalAgentSkillsDir);
+  const geminiNames = await readSkillDirNames(roots.globalGeminiSkillsDir);
   const bundledNames = await readSkillDirNames(roots.bundledSkillsDir);
 
   // precedence on name collision: personal > project > global > bundled.
@@ -95,6 +99,7 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   // matching the candidate order in addSkill.
   const bySource = new Map<string, SkillInfo['source']>();
   for (const name of bundledNames) bySource.set(name, 'bundled');
+  for (const name of geminiNames) bySource.set(name, 'global');
   for (const name of globalNames) bySource.set(name, 'global');
   for (const name of projectNames) bySource.set(name, 'project');
   for (const name of personalNames) bySource.set(name, 'personal');
@@ -138,6 +143,7 @@ export async function addSkill(
     path.join(roots.skillsRoot, name),
     path.join(roots.agentSkillsDir, name),
     path.join(roots.globalAgentSkillsDir, name),
+    ...(roots.globalGeminiSkillsDir ? [path.join(roots.globalGeminiSkillsDir, name)] : []),
     path.join(roots.bundledSkillsDir, name),
   ];
 

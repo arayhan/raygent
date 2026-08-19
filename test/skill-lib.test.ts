@@ -9,6 +9,7 @@ let skillsRoot: string;
 let projectSkillsDir: string;
 let agentSkillsDir: string;
 let globalAgentSkillsDir: string;
+let globalGeminiSkillsDir: string;
 let bundledSkillsDir: string;
 let globalSkillsDir: string;
 let roots: Roots;
@@ -18,6 +19,7 @@ beforeEach(() => {
   projectSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-project-'));
   agentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-agent-'));
   globalAgentSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-global-agent-'));
+  globalGeminiSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-global-gemini-'));
   // Pointed at a temp dir rather than the real bundle, so these tests assert on
   // what they create and are not perturbed by whatever raygent ships.
   bundledSkillsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'raygent-bundled-'));
@@ -27,6 +29,7 @@ beforeEach(() => {
     projectSkillsDir,
     agentSkillsDir,
     globalAgentSkillsDir,
+    globalGeminiSkillsDir,
     bundledSkillsDir,
     globalSkillsDir,
   };
@@ -37,6 +40,7 @@ afterEach(() => {
   fs.rmSync(projectSkillsDir, { recursive: true, force: true });
   fs.rmSync(agentSkillsDir, { recursive: true, force: true });
   fs.rmSync(globalAgentSkillsDir, { recursive: true, force: true });
+  fs.rmSync(globalGeminiSkillsDir, { recursive: true, force: true });
   fs.rmSync(bundledSkillsDir, { recursive: true, force: true });
   fs.rmSync(globalSkillsDir, { recursive: true, force: true });
 });
@@ -132,7 +136,7 @@ describe('addSkill', () => {
     expect(copiedAgent).toBe('# my-skill');
   });
 
-  it('copies a skill globally to globalSkillsDir and globalAgentSkillsDir', async () => {
+  it('copies a skill globally to globalSkillsDir, globalAgentSkillsDir, and globalGeminiSkillsDir', async () => {
     fs.mkdirSync(path.join(skillsRoot, 'global-skill'));
     fs.writeFileSync(path.join(skillsRoot, 'global-skill', 'SKILL.md'), '# global-skill');
 
@@ -142,6 +146,8 @@ describe('addSkill', () => {
     expect(copiedClaude).toBe('# global-skill');
     const copiedAgent = fs.readFileSync(path.join(globalAgentSkillsDir, 'global-skill', 'SKILL.md'), 'utf8');
     expect(copiedAgent).toBe('# global-skill');
+    const copiedGemini = fs.readFileSync(path.join(globalGeminiSkillsDir, 'global-skill', 'SKILL.md'), 'utf8');
+    expect(copiedGemini).toBe('# global-skill');
   });
 
   it('throws when the source skill does not exist in any location', async () => {

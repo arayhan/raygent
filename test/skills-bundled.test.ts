@@ -26,6 +26,7 @@ function isolatedRoots(overrides: Partial<ReturnType<typeof defaultRoots>> = {})
     projectSkillsDir: path.join(tmp, 'project', '.claude', 'skills'),
     agentSkillsDir: path.join(tmp, 'agent'),
     globalAgentSkillsDir: path.join(tmp, 'global'),
+    globalGeminiSkillsDir: path.join(tmp, 'gemini'),
     bundledSkillsDir: bundledSkillsDir(),
     globalSkillsDir: path.join(tmp, 'home', '.claude', 'skills'),
     ...overrides,
@@ -109,6 +110,7 @@ describe('bundled skills', () => {
     await addSkill('raygent', roots, { scope: 'global' });
     expect(await exists(path.join(roots.globalSkillsDir, 'raygent', 'SKILL.md'))).toBe(true);
     expect(await exists(path.join(roots.globalAgentSkillsDir, 'raygent', 'SKILL.md'))).toBe(true);
+    expect(await exists(path.join(roots.globalGeminiSkillsDir, 'raygent', 'SKILL.md'))).toBe(true);
     expect(await exists(path.join(roots.projectSkillsDir, 'raygent'))).toBe(false);
     expect(await exists(path.join(roots.agentSkillsDir, 'raygent'))).toBe(false);
   });
