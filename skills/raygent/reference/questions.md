@@ -83,12 +83,16 @@ asking: `market`, `businessModel`, `successMetrics`, `riskiestAssumption`.
 
 ## How to ask
 
-**Batch.** Use one `AskUserQuestion` with several related questions rather than
+**Always use `AskUserQuestion`.** Present all interview prompts, choices, and
+confirmations through interactive questions so the user has structured options
+and write-ins.
+
+**Batch.** Use `AskUserQuestion` with several related questions rather than
 fourteen prompts in a row. Attention is finite and the later answers get thinner.
 
 **Choices as choices.** Where the answer is one of a few known options — engagement
-type, phase count, whether there is a UI — offer options rather than an open box.
-Where it is a paragraph, just ask.
+type, phase count, stack options, whether there is a UI — offer options rather than an open box.
+Where it is a paragraph or open context, provide helpful recommended options with write-ins.
 
 **Skipping is allowed, inventing is not.** An unknown answer stays unknown and
 becomes a `TODO(content)` in the generated docs. That marker is a prompt for a
