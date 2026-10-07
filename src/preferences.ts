@@ -33,6 +33,29 @@ export interface ProjectPreferences {
   viewport?: Viewport;
 }
 
+export const PREFERENCE_VALUES: Record<keyof ProjectPreferences, readonly string[]> = {
+  comments: COMMENT_DENSITIES.map((c) => c.value),
+  buildFocus: BUILD_FOCUSES.map((b) => b.value),
+  viewport: VIEWPORTS.map((v) => v.value),
+};
+
+/**
+ * Read a preferences object from untyped JSON (a preset). Malformed values are
+ * dropped rather than thrown on: a preset is reused across projects, and one
+ * stale field should not block every init that names it.
+ */
+export function parsePreferences(raw: unknown): ProjectPreferences | undefined {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const r = raw as Record<string, unknown>;
+  const pick = (key: keyof ProjectPreferences) =>
+    typeof r[key] === 'string' && PREFERENCE_VALUES[key].includes(r[key] as string) ? r[key] : undefined;
+  return {
+    comments: pick('comments') as CommentDensity | undefined,
+    buildFocus: pick('buildFocus') as BuildFocus | undefined,
+    viewport: pick('viewport') as Viewport | undefined,
+  };
+}
+
 export const PREFERENCES_DOC_PATH = 'docs/rules/project-preferences.md';
 
 interface ProjectShape {

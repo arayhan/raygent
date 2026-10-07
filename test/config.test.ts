@@ -214,4 +214,19 @@ describe('presets', () => {
     await saveConfig({ presets: { p: { skills: ['ok', 42, null] } } }, configPath);
     expect((await loadPreset('p', configPath))?.skills).toEqual(['ok']);
   });
+
+  it('loadPreset keeps valid preferences and drops unknown values', async () => {
+    const configPath = path.join(makeTempDir(), 'config.json');
+    await saveConfig(
+      { presets: { p: { preferences: { comments: 'minimal', buildFocus: 'sideways', viewport: 'mobile-first' } } } },
+      configPath
+    );
+    expect((await loadPreset('p', configPath))?.preferences).toEqual({ comments: 'minimal', viewport: 'mobile-first' });
+  });
+
+  it('loadPreset ignores a preferences value that is not an object', async () => {
+    const configPath = path.join(makeTempDir(), 'config.json');
+    await saveConfig({ presets: { p: { preferences: 'full' } } }, configPath);
+    expect((await loadPreset('p', configPath))?.preferences).toBeUndefined();
+  });
 });

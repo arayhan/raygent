@@ -58,6 +58,15 @@ import { renderBrief } from './brief.js';
 import { writeInterviewJson, applyInterviewToScaffoldDocs, applyInterviewToStubDocs } from './doc-fill.js';
 import { emitProjectState } from './project-emit.js';
 import {
+  COMMENT_DENSITIES,
+  BUILD_FOCUSES,
+  VIEWPORTS,
+  PREFERENCE_VALUES,
+  asksBuildFocus,
+  asksViewport,
+  type ProjectPreferences,
+} from './preferences.js';
+import {
   loadAiConfig,
   loadConfig,
   loadPreset,
@@ -519,6 +528,9 @@ program
   .option('--framework <framework>', 'frontend framework valid for the chosen --platform')
   .option('--agents <list>', 'comma-separated coding agents: claude-code, opencode, antigravity')
   .option('--rules <list>', 'comma-separated docs/rules files (default: every one that applies to the stack)')
+  .option('--comments <density>', 'code comments: none | minimal | full')
+  .option('--build-focus <focus>', 'UI projects with data: ui-first | end-to-end')
+  .option('--viewport <priority>', 'web frontends: mobile-first | web-first')
   .option('--brand <name>', 'display name shown to users (default: the project name, title-cased)')
   .option('--here', 'generate into the current directory instead of a new <name> folder')
   .option('--kind <kind>', 'web only: app | landing (default app)')
@@ -542,6 +554,9 @@ program
         here?: boolean;
         agents?: string;
         rules?: string;
+        comments?: string;
+        buildFocus?: string;
+        viewport?: string;
         brand?: string;
         target?: string;
         backend?: string;
@@ -603,6 +618,9 @@ program
           opts.target ??= preset.target;
           opts.backend ??= preset.backend;
           if (opts.monorepo === undefined) opts.monorepo = preset.monorepo;
+          opts.comments ??= preset.preferences?.comments;
+          opts.buildFocus ??= preset.preferences?.buildFocus;
+          opts.viewport ??= preset.preferences?.viewport;
         }
 
         // Spec values sit between flags and preset: an explicit flag still wins,
@@ -628,6 +646,9 @@ program
           if (st.monorepo !== undefined && opts.monorepo === undefined) opts.monorepo = st.monorepo;
           if (!opts.agents && spec.agents?.length) opts.agents = spec.agents.join(',');
           if (!opts.rules && spec.rules?.length) opts.rules = spec.rules.join(',');
+          if (spec.preferences?.comments !== undefined) opts.comments ??= spec.preferences.comments;
+          if (spec.preferences?.buildFocus !== undefined) opts.buildFocus ??= spec.preferences.buildFocus;
+          if (spec.preferences?.viewport !== undefined) opts.viewport ??= spec.preferences.viewport;
           // An omitted key in a spec is an answer, not a gap: "no agents listed"
           // means the default, "no rules listed" means every rule that applies.
           // Falling through to a prompt would break the zero-prompt promise on
@@ -663,6 +684,17 @@ program
           // treats empty as "all applicable". Fall back to prompting rather than
           // silently generating the opposite of what was typed.
           if (rulesFromFlag.length === 0) rulesFromFlag = null;
+        }
+
+        const preferenceFlags = [
+          ['--comments', 'comments', opts.comments],
+          ['--build-focus', 'buildFocus', opts.buildFocus],
+          ['--viewport', 'viewport', opts.viewport],
+        ] as const;
+        for (const [flag, key, value] of preferenceFlags) {
+          if (value !== undefined && !PREFERENCE_VALUES[key].includes(value)) {
+            throw new Error(`invalid ${flag} '${value}' (expected one of: ${PREFERENCE_VALUES[key].join(', ')})`);
+          }
         }
 
         // A spec's addons block is the same shape as a preset's stack, and both
@@ -880,6 +912,47 @@ program
           });
         }
 
+        // How the agent works in the project, written to docs/rules/ after the
+        // scaffold. Unattended runs leave an unanswered one unset rather than
+        // defaulting it: a rule nobody chose would override the scaffolded
+        // code-style.md for no reason.
+        const shape = { platform, kind: isLanding ? 'landing' : 'app', target: resolvedTarget };
+        const preferences: ProjectPreferences = {};
+        const comments =
+          opts.comments ??
+          (unattended
+            ? undefined
+            : await select({
+                message: 'How much should the code be commented?',
+                choices: COMMENT_DENSITIES.map((c) => ({ name: c.name, value: c.value, description: c.description })),
+                default: 'minimal',
+              }));
+        if (comments) preferences.comments = comments as ProjectPreferences['comments'];
+        if (asksBuildFocus(shape)) {
+          const buildFocus =
+            opts.buildFocus ??
+            (unattended
+              ? undefined
+              : await select({
+                  message: 'Build order?',
+                  choices: BUILD_FOCUSES.map((b) => ({ name: b.name, value: b.value, description: b.description })),
+                  default: 'end-to-end',
+                }));
+          if (buildFocus) preferences.buildFocus = buildFocus as ProjectPreferences['buildFocus'];
+        }
+        if (asksViewport(shape)) {
+          const viewport =
+            opts.viewport ??
+            (unattended
+              ? undefined
+              : await select({
+                  message: 'Layout priority?',
+                  choices: VIEWPORTS.map((v) => ({ name: v.name, value: v.value, description: v.description })),
+                  default: 'mobile-first',
+                }));
+          if (viewport) preferences.viewport = viewport as ProjectPreferences['viewport'];
+        }
+
         const type =
           opts.type ?? (await select({ message: 'Type:', choices: PROJECT_TYPES.map((t) => ({ name: t, value: t })) }));
 
@@ -989,6 +1062,7 @@ program
               platform,
               kind: isLanding ? 'landing' : 'app',
               target: resolvedTarget,
+              preferences,
             });
             if (emitResult.failed.length > 0) {
               console.log(
@@ -1005,6 +1079,7 @@ program
               platform,
               kind: isLanding ? 'landing' : 'app',
               target: resolvedTarget,
+              preferences,
             });
             if (emitResult.failed.length > 0) {
               console.log(
@@ -1064,6 +1139,7 @@ program
             platform,
             kind: isLanding ? 'landing' : 'app',
             target: resolvedTarget,
+            preferences,
           });
           if (emitResult.failed.length > 0) {
             console.log(
@@ -1170,6 +1246,7 @@ program
             },
             agents: agentTools,
             rules: ruleFiles,
+            preferences,
             skills: specSkills ?? preset?.skills ?? [],
             mcp: mcpSelected,
             interview: answers ?? {},

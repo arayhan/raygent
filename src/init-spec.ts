@@ -14,6 +14,7 @@ import {
   type Platform,
 } from './init-lib.js';
 import { PRODUCT_QUESTIONS, CLIENT_QUESTIONS } from './interview.js';
+import { PREFERENCE_VALUES, COMMENT_DENSITIES, BUILD_FOCUSES, VIEWPORTS } from './preferences.js';
 
 /**
  * One fully-specified init run, as JSON. Fill this in once and
@@ -49,6 +50,11 @@ export interface InitSpec {
   rules?: string[];
   skills?: string[];
   mcp?: string[];
+  preferences?: {
+    comments?: string;
+    buildFocus?: string;
+    viewport?: string;
+  };
   interview?: Record<string, string>;
 }
 
@@ -303,6 +309,27 @@ export function validateInitSpec(spec: InitSpec, opts: { requireComplete?: boole
     if (list !== undefined && !Array.isArray(list)) problems.push({ path, message: 'must be an array' });
   }
 
+  // Preferences. Same reasoning as interview keys below: a mistyped key would
+  // be a choice the user made that never reaches docs/rules/.
+  if (spec.preferences !== undefined) {
+    if (typeof spec.preferences !== 'object' || spec.preferences === null || Array.isArray(spec.preferences)) {
+      problems.push({ path: 'preferences', message: 'must be an object' });
+    } else {
+      const validKeys = Object.keys(PREFERENCE_VALUES);
+      for (const [key, value] of Object.entries(spec.preferences)) {
+        if (!validKeys.includes(key)) {
+          const suggestion = nearest(key, validKeys);
+          problems.push({
+            path: `preferences.${key}`,
+            message: `unknown preference` + (suggestion ? `. Did you mean "${suggestion}"?` : ''),
+          });
+          continue;
+        }
+        check(`preferences.${key}`, value, PREFERENCE_VALUES[key as keyof typeof PREFERENCE_VALUES]);
+      }
+    }
+  }
+
   // Interview answers. An unknown key is a problem rather than a silent drop:
   // a mistyped key means an answer the user wrote never reaches the docs.
   if (spec.interview !== undefined) {
@@ -354,6 +381,24 @@ export function initSpecTemplate(filled?: InitSpec): string {
           '    // "problem": "",',
           '    // "solution": ""',
         ].join('\n');
+
+  // Unset keys render as comments, so the valid values stay discoverable
+  // without the template inventing a preference nobody chose. Commas go only
+  // between real entries: JSON rejects one before a closing brace.
+  const prefRows = [
+    { key: 'comments', hint: COMMENT_DENSITIES.map((c) => c.value).join(' | '), example: 'minimal' },
+    { key: 'buildFocus', hint: `UI projects with data only: ${BUILD_FOCUSES.map((b) => b.value).join(' | ')}`, example: 'end-to-end' },
+    { key: 'viewport', hint: `web frontends only: ${VIEWPORTS.map((v) => v.value).join(' | ')}`, example: 'mobile-first' },
+  ] as const;
+  const setKeys = prefRows.filter((r) => s?.preferences?.[r.key] !== undefined).map((r) => r.key);
+  const preferencesBlock = prefRows
+    .map((r) => {
+      const value = s?.preferences?.[r.key];
+      if (value === undefined) return `    // ${r.hint}\n    // ${JSON.stringify(r.key)}: ${JSON.stringify(r.example)}`;
+      const comma = r.key === setKeys[setKeys.length - 1] ? '' : ',';
+      return `    // ${r.hint}\n    ${JSON.stringify(r.key)}: ${JSON.stringify(value)}${comma}`;
+    })
+    .join('\n');
 
   return `{
   // raygent init spec. Fill this in, then:  raygent init --from this-file.json
@@ -417,6 +462,12 @@ ${STACK_TOGGLE_OPTIONS.map(
 
   // MCP servers written into .mcp.json. Secrets stay as \${VAR} placeholders.
   "mcp": ${list(s?.mcp, '[]')},
+
+  // How the coding agent works; written to docs/rules/project-preferences.md.
+  // Omit a key to leave it to the scaffolded rules (nothing is written for it).
+  "preferences": {
+${preferencesBlock}
+  },
 
   "interview": {
 ${interviewBlock}

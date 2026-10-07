@@ -130,6 +130,19 @@ describe('validateInitSpec', () => {
     expect(p.message).toMatch(/Did you mean "styling"/);
   });
 
+  it('rejects an invalid preference value and suggests the nearest one', () => {
+    const problems = validateInitSpec({ ...complete, preferences: { comments: 'minimall' } });
+    expect(problems).toHaveLength(1);
+    expect(problems[0].path).toBe('preferences.comments');
+    expect(problems[0].message).toContain('"minimal"');
+  });
+
+  it('rejects an unknown preference key', () => {
+    const problems = validateInitSpec({ ...complete, preferences: { buildfocus: 'ui-first' } as never });
+    expect(problems.map((p) => p.path)).toEqual(['preferences.buildfocus']);
+    expect(problems[0].message).toContain('"buildFocus"');
+  });
+
   it('requires nothing when requireComplete is false', () => {
     expect(validateInitSpec({}, { requireComplete: false })).toEqual([]);
   });
@@ -175,6 +188,19 @@ describe('initSpecTemplate', () => {
     expect(parsed.rules).toEqual(['principles', 'testing']);
     expect(parsed.interview?.problem).toBe('people lose orders');
     expect(validateInitSpec(parsed)).toEqual([]);
+  });
+
+  it('round-trips a partial preferences block without a trailing comma', () => {
+    for (const preferences of [{ comments: 'none' }, { buildFocus: 'ui-first' }, { comments: 'full', viewport: 'web-first' }]) {
+      const used = { project: { name: 'x', type: 'product' }, stack: { platform: 'web', framework: 'nextjs' }, preferences };
+      const parsed = parseInitSpec(initSpecTemplate(used));
+      expect(parsed.preferences).toEqual(preferences);
+      expect(validateInitSpec(parsed)).toEqual([]);
+    }
+  });
+
+  it('leaves preferences empty in the blank template', () => {
+    expect(parseInitSpec(initSpecTemplate()).preferences).toEqual({});
   });
 
   it('keeps an interview answer containing a URL intact through the round trip', () => {

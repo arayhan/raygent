@@ -1,6 +1,7 @@
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs/promises';
+import { parsePreferences, type ProjectPreferences } from './preferences.js';
 
 export interface AiConfig {
   baseUrl: string;
@@ -74,6 +75,7 @@ export interface Preset {
   backend?: string;
   monorepo?: boolean;
   stack?: Record<string, unknown>;
+  preferences?: ProjectPreferences;
 }
 
 export async function loadConfig(configPath: string = defaultConfigPath()): Promise<Record<string, unknown>> {
@@ -107,6 +109,7 @@ export async function loadPreset(name: string, configPath: string = defaultConfi
     backend: typeof p.backend === 'string' ? p.backend : undefined,
     monorepo: typeof p.monorepo === 'boolean' ? p.monorepo : undefined,
     stack,
+    preferences: parsePreferences(p.preferences),
   };
 }
 
