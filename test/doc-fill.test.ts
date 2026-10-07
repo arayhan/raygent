@@ -14,6 +14,8 @@ import {
   STATE_DOC_ROW,
   insertPhaseZeroInAgentsMd,
   PHASE_ZERO_ROW,
+  insertPreferencesInAgentsMd,
+  PREFERENCES_RULE_TEXT,
 } from '../src/doc-fill.js';
 import type { InterviewAnswers } from '../src/interview.js';
 import { CLIENT_QUESTIONS, PRODUCT_QUESTIONS } from '../src/interview.js';
@@ -426,4 +428,47 @@ describe('insertPhaseZeroInAgentsMd', () => {
   });
 });
 
+describe('insertPreferencesInAgentsMd', () => {
+  const anchor = '**Project-specific rules get added here.** The ones worth the space are the silent traps.';
+  const sampleAgentsMd = [
+    '# Test Project',
+    '',
+    '## Hard rules (violations = rework)',
+    '',
+    '1. **Secrets never reach the client.**',
+    '2. **Placeholders are marked.**',
+    '3. **Never claim something works without running the check.**',
+    '',
+    anchor,
+    '',
+  ].join('\n');
 
+  it('appends the rule as the next numbered hard rule', () => {
+    const { text, didInsert } = insertPreferencesInAgentsMd(sampleAgentsMd);
+    expect(didInsert).toBe(true);
+    expect(text).toContain(
+      `3. **Never claim something works without running the check.**\n4. ${PREFERENCES_RULE_TEXT}\n\n${anchor}`
+    );
+  });
+
+  it('falls back to a bullet above the anchor when the list is not numbered', () => {
+    const unnumbered = ['## Hard rules', '', anchor].join('\n');
+    const { text, didInsert } = insertPreferencesInAgentsMd(unnumbered);
+    expect(didInsert).toBe(true);
+    expect(text).toBe(['## Hard rules', '', `- ${PREFERENCES_RULE_TEXT}`, '', anchor].join('\n'));
+  });
+
+  it('is idempotent once the link is present', () => {
+    const once = insertPreferencesInAgentsMd(sampleAgentsMd).text;
+    const { text, didInsert } = insertPreferencesInAgentsMd(once);
+    expect(didInsert).toBe(true);
+    expect(text).toBe(once);
+  });
+
+  it('returns didInsert=false when the anchor is not found (fails loudly)', () => {
+    const broken = ['# Test Project', '', '## Hard rules', '', '1. **Secrets.**'].join('\n');
+    const { text, didInsert } = insertPreferencesInAgentsMd(broken);
+    expect(didInsert).toBe(false);
+    expect(text).toBe(broken);
+  });
+});

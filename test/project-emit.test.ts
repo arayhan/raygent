@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { emitProjectState, projectHasDataLayer } from '../src/project-emit.js';
-import { STATE_DOC_ROW, PHASE_ZERO_ROW } from '../src/doc-fill.js';
+import { STATE_DOC_ROW, PHASE_ZERO_ROW, PREFERENCES_RULE_TEXT } from '../src/doc-fill.js';
 
 let tmp: string;
 
@@ -54,6 +54,12 @@ describe('emitProjectState', () => {
     '|---|---|---|',
     '| 1 | MVP features | Build now |',
     '| 2 | Polish | After 1 |',
+    '',
+    '## Hard rules (violations = rework)',
+    '',
+    '1. **Secrets never reach the client.**',
+    '',
+    '**Project-specific rules get added here.** Silent traps only.',
     '',
   ].join('\n');
 
@@ -255,5 +261,80 @@ describe('emitProjectState', () => {
     expect(result.failed).toEqual([]);
     expect(result.written).toContain('docs/STATE.md');
     expect(result.written).toContain('docs/tasks/0-step-01-scaffold.md');
+  });
+
+  it('emits no preferences doc and leaves Hard rules alone when nothing was chosen', async () => {
+    await fs.writeFile(path.join(tmp, 'AGENTS.md'), sampleAgentsMd);
+
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: false,
+      force: false,
+      platform: 'web',
+      kind: 'app',
+      preferences: {},
+    });
+
+    expect(result.written).not.toContain('docs/rules/project-preferences.md');
+    expect(await exists(path.join(tmp, 'docs', 'rules', 'project-preferences.md'))).toBe(false);
+    const agentsContent = await fs.readFile(path.join(tmp, 'AGENTS.md'), 'utf8');
+    expect(agentsContent).not.toContain('project-preferences.md');
+  });
+
+  it('emits the preferences doc and adds it as a hard rule in AGENTS.md', async () => {
+    await fs.writeFile(path.join(tmp, 'AGENTS.md'), sampleAgentsMd);
+
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: false,
+      force: false,
+      platform: 'web',
+      kind: 'app',
+      preferences: { comments: 'minimal', viewport: 'web-first' },
+    });
+
+    expect(result.written).toContain('docs/rules/project-preferences.md');
+    expect(result.failed).toEqual([]);
+    const doc = await fs.readFile(path.join(tmp, 'docs', 'rules', 'project-preferences.md'), 'utf8');
+    expect(doc).toContain('## Code comments: minimal');
+    expect(doc).toContain('## Layout priority: web-first');
+    const agentsContent = await fs.readFile(path.join(tmp, 'AGENTS.md'), 'utf8');
+    expect(agentsContent).toContain(`2. ${PREFERENCES_RULE_TEXT}`);
+  });
+
+  it('does not overwrite an existing preferences doc without force', async () => {
+    await fs.mkdir(path.join(tmp, 'docs', 'rules'), { recursive: true });
+    await fs.writeFile(path.join(tmp, 'docs', 'rules', 'project-preferences.md'), 'HAND_EDITED');
+
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: false,
+      force: false,
+      platform: 'cli',
+      preferences: { comments: 'none' },
+    });
+
+    expect(result.skipped).toContain('docs/rules/project-preferences.md');
+    const doc = await fs.readFile(path.join(tmp, 'docs', 'rules', 'project-preferences.md'), 'utf8');
+    expect(doc).toBe('HAND_EDITED');
+  });
+
+  it('fails loudly when preferences are set but AGENTS.md has no Hard rules anchor', async () => {
+    const noAnchor = sampleAgentsMd
+      .split('\n')
+      .filter((line) => !line.includes('Project-specific rules get added here.'))
+      .join('\n');
+    await fs.writeFile(path.join(tmp, 'AGENTS.md'), noAnchor);
+
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: false,
+      force: false,
+      platform: 'web',
+      kind: 'app',
+      preferences: { comments: 'full' },
+    });
+
+    expect(result.failed.some((f) => f.includes('Hard rules'))).toBe(true);
   });
 });

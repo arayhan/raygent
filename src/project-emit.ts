@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { bundledAssetsDir } from './paths.js';
-import { insertStateDocInAgentsMd, insertPhaseZeroInAgentsMd } from './doc-fill.js';
+import { insertStateDocInAgentsMd, insertPhaseZeroInAgentsMd, insertPreferencesInAgentsMd } from './doc-fill.js';
+import { PREFERENCES_DOC_PATH, renderPreferencesDoc, type ProjectPreferences } from './preferences.js';
 
 export interface ProjectDataLayerOptions {
   platform?: string;
@@ -26,6 +27,7 @@ export interface EmitOptions {
   platform?: string;
   kind?: string;
   target?: string;
+  preferences?: ProjectPreferences;
 }
 
 export interface EmitResult {
@@ -131,7 +133,24 @@ export async function emitProjectState(opts: EmitOptions): Promise<EmitResult> {
     result.failed.push(`docs/tasks: ${(err as Error).message}`);
   }
 
-  // 4. Update AGENTS.md Docs table and Phases table (if AGENTS.md exists)
+  // 4. Emit docs/rules/project-preferences.md (only when something was chosen)
+  const preferencesDoc = renderPreferencesDoc(opts.preferences ?? {});
+  if (preferencesDoc !== null) {
+    const destPath = path.join(opts.targetDir, ...PREFERENCES_DOC_PATH.split('/'));
+    try {
+      await fs.mkdir(path.dirname(destPath), { recursive: true });
+      await fs.writeFile(destPath, preferencesDoc, { flag });
+      result.written.push(PREFERENCES_DOC_PATH);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+        result.skipped.push(PREFERENCES_DOC_PATH);
+      } else {
+        result.failed.push(`${PREFERENCES_DOC_PATH}: ${(err as Error).message}`);
+      }
+    }
+  }
+
+  // 5. Update AGENTS.md Docs table, Phases table and Hard rules (if AGENTS.md exists)
   const agentsMdPath = path.join(opts.targetDir, 'AGENTS.md');
   try {
     let agentsContent = await fs.readFile(agentsMdPath, 'utf8');
@@ -153,6 +172,17 @@ export async function emitProjectState(opts: EmitOptions): Promise<EmitResult> {
     } else if (phaseZeroRes.text !== agentsContent) {
       agentsContent = phaseZeroRes.text;
       modified = true;
+    }
+
+    // Hard rules pointer, only when there is a preferences doc to point at
+    if (preferencesDoc !== null) {
+      const prefsRes = insertPreferencesInAgentsMd(agentsContent);
+      if (!prefsRes.didInsert) {
+        result.failed.push('AGENTS.md: Hard rules (Project-specific rules anchor not found — update client-project-scaffold template)');
+      } else if (prefsRes.text !== agentsContent) {
+        agentsContent = prefsRes.text;
+        modified = true;
+      }
     }
 
     if (modified) {

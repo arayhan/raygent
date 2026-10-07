@@ -402,4 +402,45 @@ export function insertPhaseZeroInAgentsMd(markdown: string): { text: string; did
   return { text: next.join('\n'), didInsert: true };
 }
 
+export const PREFERENCES_RULE_TEXT =
+  '**Follow [docs/rules/project-preferences.md](docs/rules/project-preferences.md).** Comment density, build order and layout priority were chosen for this project; that file overrides docs/rules/code-style.md where they disagree.';
+
+/**
+ * Append the project-preferences rule to the numbered Hard rules list of
+ * AGENTS.md, which ends right before the "Project-specific rules get added
+ * here." paragraph. If the link is already there, this is a no-op and
+ * didInsert is true. If the anchor is not found, didInsert is false so callers
+ * can fail loudly.
+ */
+export function insertPreferencesInAgentsMd(markdown: string): { text: string; didInsert: boolean } {
+  if (markdown.includes('[docs/rules/project-preferences.md](docs/rules/project-preferences.md)')) {
+    return { text: markdown, didInsert: true };
+  }
+
+  const lines = markdown.split('\n');
+  const anchorIndex = lines.findIndex((line) => line.includes('Project-specific rules get added here.'));
+  if (anchorIndex === -1) {
+    return { text: markdown, didInsert: false };
+  }
+
+  // Continue the numbering so the rule reads as one more hard rule. Inserting
+  // straight above the anchor paragraph would make that paragraph a lazy
+  // continuation of the new list item.
+  let lastItem = -1;
+  for (let i = anchorIndex - 1; i >= 0 && !lines[i].startsWith('#'); i--) {
+    if (/^\d+\.\s/.test(lines[i])) {
+      lastItem = i;
+      break;
+    }
+  }
+  if (lastItem === -1) {
+    const next = [...lines.slice(0, anchorIndex), `- ${PREFERENCES_RULE_TEXT}`, '', ...lines.slice(anchorIndex)];
+    return { text: next.join('\n'), didInsert: true };
+  }
+
+  const n = Number(/^(\d+)\./.exec(lines[lastItem])![1]) + 1;
+  const next = [...lines.slice(0, lastItem + 1), `${n}. ${PREFERENCES_RULE_TEXT}`, ...lines.slice(lastItem + 1)];
+  return { text: next.join('\n'), didInsert: true };
+}
+
 
