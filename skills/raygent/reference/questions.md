@@ -91,7 +91,9 @@ and write-ins.
 fourteen prompts in a row. Attention is finite and the later answers get thinner.
 
 **Choices as choices.** Where the answer is one of a few known options — engagement
-type, phase count, stack options, whether there is a UI — offer options rather than an open box.
+type, phase count, stack options, whether there is a UI, comment density
+(none / minimal / full), build order (UI-first / end-to-end), layout priority
+(mobile-first / web-first) — offer options rather than an open box.
 Where it is a paragraph or open context, provide helpful recommended options with write-ins.
 
 **Skipping is allowed, inventing is not.** An unknown answer stays unknown and

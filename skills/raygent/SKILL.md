@@ -169,6 +169,17 @@ with auth is a fullstack app; a CLI is a CLI.
 you need SEO on the public pages and server-side calls to the pricing API" is a
 claim they can push back on. Silently defaulting is not.
 
+Then ask how the agent should work, through `AskUserQuestion` with the options
+below. These are taste, not inference, so ask rather than infer:
+
+- **Comments**: `none` · `minimal` (only the non-obvious why) · `full` (doc
+  comment on every export). Always ask.
+- **Build order**: `ui-first` (screens on mock data, shown to the user for
+  approval before any backend work) · `end-to-end` (vertical slices). Ask only
+  when there are screens and a data layer. Skip it for landing pages, APIs and CLIs.
+- **Layout priority**: `mobile-first` · `web-first`. Ask only for a web frontend,
+  including landing pages.
+
 `raygent init --template` prints every valid value with its options, if you need
 to check one.
 
@@ -184,6 +195,8 @@ present. Fill:
 - `project.brand` — the human name, spaces and capitals fine
 - `project.name` — the folder and package name, kebab-case
 - `stack.*` — from step 5
+- `preferences.comments` / `preferences.buildFocus` / `preferences.viewport` —
+  from step 5; leave out any that were not asked
 - `interview.*` — the answers from steps 2-4, keys exactly as in the template
 
 Anything genuinely unknown stays out; it becomes a `TODO(content)` in the

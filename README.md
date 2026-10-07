@@ -288,6 +288,9 @@ Options:
   --here                   generate into the current directory, not a new <name> folder
   --agents <list>          comma-separated: claude-code, opencode, antigravity
   --rules <list>           comma-separated docs/rules files (default: all applicable)
+  --comments <density>     code comments: none | minimal | full
+  --build-focus <focus>    UI projects with data: ui-first | end-to-end
+  --viewport <priority>    web frontends: mobile-first | web-first
   --brand <name>           display name shown to users (default: project name, title-cased)
   --from <file>            read every answer from a JSON init spec — no prompts
   --template               print a fillable init spec to stdout and exit
@@ -399,6 +402,21 @@ because a human reads them too. `--rules` picks the set; the default is every fi
 that applies to the chosen stack, so a bare API gets no `accessibility.md` and a
 static SPA gets no `sql-and-data.md`.
 
+**Project preferences (`docs/rules/project-preferences.md`):** how the agent
+works, chosen at init and written by raygent after the scaffold:
+
+| Preference | Values | Asked when |
+|---|---|---|
+| `--comments` | `none` · `minimal` (only the non-obvious why) · `full` (doc comment on every export) | always |
+| `--build-focus` | `ui-first` · `end-to-end` | the project has screens and a data layer |
+| `--viewport` | `mobile-first` · `web-first` | web platform with a frontend |
+
+The file overrides `code-style.md` on comments, and `AGENTS.md` gets a hard rule
+pointing at it. `ui-first` also changes Phase 0: every PRD screen is built on mock
+data (`0-step-03-ui-shell`), the user signs it off at `0-gate-ui-review`, and the
+data round-trip moves to `1-step-01-data-round-trip`. A preference that was never
+answered (a spec without it, for example) writes nothing.
+
 **Agent-only tooling:** a generated project no longer ships an empty `scripts/`
 folder, and `db/migrations/` appears only for stacks that can reach a database.
 Tooling only the agent runs goes in `.claude/commands/<name>.md` (the slash-command
@@ -474,6 +492,7 @@ raygent config set presets.saas.target fullstack
 raygent config set presets.saas.backend express
 raygent config set presets.saas.monorepo true
 raygent config set presets.saas.stack '{"styling":"tailwind","dataFetching":true,"forms":"react-hook-form"}'
+raygent config set presets.saas.preferences '{"comments":"minimal","buildFocus":"ui-first","viewport":"mobile-first"}'
 
 raygent init myapp --preset saas   # flags still override preset values
 ```
