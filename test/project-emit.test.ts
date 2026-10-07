@@ -337,4 +337,48 @@ describe('emitProjectState', () => {
 
     expect(result.failed.some((f) => f.includes('Hard rules'))).toBe(true);
   });
+
+  it('emits the UI-first task set and points verify-loop at the UI shell', async () => {
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: false,
+      force: false,
+      platform: 'web',
+      kind: 'app',
+      target: 'fullstack',
+      preferences: { buildFocus: 'ui-first' },
+    });
+
+    expect(result.written).toEqual([
+      'docs/STATE.md',
+      'docs/tasks/0-step-01-scaffold.md',
+      'docs/tasks/0-step-02-verify-loop.md',
+      'docs/tasks/0-step-03-ui-shell.md',
+      'docs/tasks/0-gate-ui-review.md',
+      'docs/tasks/0-gate-deploy.md',
+      'docs/tasks/1-step-01-data-round-trip.md',
+      'docs/rules/project-preferences.md',
+    ]);
+    expect(await exists(path.join(tmp, 'docs', 'tasks', '0-step-03-data-round-trip.md'))).toBe(false);
+    const verifyLoop = await fs.readFile(path.join(tmp, 'docs', 'tasks', '0-step-02-verify-loop.md'), 'utf8');
+    expect(verifyLoop).toContain('**Blocks:** 0-step-03-ui-shell, 0-gate-deploy');
+    expect(verifyLoop).not.toContain('0-step-03-data-round-trip');
+  });
+
+  it('keeps the plain task set for a UI-first landing page, which has no data to hold back', async () => {
+    const result = await emitProjectState({
+      targetDir: tmp,
+      hasClaudeCode: false,
+      force: false,
+      platform: 'web',
+      kind: 'landing',
+      preferences: { buildFocus: 'ui-first' },
+    });
+
+    expect(result.written.filter((f) => f.startsWith('docs/tasks/'))).toEqual([
+      'docs/tasks/0-step-01-scaffold.md',
+      'docs/tasks/0-step-02-verify-loop.md',
+      'docs/tasks/0-gate-deploy.md',
+    ]);
+  });
 });

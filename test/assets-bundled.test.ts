@@ -45,6 +45,8 @@ describe('bundled assets', () => {
       '0-step-01-scaffold.md',
       '0-step-02-verify-loop.md',
       '0-step-03-data-round-trip.md',
+      '0-step-03-ui-shell.md',
+      '1-step-01-data-round-trip.md',
     ];
     for (const f of stepFiles) {
       const content = await fs.readFile(path.join(tasksDir, f), 'utf8');
@@ -53,6 +55,17 @@ describe('bundled assets', () => {
       expect(content).toContain('## Acceptance Criteria');
       expect(content).toMatch(/(?:\*\*handoff:\*\*|handoff:)\s*\w+/);
     }
+  });
+
+  it('ships 0-gate-ui-review.md as a gate without a handoff line', async () => {
+    const gateMd = await fs.readFile(
+      path.join(bundledAssetsDir(), 'project', 'tasks', '0-gate-ui-review.md'),
+      'utf8'
+    );
+    expect(gateMd).toContain('# 0-gate-ui-review');
+    expect(gateMd).toContain('## Decision Maker');
+    expect(gateMd).toContain('## Sign-off');
+    expect(gateMd).not.toContain('handoff:');
   });
 
   it('ships 0-gate-deploy.md as a gate without runnable acceptance criteria or handoff line', async () => {

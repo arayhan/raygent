@@ -98,13 +98,25 @@ export async function emitProjectState(opts: EmitOptions): Promise<EmitResult> {
   // 3. Emit docs/tasks/0-*.md
   const tasksDir = path.join(opts.targetDir, 'docs', 'tasks');
   const hasDataLayer = projectHasDataLayer(opts);
+  // UI-first holds the data round-trip back until the user has approved the
+  // screens, so it moves out of Phase 0 behind a UI review gate.
+  const uiFirst = hasDataLayer && opts.preferences?.buildFocus === 'ui-first';
 
-  const taskFiles = [
-    '0-step-01-scaffold.md',
-    '0-step-02-verify-loop.md',
-    ...(hasDataLayer ? ['0-step-03-data-round-trip.md'] : []),
-    '0-gate-deploy.md',
-  ];
+  const taskFiles = uiFirst
+    ? [
+        '0-step-01-scaffold.md',
+        '0-step-02-verify-loop.md',
+        '0-step-03-ui-shell.md',
+        '0-gate-ui-review.md',
+        '0-gate-deploy.md',
+        '1-step-01-data-round-trip.md',
+      ]
+    : [
+        '0-step-01-scaffold.md',
+        '0-step-02-verify-loop.md',
+        ...(hasDataLayer ? ['0-step-03-data-round-trip.md'] : []),
+        '0-gate-deploy.md',
+      ];
 
   try {
     await fs.mkdir(tasksDir, { recursive: true });
@@ -114,7 +126,12 @@ export async function emitProjectState(opts: EmitOptions): Promise<EmitResult> {
       const destPath = path.join(tasksDir, taskFile);
 
       try {
-        const content = await fs.readFile(srcPath, 'utf8');
+        let content = await fs.readFile(srcPath, 'utf8');
+        // The shared verify-loop asset names the step that follows it; in the
+        // UI-first set that step is the UI shell, not the round-trip.
+        if (uiFirst && taskFile === '0-step-02-verify-loop.md') {
+          content = content.replace('0-step-03-data-round-trip', '0-step-03-ui-shell');
+        }
         try {
           await fs.writeFile(destPath, content, { flag });
           result.written.push(relPath);
