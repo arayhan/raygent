@@ -190,3 +190,27 @@ page's only perpetual loop.
   accepted by the owner: where a dot passes under a glyph that 1 to 2.5px spot
   drops to 1.94:1 for signal-mute at worst; the surrounding text keeps full
   contrast.
+
+## Languages
+
+English is the default; Indonesian (`id`) is the second language.
+
+- **Where copy lives**: every user-facing string is in `src/i18n/en.tsx` and
+  `src/i18n/id.tsx`, both typed by `Dict` in `src/i18n/types.ts`. A new string
+  lands in both files or the typecheck fails. Components read it with
+  `useT()`; never write prose directly into JSX.
+- **What is never translated**: commands, terminal output, file names and real
+  file contents in the example panels. They are copied from CLI runs and stay
+  verbatim. Panel titles and `# ` annotation lines are translated through
+  `annotations`, keyed by the English text.
+- **Tone**: Indonesian is formal ("Anda"). Developer terms stay in English
+  where Indonesian developers use them (repo, scaffold, commit, CLI, spec,
+  agent, skill).
+- **First language**: `?lang=` in the URL, then `localStorage['raygent-lang']`,
+  then an Indonesian browser (`navigator.languages` starting with `id`), then
+  English.
+- **Switching**: the header `LanguageToggle` (`role="group"`, two buttons with
+  `aria-pressed`, styled as `.tab`, the pressed one blue) saves the choice,
+  writes `?lang=id` or removes `?lang` for English, and sets `<html lang>`,
+  the title and the description. Text re-renders; the canvases do not remount.
+
