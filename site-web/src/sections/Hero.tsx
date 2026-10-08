@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { CommandChip } from '../components/CommandChip';
 import { RingField } from '../components/RingField';
-import { INSTALL_COMMAND, LINKS } from '../content/links';
+import { INSTALL_COMMAND } from '../content/links';
 import { DUR, EASE_OUT_EXPO, STAGGER, gsap, prefersReducedMotion, useGSAP } from '../motion/gsap';
 
 export function Hero() {
@@ -44,10 +44,10 @@ export function Hero() {
             session.
           </p>
           <div className="flex flex-wrap items-center gap-4" data-hero-rest>
-            <CommandChip command={INSTALL_COMMAND} />
-            <a href={LINKS.readme} className="btn btn-ghost" target="_blank" rel="noreferrer">
-              Read the docs
+            <a href="#docs" className="btn btn-primary">
+              Get started
             </a>
+            <CommandChip command={INSTALL_COMMAND} />
           </div>
           <p className="m-0 text-small text-signal-mute" data-hero-rest>
             Works with Claude Code, opencode and Antigravity. Node.js 20 or newer.

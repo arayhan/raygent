@@ -111,7 +111,7 @@ export function Flagship() {
           <span
             aria-hidden="true"
             data-fill
-            className="absolute top-2 bottom-2 left-[11px] w-px origin-top bg-cyan"
+            className="absolute top-2 bottom-2 left-[11px] w-px origin-top bg-signal-white"
           />
           {STAGES.map((stage) => (
             <li key={stage.title} data-stage data-lit="false" data-live="false" className="flow-stage relative grid gap-2">

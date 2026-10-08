@@ -37,7 +37,7 @@ export function Features() {
             <div
               key={f.name}
               data-reveal
-              className={`grid gap-1 px-5 py-4 transition-colors duration-(--dur-hover) ease-out hover:bg-cyan-wash md:grid-cols-[minmax(0,0.42fr)_minmax(0,1fr)] md:gap-8 md:px-8 md:py-5 ${
+              className={`grid gap-1 px-5 py-4 transition-colors duration-(--dur-hover) ease-out hover:bg-wash md:grid-cols-[minmax(0,0.42fr)_minmax(0,1fr)] md:gap-8 md:px-8 md:py-5 ${
                 i > 0 ? 'border-t border-hairline-soft' : ''
               }`}
             >

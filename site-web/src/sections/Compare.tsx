@@ -59,12 +59,12 @@ export function Compare() {
               {ROWS.map((row) => (
                 <tr
                   key={row.name}
-                  className={`border-b border-hairline-soft last:border-b-0 ${row.self ? 'bg-cyan-wash' : ''}`}
+                  className={`border-b border-hairline-soft last:border-b-0 ${row.self ? 'bg-wash' : ''}`}
                 >
                   <th
                     scope="row"
                     className={`px-5 py-3.5 text-[17px] font-semibold tracking-[-0.01em] ${
-                      row.self ? 'text-cyan' : 'text-signal-white'
+                      'text-signal-white'
                     }`}
                   >
                     {row.name}

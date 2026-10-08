@@ -12,12 +12,12 @@ export function Founder() {
         <div className="border-b border-hairline-soft md:border-r md:border-b-0" data-reveal>
           <img
             src={`${import.meta.env.BASE_URL}raygent-avatar.jpg`}
-            alt="The raygent mark: an armored steel-blue dragon on a plinth inside glowing cyan tech-rings"
+            alt="The raygent mark: an armored dragon on a plinth inside glowing tech-rings"
             width={640}
             height={640}
             loading="lazy"
             decoding="async"
-            className="block aspect-square h-auto w-full max-w-full object-cover"
+            className="block aspect-square h-auto w-full max-w-full object-cover grayscale"
           />
         </div>
         <div className="grid content-center gap-5 p-6 md:p-12" data-reveal>
