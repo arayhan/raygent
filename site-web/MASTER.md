@@ -36,14 +36,33 @@ primary button. Interaction: the features preview panel crossfades (200ms out,
 450ms in, opacity only) when the active row changes on scroll; the active row
 is marked by colour and a 1px white left rule.
 
+**v2.2 / v2.3 amendment (validated 2026-10-08).** The owner asked for the page
+to feel alive with blue as the primary, then for more blue, a colour founder
+mark and a background that moves with scroll. These replace every cyan clause
+above:
+
+- Visual: electric blue `#5b8cff` is the single accent and marks what is live,
+  actionable or labelling: the primary button (void label), focus and
+  selection, link sweeps, the selected tab, the flagship flow line and live
+  stage, the active feature row, the prompts and caret, section eyebrows,
+  icons beside headings and features (blue at rest), raygent's row in the
+  comparison, and two of the hero rings. The founder mark shows in full
+  colour. A fixed field of soft blue and indigo light pools sits behind all
+  content.
+- Interaction: the light field drifts, scales and crosses from blue to indigo
+  as the page scrolls, scrubbed to the scrollbar, transform and opacity only;
+  static under reduced motion.
+
 **Allowed patterns:** hero ring rotation (the one loop), hairline rules, typed
 terminal, the ring mark, mono only for commands and terminal output, line
-icons beside labels, a sticky example panel showing real command output and
-real files.
+icons beside labels (blue), a sticky example panel showing real command output
+and real files, soft radial light pools behind content (scroll-linked),
+indigo only inside the light field, blue section eyebrows.
 
 **Still forbidden:** emoji as icons, an icon standing in for a label (the
-GitHub mark always sits next to the word or carries an aria-label), filled or
-coloured icons.
+GitHub mark always sits next to the word or carries an aria-label), filled
+icons, glow on text or buttons, gradient text, glass, `filter: blur`, a light
+pool in front of content or strong enough to drop text under 4.5:1.
 
 ## Colour
 
@@ -56,13 +75,24 @@ coloured icons.
 | `signal-white` | `#e7edf5` | headings, primary text, focus ring, selection, rings, flow line |
 | `signal-dim` | `#b7c1cd` | body copy |
 | `signal-mute` | `#8b98a8` | labels, captions, idle states |
-| `wash` | `rgba(231, 237, 245, 0.04)` | row hover, own row in the comparison |
-| `cyan` | `#4fd3e8` | **primary button fill only** |
-| `cyan-bright` | `#7fe0ef` | primary button hover only |
+| `wash` | `rgba(231, 237, 245, 0.04)` | neutral hover, own row in the comparison |
+| `blue` | `#5b8cff` | **the accent** (see the v2.2 / v2.3 amendment) |
+| `blue-bright` | `#86a8ff` | primary button hover only |
+| `blue-dim` | `#3a5aa6` | lit flow nodes; decorative, never text |
+| `blue-wash` | `rgba(91, 140, 255, 0.08)` | active feature row, tab press |
+| `indigo` | `#7b6bff` | light field only, never UI |
+
+Light field pools: `rgba(91,140,255,0.12)` and `rgba(123,107,255,0.12)` radial
+gradients, peak alpha 12%.
 
 Computed contrast (WCAG): signal-white on void 16.52:1, signal-dim on void
-10.68:1, signal-mute on void 6.63:1, signal-mute on charcoal 5.77:1, void on
-cyan 10.95:1, void on cyan-bright 12.80:1. `hairline` is decorative only.
+10.68:1, signal-mute on void 6.63:1, signal-mute on charcoal 5.77:1, blue on
+void 6.15:1, blue on charcoal 5.35:1, void on blue 6.15:1, void on blue-bright
+8.39:1 (white on blue is 3.16:1, so the button label is void). Worst case over
+the light field, two pools overlapping at their peak: signal-dim 8.13:1,
+signal-mute 5.05:1, blue 4.69:1. At 16% that case failed (mute 4.30, blue
+3.99), which is why the pools stop at 12%. `hairline` and `blue-dim` are
+decorative only.
 
 ## Type
 
@@ -113,8 +143,8 @@ page's only perpetual loop.
 
 - **Plate**: transparent, 1px `hairline`, 8px radius, flat. Rows inside are
   divided by `hairline-soft`.
-- **Button primary**: `cyan` fill, `void` label, Plex Sans 500 15px, 4px
-  radius. Hover `cyan-bright`. Focus 2px `signal-white` outline, 2px offset.
+- **Button primary**: `blue` fill, `void` label, Plex Sans 500 15px, 4px
+  radius. Hover `blue-bright`. Focus 2px `blue` outline, 2px offset.
   Disabled 40% opacity. At most one per viewport.
 - **Button ghost**: transparent, 1px `hairline`, `signal-white` label. Hover:
   border `signal-mute`, ground `wash`.
@@ -138,3 +168,7 @@ page's only perpetual loop.
   panel shows the active row's example, below `lg` each example sits under its
   row. Examples are real: CLI output, generated files, README blocks, or the
   exact shape the source writes. Never a drawn imitation.
+- **Light field**: `components/LightField.tsx`, a fixed `-z-10` layer of three
+  radial pools (one with an indigo twin for the crossfade), one GSAP timeline
+  scrubbed to page scroll. `body` is transparent so the layer sits between the
+  html ground and the content; `main` and `footer` are `relative z-10`.
