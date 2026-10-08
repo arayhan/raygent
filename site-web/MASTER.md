@@ -203,9 +203,13 @@ English is the default; Indonesian (`id`) is the second language.
   file contents in the example panels. They are copied from CLI runs and stay
   verbatim. Panel titles and `# ` annotation lines are translated through
   `annotations`, keyed by the English text.
-- **Tone**: Indonesian is formal ("Anda"). Developer terms stay in English
-  where Indonesian developers use them (repo, scaffold, commit, CLI, spec,
-  agent, skill).
+- **Tone**: Indonesian is casual, "kamu" + santai (nggak, udah, bikin, aja),
+  like a fellow dev talking, readable across Indonesia; no Jakarta lo/gue.
+  Developer terms stay in English where Indonesian developers use them (repo,
+  scaffold, commit, CLI, spec, agent, skill, build, deploy). No em or en
+  dashes; copy is checked with the humanizer patterns. Register is short,
+  benefit-first marketing copy, but every claim must exist in the English
+  source and the CLI: catchy, never invented.
 - **First language**: `?lang=` in the URL, then `localStorage['raygent-lang']`,
   then an Indonesian browser (`navigator.languages` starting with `id`), then
   English.
