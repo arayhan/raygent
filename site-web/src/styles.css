@@ -332,6 +332,40 @@
     opacity: 1;
   }
 
+  /* Icon beside a heading or label: the icon sits on the first line of text. */
+  .icon-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .icon-row > svg {
+    margin-top: 2px;
+  }
+
+  /* Features: the row crossing the middle of the viewport is active. Colour
+     and a 1px white left rule only. */
+  .feature-row {
+    transition: border-color var(--dur-hover) ease-out;
+  }
+  .feature-row .title,
+  .feature-icon {
+    color: var(--color-signal-mute);
+    transition: color var(--dur-hover) ease-out;
+  }
+  .feature-row[data-active='true'] {
+    border-left-color: var(--color-signal-white);
+  }
+  .feature-row[data-active='true'] .title,
+  .feature-row[data-active='true'] .feature-icon {
+    color: var(--color-signal-white);
+  }
+  @media (max-width: 1023px) {
+    .feature-row .title,
+    .feature-icon {
+      color: var(--color-signal-white);
+    }
+  }
+
   .skip-link {
     position: absolute;
     z-index: 50;
@@ -368,7 +402,10 @@
   .tab,
   .flow-node,
   .flow-node::after,
-  .flow-stage .title {
+  .flow-stage .title,
+  .feature-row,
+  .feature-row .title,
+  .feature-icon {
     transition: none;
   }
   .caret[data-typing='true'] {
