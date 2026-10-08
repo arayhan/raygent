@@ -1,10 +1,30 @@
 {
   "name": "raygent",
   "version": "0.1.0",
-  "description": "Personal CLI for managing Claude Code agent skills and project scaffolding",
+  "description": "From a raw idea to a runnable repo your coding agents already know how to work in: an interview that argues with your plan, then a real scaffold with AGENTS.md, rules and a Phase 0 task plan.",
+  "keywords": [
+    "claude-code",
+    "ai-agents",
+    "agents-md",
+    "scaffolding",
+    "cli",
+    "project-generator",
+    "coding-agent",
+    "opencode",
+    "skills"
+  ],
+  "homepage": "https://arayhan.github.io/raygent/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arayhan/raygent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/arayhan/raygent/issues"
+  },
+  "author": "Ahmed Rayhan Primadedas",
   "type": "module",
   "bin": {
-    "raygent": "./dist/cli.js"
+    "raygent": "dist/cli.js"
   },
   "files": [
     "dist",
