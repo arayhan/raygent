@@ -7,7 +7,7 @@ raygent interviews you, pushes back on the weak parts, cuts phase 1, picks a sta
 and says why, then generates a real project: runnable code, product docs, coding
 rules, and a task plan your agent picks up on its first session.
 
-[Install](#install) · [Examples](#examples) · [Flagship](#flagship-raygent-init) · [Features](#features) ·
+[Website](https://arayhan.github.io/raygent/) · [Install](#install) · [Examples](#examples) · [Flagship](#flagship-raygent-init) · [Features](#features) ·
 [How it compares](#how-it-compares) · [Tutorial](#tutorial-from-scratch-to-product-ready) ·
 [Commands](#commands)
 
