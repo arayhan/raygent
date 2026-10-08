@@ -7,7 +7,7 @@ raygent interviews you, pushes back on the weak parts, cuts phase 1, picks a sta
 and says why, then generates a real project: runnable code, product docs, coding
 rules, and a task plan your agent picks up on its first session.
 
-[Install](#install) · [Flagship](#flagship-raygent-init) · [Features](#features) ·
+[Install](#install) · [Examples](#examples) · [Flagship](#flagship-raygent-init) · [Features](#features) ·
 [How it compares](#how-it-compares) · [Tutorial](#tutorial-from-scratch-to-product-ready) ·
 [Commands](#commands)
 
@@ -120,6 +120,139 @@ raygent skill install        # the raygent skill, once per machine
 
 Requires Node.js >= 20. Then, in an empty folder, run **`/raygent init`** in your
 coding agent.
+
+## Examples
+
+Two ways to drive every recipe below:
+
+- **Talk to your agent.** Type `/raygent init` and one sentence about the idea.
+  It interviews you, picks the flags itself, and shows the spec before generating.
+- **Run the CLI.** Pass flags; anything you leave out is asked. Agents, rules,
+  stack add-ons and the skill / MCP checklists are prompts too — pass them, use a
+  [preset](#presets), or use `--from spec.json` (recipe 8) to be asked nothing.
+
+### 1. Landing page
+
+> `/raygent init` — a waitlist page for Acme, an invoicing tool for freelancers
+
+```bash
+raygent init acme-launch --platform web --kind landing --type product \
+  --mode quick --viewport mobile-first
+```
+
+Next.js with a marketing starter: hero, features, CTA, email capture and
+`/api/subscribe`, an OG image, `vercel.json`, plus `AGENTS.md`, `docs/` and
+`.claude/`. No framework or target questions — a landing page has one shape.
+
+### 2. SaaS web app (fullstack, UI-first)
+
+> `/raygent init` — a SaaS where small clinics book and track patient follow-ups
+
+```bash
+raygent init acme --platform web --target fullstack --framework nextjs \
+  --backend hono --monorepo --type product --mode guided \
+  --build-focus ui-first --viewport web-first
+```
+
+A Turborepo with `apps/web`, `apps/api` and `packages/domain`. `--mode guided`
+runs the 14-question interview and pre-fills `docs/PRODUCT.md` and `docs/PRD.md`.
+`ui-first` makes Phase 0 build every screen on mock data and stop at
+`0-gate-ui-review` for your sign-off before any backend work.
+
+### 3. Client dashboard (frontend only)
+
+> `/raygent init` — an internal ops portal for a logistics client; their API already exists
+
+```bash
+raygent init ops-portal --platform web --target frontend --framework vite-react \
+  --type client
+```
+
+`--type client` swaps the product interview for a brief intake — requirements,
+scope, deliverables, decision-maker — and the docs follow it.
+
+### 4. API only
+
+```bash
+raygent init acme-api --platform web --target backend --backend nestjs \
+  --type product --comments minimal
+```
+
+A bare backend gets only the framework-agnostic add-ons (Zod, date-fns), and no
+UI rules such as `accessibility.md` or `ui-styling.md`.
+
+### 5. Mobile app
+
+> `/raygent init` — a habit tracker app with streaks and reminders
+
+```bash
+raygent init acme-mobile --platform mobile --framework react-native \
+  --type product --build-focus ui-first
+```
+
+Expo-based React Native with a deletable example feature module showing the
+feature-driven layout.
+
+### 6. Desktop app
+
+```bash
+raygent init acme-desktop --platform desktop --framework electron --type product
+```
+
+Electron, with the same example feature module as mobile.
+
+### 7. CLI tool
+
+```bash
+raygent init acme-cli --platform cli --framework node --type product --mode quick
+```
+
+CLI platforms get raygent's own doc set (`PRD.md`, `ARCHITECTURE.md`,
+`PROGRESS.md`…) rather than a runnable scaffold — see
+[real scaffolding vs stub docs](#init).
+
+### 8. Zero prompts (CI, scripts, the fifth landing page)
+
+```jsonc
+// launch.json
+{
+  "project": { "name": "acme-launch", "type": "product", "mode": "quick" },
+  "stack": { "platform": "web", "kind": "landing", "addons": { "styling": "tailwind" } },
+  "agents": ["claude-code"],
+  "skills": [],
+  "mcp": [],
+  "preferences": { "comments": "minimal", "viewport": "mobile-first" }
+}
+```
+
+```bash
+raygent init --from launch.json      # asks nothing; a bad field fails before any write
+```
+
+`raygent init --template` prints a commented spec with every valid value, and every
+run saves its own as `docs/raygent-init.json` — copy it, change the name, replay.
+
+### 9. Your usual stack, one flag
+
+```bash
+raygent config set presets.saas.platform web
+raygent config set presets.saas.target fullstack
+raygent config set presets.saas.preferences '{"comments":"minimal","buildFocus":"ui-first"}'
+
+raygent init next-idea --preset saas
+```
+
+Full preset reference in [Presets](#presets).
+
+### After generating
+
+```bash
+cd acme && pnpm install && pnpm dev
+```
+
+Then `/bootstrap-project` in your agent to fill the remaining `TODO(content)`
+gaps. The [tutorial](#tutorial-from-scratch-to-product-ready) covers the rest:
+work orders, build, `/verify`, review.
 
 ## Tutorial: from scratch to product-ready
 
