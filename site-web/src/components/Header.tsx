@@ -1,6 +1,7 @@
 import { LINKS } from '../content/links';
 import { RingMark } from './RingMark';
 import { GitHubMark } from './Icon';
+import { LanguageToggle } from './LanguageToggle';
 import { useT } from '../i18n/LanguageProvider';
 
 const NAV = [
@@ -34,10 +35,14 @@ export function Header() {
             ))}
           </ul>
         </nav>
-        <a href={LINKS.repo} className="btn btn-ghost px-4 py-2" target="_blank" rel="noreferrer">
-          <GitHubMark size={16} />
-          GitHub
-        </a>
+        <div className="flex items-center gap-4">
+          <LanguageToggle />
+          <a href={LINKS.repo} className="btn btn-ghost px-4 py-2" target="_blank" rel="noreferrer">
+            <GitHubMark size={16} />
+            <span className="hidden sm:inline">GitHub</span>
+            <span className="sr-only-x sm:hidden">GitHub</span>
+          </a>
+        </div>
       </div>
     </header>
   );

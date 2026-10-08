@@ -295,7 +295,8 @@
   .tab:active {
     background: var(--color-blue-wash);
   }
-  .tab[aria-selected='true'] {
+  .tab[aria-selected='true'],
+  .tab[aria-pressed='true'] {
     color: var(--color-blue);
     border-bottom-color: var(--color-blue);
   }

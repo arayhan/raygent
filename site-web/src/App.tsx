@@ -24,7 +24,7 @@ function SkipLink() {
 
 export function App() {
   return (
-    <LanguageProvider initial="en">
+    <LanguageProvider>
       <SkipLink />
       <LightField />
       <ParticleField />
