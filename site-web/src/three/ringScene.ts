@@ -1,5 +1,4 @@
 import {
-  AdditiveBlending,
   BufferGeometry,
   Color,
   Float32BufferAttribute,
@@ -15,19 +14,19 @@ import {
 } from 'three';
 
 // MASTER.md tokens. three needs numbers, so they are read here once.
-const CYAN = new Color('#4fd3e8');
+const SIGNAL_WHITE = new Color('#e7edf5');
 const SIGNAL_DIM = new Color('#b7c1cd');
 
 // Inner to outer. speed is MASTER.md "ring speeds" in revolutions per second.
 const RINGS = [
-  { radius: 1.0, width: 0.035, segments: 3, gap: 0.5, opacity: 0.95, speed: 0.05 },
-  { radius: 1.38, width: 0.016, segments: 24, gap: 0.55, opacity: 0.6, speed: -0.09 },
-  { radius: 1.74, width: 0.055, segments: 5, gap: 0.25, opacity: 0.8, speed: 0.14 },
-  { radius: 2.12, width: 0.012, segments: 60, gap: 0.6, opacity: 0.35, speed: -0.05 },
+  { radius: 1.0, width: 0.03, segments: 3, gap: 0.5, opacity: 0.6, speed: 0.025 },
+  { radius: 1.38, width: 0.014, segments: 24, gap: 0.55, opacity: 0.35, speed: -0.045 },
+  { radius: 1.74, width: 0.04, segments: 5, gap: 0.25, opacity: 0.5, speed: 0.07 },
+  { radius: 2.12, width: 0.012, segments: 60, gap: 0.6, opacity: 0.25, speed: -0.025 },
 ];
-const PARTICLES = 420;
-// MASTER.md parallax: 10px max. At this camera distance 0.08 units is about 10px.
-const PARALLAX = 0.08;
+const PARTICLES = 160;
+// MASTER.md parallax: 6px max. At this camera distance 0.05 units is about 6px.
+const PARALLAX = 0.05;
 
 export interface RingScene {
   start(): void;
@@ -59,10 +58,9 @@ export function createRingScene(canvas: HTMLCanvasElement): RingScene {
     const step = (Math.PI * 2) / ring.segments;
     const arc = step * (1 - ring.gap);
     const material = new MeshBasicMaterial({
-      color: CYAN,
+      color: SIGNAL_WHITE,
       transparent: true,
       opacity: ring.opacity,
-      blending: AdditiveBlending,
       depthWrite: false,
     });
     disposables.push(material);
@@ -91,23 +89,21 @@ export function createRingScene(canvas: HTMLCanvasElement): RingScene {
   pointsGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
   const pointsMaterial = new PointsMaterial({
     color: SIGNAL_DIM,
-    size: 0.022,
+    size: 0.02,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.35,
     depthWrite: false,
   });
   disposables.push(pointsGeometry, pointsMaterial);
   const points = new Points(pointsGeometry, pointsMaterial);
   tilt.add(points);
-  const pointsOmega = 0.02 * Math.PI * 2;
+  const pointsOmega = 0.01 * Math.PI * 2;
 
-  // The core: the one live element in this viewport.
-  const coreGeometry = new RingGeometry(0, 0.11, 32);
-  const coreMaterial = new MeshBasicMaterial({ color: CYAN, transparent: true, opacity: 0.95, blending: AdditiveBlending });
-  const haloGeometry = new RingGeometry(0.11, 0.38, 48);
-  const haloMaterial = new MeshBasicMaterial({ color: CYAN, transparent: true, opacity: 0.12, blending: AdditiveBlending, depthWrite: false });
-  disposables.push(coreGeometry, coreMaterial, haloGeometry, haloMaterial);
-  tilt.add(new Mesh(coreGeometry, coreMaterial), new Mesh(haloGeometry, haloMaterial));
+  // The core: a small white dot, no halo.
+  const coreGeometry = new RingGeometry(0, 0.07, 32);
+  const coreMaterial = new MeshBasicMaterial({ color: SIGNAL_WHITE });
+  disposables.push(coreGeometry, coreMaterial);
+  tilt.add(new Mesh(coreGeometry, coreMaterial));
 
   let raf = 0;
   let last = 0;

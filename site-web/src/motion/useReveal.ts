@@ -2,9 +2,9 @@ import type { RefObject } from 'react';
 import { DUR, EASE_OUT_EXPO, STAGGER, gsap, prefersReducedMotion, useGSAP } from './gsap';
 
 /**
- * Staggered entrance for every `[data-reveal]` inside `scope`, once, when the
- * group scrolls into view. Reduced motion skips it: the content is already in
- * its resting place.
+ * Staggered opacity fade for every `[data-reveal]` inside `scope`, once, when
+ * the group scrolls into view. No slide: v2 motion is fades only. Reduced
+ * motion skips it, and the content is already at rest.
  */
 export function useReveal(scope: RefObject<HTMLElement | null>, opts: { start?: string } = {}) {
   useGSAP(
@@ -14,7 +14,6 @@ export function useReveal(scope: RefObject<HTMLElement | null>, opts: { start?: 
       if (items.length === 0) return;
       gsap.from(items, {
         opacity: 0,
-        y: 24,
         duration: DUR.enter,
         ease: EASE_OUT_EXPO,
         stagger: STAGGER,

@@ -9,7 +9,7 @@ gsap.registerPlugin(ScrollTrigger, CustomEase, useGSAP);
 export const EASE_OUT_EXPO = CustomEase.create('raygentOutExpo', '0.16,1,0.3,1');
 
 // MASTER.md motion tokens, in seconds.
-export const DUR = { enterS: 0.45, enter: 0.6, enterL: 0.7, exit: 0.2 } as const;
+export const DUR = { enterS: 0.45, enter: 0.5, exit: 0.2 } as const;
 export const STAGGER = 0.06;
 export const TYPE_CHAR_MS = 35;
 export const TYPE_LINE_MS = 120;

@@ -38,7 +38,7 @@ export function Examples() {
       setActive(next);
       return;
     }
-    // Exit subtler than enter: 200ms ease-in fade out, then the new panel rises in.
+    // Exit subtler than enter: 200ms ease-in fade out, then the new panel fades in.
     gsap.killTweensOf(panel);
     gsap.to(panel, {
       opacity: 0,
@@ -46,7 +46,7 @@ export function Examples() {
       ease: 'power1.in',
       onComplete: () => {
         setActive(next);
-        gsap.fromTo(panel, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.enterS, ease: EASE_OUT_EXPO });
+        gsap.fromTo(panel, { opacity: 0 }, { opacity: 1, duration: DUR.enterS, ease: EASE_OUT_EXPO });
       },
     });
   };
