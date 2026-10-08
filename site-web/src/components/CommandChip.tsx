@@ -1,7 +1,11 @@
 import { useRef, useState } from 'react';
 
-/** A copyable shell command. Falls back to selecting the text when the clipboard is refused. */
-export function CommandChip({ command }: { command: string }) {
+/**
+ * A copyable command. `prompt` is `$` for a shell and `>` for something typed
+ * into a coding agent. Falls back to selecting the text when the clipboard is
+ * refused.
+ */
+export function CommandChip({ command, prompt = '$' }: { command: string; prompt?: '$' | '>' }) {
   const codeRef = useRef<HTMLElement>(null);
   const [status, setStatus] = useState<'idle' | 'copied' | 'select'>('idle');
 
@@ -30,7 +34,7 @@ export function CommandChip({ command }: { command: string }) {
     <div className="cmd">
       <code ref={codeRef}>
         <span className="text-cyan" aria-hidden="true">
-          ${' '}
+          {prompt}{' '}
         </span>
         {command}
       </code>
