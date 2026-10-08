@@ -13,7 +13,7 @@ const FOOTER_LINKS: { href: string; label: string; icon: ReactNode }[] = [
 
 export function Footer() {
   return (
-    <footer className="page-x border-t border-hairline-soft">
+    <footer className="page-x relative z-10 border-t border-hairline-soft">
       <div className="mx-auto grid max-w-(--container-page) gap-6 py-10 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div className="flex items-center gap-3">
           <RingMark size={24} />

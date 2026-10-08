@@ -1,4 +1,5 @@
 import { Header } from './components/Header';
+import { LightField } from './components/LightField';
 import { Hero } from './sections/Hero';
 import { Why } from './sections/Why';
 import { Flagship } from './sections/Flagship';
@@ -16,8 +17,9 @@ export function App() {
       <a href="#main" className="btn btn-primary skip-link">
         Skip to content
       </a>
+      <LightField />
       <Header />
-      <main id="main">
+      <main id="main" className="relative z-10">
         <Hero />
         <Why />
         <Flagship />
