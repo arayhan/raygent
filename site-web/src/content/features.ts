@@ -26,7 +26,8 @@ export interface Feature {
 // Every example is real: generated files and command output from runs of the
 // CLI (project names are the descriptive ones used in Examples), documented
 // output blocks from the README, or the exact shape the source writes. Home
-// paths are shortened to ~ and the run directory to ./.
+// paths are shortened to ~ and the run directory to ./. Lines starting with
+// `# ` are our annotations, never presented as output.
 export const FEATURES: Feature[] = [
   {
     icon: MessagesSquare,
@@ -76,8 +77,8 @@ export const FEATURES: Feature[] = [
       lines: [
         'clinic-followups/',
         '├── apps/',
-        '│   ├── api/            Hono',
-        '│   └── web/            Next.js (App Router)',
+        '│   ├── api/            # Hono',
+        '│   └── web/            # Next.js (App Router)',
         '├── packages/',
         '│   ├── config/',
         '│   └── domain/',
@@ -129,8 +130,8 @@ export const FEATURES: Feature[] = [
         '├── skills/     bootstrap-project  project-gotchas',
         '└── settings.json',
         '',
-        'AGENTS.md       read by Claude Code, opencode and Antigravity',
-        'CLAUDE.md       points Claude Code at AGENTS.md',
+        'AGENTS.md       # read by Claude Code, opencode and Antigravity',
+        'CLAUDE.md       # points Claude Code at AGENTS.md',
       ],
     },
   },
@@ -150,7 +151,7 @@ export const FEATURES: Feature[] = [
         'sql-and-data.md',
         'testing.md',
         '',
-        'no accessibility.md or ui-styling.md: nothing here renders UI',
+        '# no accessibility.md or ui-styling.md: nothing here renders UI',
       ],
     },
   },
@@ -183,10 +184,10 @@ export const FEATURES: Feature[] = [
       lines: [
         '0-step-01-scaffold.md',
         '0-step-02-verify-loop.md',
-        '0-step-03-ui-shell.md          every screen on mock data',
-        '0-gate-ui-review.md            you approve the UI',
-        '0-gate-deploy.md               live on a public URL',
-        '1-step-01-data-round-trip.md   then the real backend',
+        '0-step-03-ui-shell.md          # every screen on mock data',
+        '0-gate-ui-review.md            # you approve the UI',
+        '0-gate-deploy.md               # live on a public URL',
+        '1-step-01-data-round-trip.md   # then the real backend',
         'README.md',
       ],
     },
@@ -266,7 +267,7 @@ export const FEATURES: Feature[] = [
         '  }',
         '}',
         '',
-        'Without it, no AI prompt appears and init still completes.',
+        '# without it, no AI prompt appears and init still completes',
       ],
     },
   },
@@ -283,8 +284,8 @@ export const FEATURES: Feature[] = [
         '$ raygent finance add waitlist-page 49 "first sale"',
         '$ raygent finance summary',
         '',
-        'Products send events to /api/ingest.',
-        'Data stays in ~/.raygent/.',
+        '# products send events to /api/ingest',
+        '# data stays in ~/.raygent/',
       ],
     },
   },
