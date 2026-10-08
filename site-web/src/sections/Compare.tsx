@@ -34,7 +34,7 @@ export function Compare() {
     <section id="compare" ref={ref} className="page-x section-y" aria-labelledby="compare-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12">
         <div className="grid gap-4" data-reveal>
-          <p className="label m-0">How it compares</p>
+          <p className="label eyebrow m-0">How it compares</p>
           <h2 id="compare-title" className="display-l">
             Built for the moment before the repo exists
           </h2>
@@ -66,14 +66,14 @@ export function Compare() {
                   <th
                     scope="row"
                     className={`px-5 py-3.5 text-[17px] font-semibold tracking-[-0.01em] ${
-                      'text-signal-white'
+                      row.self ? 'text-blue' : 'text-signal-white'
                     }`}
                   >
                     {row.name}
                   </th>
                   {row.marks.map((m, i) => (
                     <td key={COLUMNS[i]} className="px-3 py-3.5 text-center">
-                      <Mark value={m} />
+                      <Mark value={m} accent={row.self} />
                     </td>
                   ))}
                 </tr>
@@ -85,7 +85,7 @@ export function Compare() {
         <div className="grid gap-10 md:grid-cols-2">
           <div className="grid content-start gap-3" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={Compass} className="text-signal-mute" />
+              <Icon as={Compass} className="text-blue" />
               Where raygent fits
             </h3>
             <p className="m-0 text-signal-dim">
@@ -100,7 +100,7 @@ export function Compare() {
           </div>
           <div className="grid content-start gap-3" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={Ban} className="text-signal-mute" />
+              <Icon as={Ban} className="text-blue" />
               What raygent does not do
             </h3>
             <p className="m-0 text-signal-dim">

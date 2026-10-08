@@ -72,7 +72,9 @@
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
     -webkit-font-smoothing: antialiased;
-    background: var(--color-void);
+    /* Transparent on purpose: html paints the void ground, and the fixed
+       light field (z-index -10) must sit between the two. */
+    background: transparent;
   }
   ::selection {
     background: var(--color-blue);
@@ -107,6 +109,9 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--color-signal-mute);
+  }
+  .eyebrow {
+    color: var(--color-blue);
   }
   .display-xl,
   .display-l,
@@ -328,13 +333,6 @@
     color: var(--color-blue);
   }
   .flow-icon {
-    color: var(--color-signal-mute);
-    transition: color var(--dur-hover) ease-out;
-  }
-  .flow-stage[data-lit='true'] .flow-icon {
-    color: var(--color-signal-dim);
-  }
-  .flow-stage[data-live='true'] .flow-icon {
     color: var(--color-blue);
   }
   .flow-stage[data-live='true'] .flow-node {
@@ -361,10 +359,12 @@
       border-color var(--dur-hover) ease-out,
       background-color var(--dur-hover) ease-out;
   }
-  .feature-row .title,
-  .feature-icon {
+  .feature-row .title {
     color: var(--color-signal-mute);
     transition: color var(--dur-hover) ease-out;
+  }
+  .feature-icon {
+    color: var(--color-blue);
   }
   .feature-row[data-active='true'] {
     border-left-color: var(--color-blue);
@@ -373,12 +373,8 @@
   .feature-row[data-active='true'] .title {
     color: var(--color-signal-white);
   }
-  .feature-row[data-active='true'] .feature-icon {
-    color: var(--color-blue);
-  }
   @media (max-width: 1023px) {
-    .feature-row .title,
-    .feature-icon {
+    .feature-row .title {
       color: var(--color-signal-white);
     }
   }
@@ -421,9 +417,7 @@
   .flow-node::after,
   .flow-stage .title,
   .feature-row,
-  .feature-row .title,
-  .feature-icon,
-  .flow-icon {
+  .feature-row .title {
     transition: none;
   }
   .caret[data-typing='true'] {

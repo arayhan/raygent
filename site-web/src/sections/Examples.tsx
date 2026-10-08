@@ -67,7 +67,7 @@ export function Examples() {
     <section id="examples" ref={ref} className="page-x section-y" aria-labelledby="examples-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12">
         <div className="grid gap-4" data-reveal>
-          <p className="label m-0">Examples</p>
+          <p className="label eyebrow m-0">Examples</p>
           <h2 id="examples-title" className="display-l">
             One sentence to your agent, or one command
           </h2>

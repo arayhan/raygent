@@ -21,10 +21,10 @@ const SIGNAL_DIM = new Color('#b7c1cd');
 
 // Inner to outer. speed is MASTER.md "ring speeds" in revolutions per second.
 const RINGS = [
-  { radius: 1.0, width: 0.03, segments: 3, gap: 0.5, opacity: 0.6, speed: 0.025 },
-  { radius: 1.38, width: 0.014, segments: 24, gap: 0.55, opacity: 0.35, speed: -0.045 },
-  { radius: 1.74, width: 0.04, segments: 5, gap: 0.25, opacity: 0.5, speed: 0.07 },
-  { radius: 2.12, width: 0.012, segments: 60, gap: 0.6, opacity: 0.25, speed: -0.025 },
+  { radius: 1.0, width: 0.03, segments: 3, gap: 0.5, opacity: 0.85, speed: 0.025, blue: true },
+  { radius: 1.38, width: 0.014, segments: 24, gap: 0.55, opacity: 0.55, speed: -0.045, blue: false },
+  { radius: 1.74, width: 0.04, segments: 5, gap: 0.25, opacity: 0.75, speed: 0.07, blue: true },
+  { radius: 2.12, width: 0.012, segments: 60, gap: 0.6, opacity: 0.4, speed: -0.025, blue: false },
 ];
 const PARTICLES = 160;
 // MASTER.md parallax: 6px max. At this camera distance 0.05 units is about 6px.
@@ -55,12 +55,12 @@ export function createRingScene(canvas: HTMLCanvasElement): RingScene {
   const disposables: { dispose(): void }[] = [];
   const spinners: { group: Group; omega: number }[] = [];
 
-  for (const [index, ring] of RINGS.entries()) {
+  for (const ring of RINGS) {
     const group = new Group();
     const step = (Math.PI * 2) / ring.segments;
     const arc = step * (1 - ring.gap);
     const material = new MeshBasicMaterial({
-      color: index === 0 ? BLUE : BLUE_TINT,
+      color: ring.blue ? BLUE : BLUE_TINT,
       transparent: true,
       opacity: ring.opacity,
       depthWrite: false,

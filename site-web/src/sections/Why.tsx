@@ -11,7 +11,7 @@ export function Why() {
     <section id="why" ref={ref} className="page-x section-y" aria-labelledby="why-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12">
         <div className="grid gap-4" data-reveal>
-          <p className="label m-0">Why raygent</p>
+          <p className="label eyebrow m-0">Why raygent</p>
           <h2 id="why-title" className="display-l">
             The first session should start working, not guessing
           </h2>
@@ -20,7 +20,7 @@ export function Why() {
         <ul className="plate m-0 grid list-none p-0 md:grid-cols-2">
           <li className="grid gap-3 border-hairline-soft p-6 md:border-r md:p-8" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={Bot} className="text-signal-mute" />
+              <Icon as={Bot} className="text-blue" />
               Agents start every repo cold
             </h3>
             <p className="m-0 text-signal-dim">
@@ -32,7 +32,7 @@ export function Why() {
           </li>
           <li className="grid gap-3 border-t border-hairline-soft p-6 md:border-t-0 md:p-8" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={Split} className="text-signal-mute" />
+              <Icon as={Split} className="text-blue" />
               Code without a plan, or a plan without code
             </h3>
             <p className="m-0 text-signal-dim">
@@ -43,7 +43,7 @@ export function Why() {
           </li>
           <li className="grid gap-3 border-t border-hairline-soft p-6 md:border-r md:p-8" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={MessageSquareWarning} className="text-signal-mute" />
+              <Icon as={MessageSquareWarning} className="text-blue" />
               A form accepts every answer
             </h3>
             <p className="m-0 text-signal-dim">
@@ -54,7 +54,7 @@ export function Why() {
           </li>
           <li className="grid gap-3 border-t border-hairline-soft p-6 md:p-8" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={ShieldCheck} className="text-signal-mute" />
+              <Icon as={ShieldCheck} className="text-blue" />
               Rules that fail the build
             </h3>
             <p className="m-0 text-signal-dim">

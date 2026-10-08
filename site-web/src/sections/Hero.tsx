@@ -28,7 +28,7 @@ export function Hero() {
     <section id="top" ref={ref} className="page-x" aria-labelledby="hero-title">
       <div className="mx-auto grid max-w-(--container-page) items-center gap-10 pt-16 pb-24 md:pt-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:pb-32">
         <div className="grid gap-8">
-          <p className="label m-0" data-hero-rest>
+          <p className="label eyebrow m-0" data-hero-rest>
             Open-source CLI and agent skill
           </p>
           <h1 id="hero-title" className="display-xl">

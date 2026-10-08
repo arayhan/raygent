@@ -101,7 +101,7 @@ export function Flagship() {
     <section id="flagship" ref={ref} className="page-x section-y" aria-labelledby="flagship-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
         <div className="grid content-start gap-5 lg:sticky lg:top-28">
-          <p className="label m-0">Flagship</p>
+          <p className="label eyebrow m-0">Flagship</p>
           <h2 id="flagship-title" className="display-l">
             <code className="font-mono font-medium tracking-[-0.03em]">/raygent init</code>
           </h2>

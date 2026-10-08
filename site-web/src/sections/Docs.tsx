@@ -13,7 +13,7 @@ export function Docs() {
     <section id="docs" ref={ref} className="page-x section-y" aria-labelledby="docs-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12">
         <div className="grid gap-4" data-reveal>
-          <p className="label m-0">How to use it</p>
+          <p className="label eyebrow m-0">How to use it</p>
           <h2 id="docs-title" className="display-l">
             Three commands to your first conversation
           </h2>
@@ -22,7 +22,7 @@ export function Docs() {
         <ol className="plate m-0 grid list-none p-0 lg:grid-cols-3">
           <li className="grid content-start gap-4 p-6 md:p-8" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={Download} className="text-signal-mute" />
+              <Icon as={Download} className="text-blue" />
               Install the CLI
             </h3>
             <CommandChip command={INSTALL_COMMAND} />
@@ -33,7 +33,7 @@ export function Docs() {
           </li>
           <li className="grid content-start gap-4 border-t border-hairline-soft p-6 md:p-8 lg:border-t-0 lg:border-l" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={Puzzle} className="text-signal-mute" />
+              <Icon as={Puzzle} className="text-blue" />
               Install the skill, once per machine
             </h3>
             <CommandChip command="raygent skill install" />
@@ -43,7 +43,7 @@ export function Docs() {
           </li>
           <li className="grid content-start gap-4 border-t border-hairline-soft p-6 md:p-8 lg:border-t-0 lg:border-l" data-reveal>
             <h3 className="title icon-row">
-              <Icon as={SquareTerminal} className="text-signal-mute" />
+              <Icon as={SquareTerminal} className="text-blue" />
               Start in an empty folder
             </h3>
             <CommandChip command="/raygent init" prompt=">" />

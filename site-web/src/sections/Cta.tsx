@@ -34,7 +34,7 @@ export function Cta() {
         >
           <div className="grid gap-2">
             <h3 className="title icon-row">
-              <Icon as={HandHeart} className="text-signal-mute" />
+              <Icon as={HandHeart} className="text-blue" />
               Support raygent
             </h3>
             <p className="prose-measure m-0 text-signal-dim">

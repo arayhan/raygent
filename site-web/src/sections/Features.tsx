@@ -61,7 +61,7 @@ export function Features() {
     <section id="features" ref={ref} className="page-x section-y" aria-labelledby="features-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12">
         <div className="grid gap-4" data-reveal>
-          <p className="label m-0">Features</p>
+          <p className="label eyebrow m-0">Features</p>
           <h2 id="features-title" className="display-l">
             Everything between the idea and the first commit
           </h2>
