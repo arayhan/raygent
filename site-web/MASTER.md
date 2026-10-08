@@ -72,7 +72,7 @@ pool in front of content or strong enough to drop text under 4.5:1.
 | `charcoal` | `#161d28` | the few filled surfaces (command chip) |
 | `hairline` | `#2a3542` | plate and control borders |
 | `hairline-soft` | `#202932` | rows and dividers inside a plate |
-| `signal-white` | `#e7edf5` | headings, primary text, focus ring, selection, rings, flow line |
+| `signal-white` | `#e7edf5` | headings, primary text, the untinted hero rings |
 | `signal-dim` | `#b7c1cd` | body copy |
 | `signal-mute` | `#8b98a8` | labels, captions, idle states |
 | `wash` | `rgba(231, 237, 245, 0.04)` | neutral hover, own row in the comparison |
@@ -158,7 +158,7 @@ page's only perpetual loop.
   white underline; arrow-key navigation.
 - **Matrix marks**: SVG ring (yes, `signal-white`), half ring (partly,
   `signal-mute`), dash (no, `hairline`), each with a visually hidden word.
-- **Ring mark**: white strokes, no glow.
+- **Ring mark**: white strokes, `blue` core, no glow.
 - **Icon**: `components/Icon.tsx`, lucide, 20px (18 in buttons, 14 in the
   footer and copy buttons), stroke 1.5, `aria-hidden`, colour inherited.
   `.icon-row` puts it on the first line of the text it labels. The GitHub mark
