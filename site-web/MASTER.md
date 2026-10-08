@@ -1,155 +1,118 @@
-# MASTER: raygent landing page design system
+# MASTER: raygent landing page design system (v2)
 
-Single source of truth for `site-web/`. Every colour, size, radius, shadow and
+Single source of truth for `site-web/`. Every colour, size, radius and
 duration in the site comes from a token here, mirrored in `src/styles.css`
-(`@theme`). The dashboard keeps its own system in the root `DESIGN.md`; this
-file extends the same brand, it does not replace it.
+(`@theme`). The dashboard keeps its own system in the root `DESIGN.md`.
 
-## Theses (validated 2026-10-08)
+v1 (Rajdhani, cyan accents, glow, texture, kinetic motion) was replaced on
+2026-10-08: the owner rejected the font pairing and asked for the whole page
+to be minimalist.
 
-**Visual thesis.** A dark guardian-tech page on raygent's existing tokens: void
-to charcoal ground, Signal White text and Guardian Cyan as the only accent
-(existing palette and mark preserved); Rajdhani set large, condensed and
-uppercase for headlines and labels because it is the brand's own technical
-face, system sans for reading, tabular mono for commands and terminal output;
-airy section rhythm on an 8px base with dense instrument plates inside;
-hairline-bordered sealed plates, 8px radius on the outer plate only, flat
-inside, no card grid, cyan glow reserved for the one live element per viewport.
+## Theses (v2, validated 2026-10-08)
 
-**Interaction thesis.** Kinetic and technical: a three.js hero of the
-guardian's segmented tech-rings and circuit particles rotating at different
-speeds with gentle pointer parallax; GSAP ScrollTrigger scrubs the flagship
-flow line and lights each stage cyan as the line reaches it; terminals type
-their command at 35ms per character, then print output; entrances 450 to 700ms
-on cubic-bezier(0.16, 1, 0.3, 1) with a 60ms stagger; hover 160ms ease-out with
-a cyan hairline sweep and a 2px lift on CTAs and plates, never scale on text.
-Forbidden: bounce or elastic, gradient text, glassmorphism, a second accent
-hue, scroll-jacking, parallax on body text. Reduced motion: rings static,
-diagrams complete, terminals show final text.
+**Visual thesis.** A near-monochrome dark page: void ground, flat charcoal
+surfaces, Signal White, Dim and Mute for text and hairlines, and Guardian Cyan
+in exactly one role, the fill of the primary button (one per viewport); IBM
+Plex Sans throughout, because one engineered superfamily is the least
+ornamented voice for a dev tool, headings 600 in sentence case at -0.02em,
+body 400, IBM Plex Mono only for commands, paths and terminal output; generous
+whitespace on an 8px base; flat 1px hairline plates, 8px radius on the outer
+plate only, no gradients, shadows, glows or texture.
 
-**Allowed patterns:** hero ring rotation (the one perpetual loop), cyan glow on
-the live element, mono labels for commands, hairline rules, 5% hex/circuit
-ambient texture, typed terminal, the ring mark.
+**Interaction thesis.** Quiet and precise: opacity-only fades at 500ms on
+cubic-bezier(0.16, 1, 0.3, 1) with a 60ms stagger and no slide; hover 160ms
+ease-out on colour and border only, plus a 1px underline sweep on text links,
+never lift or glow; hero rings in low-opacity white at half the old speed with
+about 160 particles and 6px parallax, pause control kept; the flagship line
+stays scroll-scrubbed in white and stages light by colour only; terminals type
+at 35ms per character; exits 200ms ease-in fade. Forbidden: glow, lift,
+bounce, gradient text, glass, texture, any colour beyond the one cyan role.
+Reduced motion: static rings, complete flow, final terminal text, no fades.
 
-## Dials
-
-| Dial | Value | From the thesis clause |
-|---|---|---|
-| motion | 8 | "kinetic and technical", scrubbed flow, typed terminals, staggered entrances |
-| density | 4 | "airy section rhythm on an 8px base with dense instrument plates inside" |
-| variance | not sent | the thesis sets no symmetry or experimental-layout clause |
+**Allowed patterns:** hero ring rotation (the one loop), hairline rules, typed
+terminal, the ring mark, mono only for commands and terminal output.
 
 ## Colour
 
-One accent. Neutrals carry a slight blue bias toward the cyan.
-
 | Token | Value | Use |
 |---|---|---|
-| `void` | `#0a0d12` | page ground, terminal ground, text on cyan |
-| `charcoal-deep` | `#10151d` | plate gradient end |
-| `charcoal` | `#161d28` | plate gradient start, table cells |
-| `charcoal-raised` | `#1e2733` | command chip, active tab |
-| `hairline` | `#2a3542` | plate borders, control borders |
+| `void` | `#0a0d12` | page ground, terminal ground, primary button label |
+| `charcoal` | `#161d28` | the few filled surfaces (command chip) |
+| `hairline` | `#2a3542` | plate and control borders |
 | `hairline-soft` | `#202932` | rows and dividers inside a plate |
-| `signal-white` | `#e7edf5` | headings, primary text |
+| `signal-white` | `#e7edf5` | headings, primary text, focus ring, selection, rings, flow line |
 | `signal-dim` | `#b7c1cd` | body copy |
-| `signal-mute` | `#8b98a8` | labels, captions, meta |
-| `cyan` | `#4fd3e8` | the accent: live element, primary button, links on hover, ✓ marks |
-| `cyan-dim` | `#2f7a8c` | hover borders, partial marks, idle flow line |
-| `cyan-wash` | `rgba(79, 211, 232, 0.06)` | row hover, active tab ground |
+| `signal-mute` | `#8b98a8` | labels, captions, idle states |
+| `wash` | `rgba(231, 237, 245, 0.04)` | row hover, own row in the comparison |
+| `cyan` | `#4fd3e8` | **primary button fill only** |
+| `cyan-bright` | `#7fe0ef` | primary button hover only |
 
-Computed contrast (WCAG): signal-white on void 16.52:1, signal-dim on charcoal
-9.29:1, signal-mute on charcoal 5.77:1 (on charcoal-raised 5.14:1), cyan on void
-10.95:1, void on cyan 10.95:1, cyan-dim on void 3.97:1 (marks and borders only,
-never text). `hairline` on void is 1.56:1 and is decorative only, never a
-boundary a user must find.
-
-No semantic hues. Success, warning and error do not exist on this page; if a
-state needs emphasis it gets more cyan (the One Channel Rule from `DESIGN.md`).
+Computed contrast (WCAG): signal-white on void 16.52:1, signal-dim on void
+10.68:1, signal-mute on void 6.63:1, signal-mute on charcoal 5.77:1, void on
+cyan 10.95:1, void on cyan-bright 12.80:1. `hairline` is decorative only.
 
 ## Type
 
+IBM Plex Sans and IBM Plex Mono, self-hosted through `@fontsource` (OFL),
+latin subset. Sans 400/500/600, Mono 400/500.
+
 | Role | Face | Size / line-height | Weight | Case, tracking |
 |---|---|---|---|---|
-| display-xl (hero) | Rajdhani | clamp(52px, 9vw, 116px) / 0.9 | 700 | upper, 0.005em |
-| display-l (section) | Rajdhani | clamp(34px, 5vw, 60px) / 0.98 | 700 | upper, 0.01em |
-| title | Rajdhani | 22px / 1.2 | 600 | upper, 0.04em |
-| label | Rajdhani | 12px / 1.3 | 600 | upper, 0.14em |
-| body-l | system sans | 18px / 1.65 | 400 | none |
-| body | system sans | 16px / 1.65 | 400 | none |
-| small | system sans | 14px / 1.55 | 400 | none |
-| mono | system mono | 14px / 1.65 | 400 | none, tabular-nums |
-| mono-s | system mono | 12.5px / 1.6 | 400 | none |
+| display-xl | Plex Sans | clamp(44px, 7vw, 88px) / 1.0 | 600 | sentence, -0.02em |
+| display-l | Plex Sans | clamp(30px, 4vw, 48px) / 1.08 | 600 | sentence, -0.02em |
+| title | Plex Sans | 20px / 1.3 | 600 | sentence, -0.01em |
+| label | Plex Sans | 12px / 1.3 | 500 | upper, 0.12em |
+| body-l | Plex Sans | 18px / 1.65 | 400 | none |
+| body | Plex Sans | 16px / 1.65 | 400 | none |
+| small | Plex Sans | 14px / 1.55 | 400 | none |
+| mono | Plex Mono | 14px / 1.65 | 400 | none, tabular-nums |
+| mono-s | Plex Mono | 12.5px / 1.6 | 400 | none |
 
-Rajdhani is self-hosted (`src/assets/fonts`, OFL), weights 500/600/700.
-Mono appears only where the content is a command, a path, a flag or terminal
-output. Body text runs at most 68ch wide.
+Body text runs at most 68ch wide.
 
-## Space
+## Space and shape
 
-Base 8. Scale: `1` 4px, `2` 8px, `3` 12px, `4` 16px, `6` 24px, `8` 32px,
-`12` 48px, `16` 64px, `24` 96px, `32` 128px.
-
-- Page gutter: `clamp(16px, 4vw, 32px)`; content max-width 1180px.
-- Section rhythm: 128px block padding on desktop, 80px below 768px.
-- Plate inner padding: 20px; rows inside a plate: 14px x 20px.
-
-## Shape and depth
-
-| Token | Value |
-|---|---|
-| `radius-plate` | 8px, outer plates and the terminal only |
-| `radius-control` | 4px, buttons, tabs, command chip |
-| `radius-none` | 0, everything inside a plate |
-| `shadow-plate` | `0 1px 0 rgba(255,255,255,0.03) inset, 0 14px 30px -18px rgba(0,0,0,0.65)` |
-| `glow-live` | `0 0 16px rgba(79, 211, 232, 0.4)` (text-shadow or drop-shadow), one live element per viewport |
+Base 8: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128px. Page gutter
+`clamp(16px, 4vw, 32px)`, content max-width 1180px, section rhythm 128px
+(80px below 768px). Radius: `plate` 8px (outer plates, terminal), `control`
+4px (buttons, chips, tabs), 0 inside a plate. No shadows.
 
 ## Motion
 
 | Token | Value | Use |
 |---|---|---|
-| `ease-out-expo` | `cubic-bezier(0.16, 1, 0.3, 1)` | every entrance, tab content swap |
-| `ease-hover` | `ease-out` | hover and focus transitions |
-| `dur-hover` | 160ms | hover, focus, press |
-| `dur-enter-s` | 450ms | small items, rows, labels |
-| `dur-enter` | 600ms | blocks, plates |
-| `dur-enter-l` | 700ms | headlines |
-| `dur-exit` | 200ms ease-in, opacity only | content leaving (example tab swap); exit is always subtler than enter |
-| `stagger` | 60ms | sibling entrances |
-| `type-char` | 35ms | terminal typing per character |
-| `type-line` | 120ms | terminal output, per printed line |
-| `lift` | -2px translateY | hover on CTAs and plates |
-| ring speeds | 0.05, -0.09, 0.14, -0.05 rev/s | hero rings, inner to outer |
-| parallax | 10px max | hero rings only, never body text |
+| `ease-out-expo` | `cubic-bezier(0.16, 1, 0.3, 1)` | every entrance |
+| `dur-hover` | 160ms ease-out | hover, focus, press: colour and border only |
+| `dur-enter-s` | 450ms | tab panel fade-in |
+| `dur-enter` | 500ms | every scroll and load fade |
+| `dur-exit` | 200ms ease-in, opacity only | content leaving |
+| `stagger` | 60ms | sibling fades |
+| `type-char` / `type-line` | 35ms / 120ms | terminal typing, output lines |
+| ring speeds | 0.025, -0.045, 0.07, -0.025 rev/s | hero rings, inner to outer |
+| ring opacity | 0.6, 0.35, 0.5, 0.25 | inner to outer, white, normal blending |
+| particles | 160 at 0.35 opacity | hero |
+| parallax | 6px max | hero rings only |
 
-Entrances start from a visible resting state for a static capture: content is
-readable with JavaScript off. Reduced motion (OS setting): rings render one
-static frame, the flow line renders complete with every stage lit, terminals
-print final text, entrances are skipped, hover keeps colour changes and drops
-the lift.
-
-The terminal caret blinks only while a terminal is typing, then rests solid:
-the ring rotation is the page's only perpetual loop.
+The caret blinks only while a terminal is typing; the ring rotation is the
+page's only perpetual loop.
 
 ## Components
 
-- **Plate**: gradient `charcoal` to `charcoal-deep` at 165deg, 1px `hairline`
-  border, `radius-plate`, `shadow-plate`. Rows inside are separated by
-  `hairline-soft`, flat, no radius.
-- **Button primary**: `cyan` fill, `void` text, label type, `radius-control`.
-  Hover: lift, `glow-live` box. Focus: 2px `cyan` outline, 2px offset. Active:
-  no lift. Disabled: 40% opacity, no lift.
-- **Button ghost**: transparent, 1px `hairline` border, `signal-white` text.
-  Hover: lift, border `cyan-dim`, a 1px `cyan` underline sweeping in from the
-  left over `dur-hover`.
-- **Command chip**: `charcoal-raised`, mono, `$ ` prompt in `cyan`, copy button
-  that announces "Copied" through a live region.
-- **Terminal**: `void` ground, `hairline` border, `radius-plate`, a title bar
-  with the working directory in mono-s. Only real commands from the README,
-  each one run against the CLI before publishing.
-- **Tabs (examples)**: label type, `cyan` 1px underline on the selected tab,
-  arrow-key navigation, `aria-selected`.
-- **Matrix marks**: inline SVG: full ring (yes, `cyan`), half ring (partly,
-  `cyan-dim`), short dash (no, `signal-mute`), each with a visually hidden word.
-- **Ring mark**: the dashboard's 36px SVG motif, reused in the header and the
-  founder block.
+- **Plate**: transparent, 1px `hairline`, 8px radius, flat. Rows inside are
+  divided by `hairline-soft`.
+- **Button primary**: `cyan` fill, `void` label, Plex Sans 500 15px, 4px
+  radius. Hover `cyan-bright`. Focus 2px `signal-white` outline, 2px offset.
+  Disabled 40% opacity. At most one per viewport.
+- **Button ghost**: transparent, 1px `hairline`, `signal-white` label. Hover:
+  border `signal-mute`, ground `wash`.
+- **Text link**: `signal-dim`, hover `signal-white` with a 1px white underline
+  sweeping in from the left.
+- **Command chip**: `charcoal`, 1px `hairline`, Plex Mono, `$` or `>` prompt in
+  `signal-mute`, copy button announcing "Copied" through a live region.
+- **Terminal**: `void`, 1px `hairline`, 8px radius, title bar with the
+  working directory in mono-s. Real commands and real output only.
+- **Tabs**: Plex Sans 500, `signal-mute`; selected `signal-white` with a 1px
+  white underline; arrow-key navigation.
+- **Matrix marks**: SVG ring (yes, `signal-white`), half ring (partly,
+  `signal-mute`), dash (no, `hairline`), each with a visually hidden word.
+- **Ring mark**: white strokes, no glow.
