@@ -1,15 +1,125 @@
 # raygent
 
-Personal CLI for managing Claude Code agent skills and scaffolding new projects
-with AI-context docs.
+**From a raw idea to a runnable repo your coding agents already know how to work
+in — through a conversation that argues with your plan first.**
+
+raygent interviews you, pushes back on the weak parts, cuts phase 1, picks a stack
+and says why, then generates a real project: runnable code, product docs, coding
+rules, and a task plan your agent picks up on its first session.
+
+[Install](#install) · [Flagship](#flagship-raygent-init) · [Features](#features) ·
+[How it compares](#how-it-compares) · [Tutorial](#tutorial-from-scratch-to-product-ready) ·
+[Commands](#commands)
+
+## Why raygent
+
+- **Agents start every repo cold.** A fresh scaffold tells Claude Code, opencode
+  or Antigravity nothing about the product, the boundaries or what to build first.
+  raygent ships `AGENTS.md`, `docs/rules/` and a Phase 0 task plan, so the first
+  session starts working instead of guessing.
+- **Scaffolders give you code without a plan; spec tools give you a plan without
+  code.** raygent produces both from one conversation, and the plan is written
+  into the repo the code lives in.
+- **A form accepts every answer.** The `/raygent init` skill does not. It names
+  the riskiest assumption, refuses "everyone" as a target user, and says so when
+  the idea is a feature inside somebody else's product — once, clearly, then it
+  builds what you asked for.
+- **Rules are enforced, not just written.** ESLint `no-restricted-imports` zones
+  fail the build on a crossed module boundary, `/verify` quotes lint, test and
+  build output, and the code reviewer is read-only so it keeps reporting.
+
+## Flagship: `/raygent init`
+
+One conversation in your coding agent, from idea to a verified phase 1:
+
+```
+ idea, or the docs you already have (PRD, ROADMAP, PDF ...)
+   │
+   ▼
+ interview ── pushback: riskiest assumption, first user, feature-vs-product
+   │
+   ▼
+ phase 1 cut + non-goals said out loud ── stack picked, one reason per choice
+   │
+   ▼
+ raygent-init.json ── shown to you; nothing exists yet, last cheap change
+   │  approve
+   ▼
+ raygent init --from ── runnable repo + AGENTS.md + docs/ + rules + .claude/
+   │
+   ▼
+ /bootstrap-project ── fills the TODO(content) gaps the interview left
+   │
+   ▼
+ step / gate tasks ── build ── /verify ── code-reviewer: APPROVE | FIX-FIRST
+```
+
+Existing docs are adopted with provenance — each answer shows the file it came
+from — and nothing is invented: an unanswered question stays a visible
+`TODO(content)`. What lands in the repo is listed in
+[tutorial step 6](#6-approve-the-spec-then-generate).
+
+## Features
+
+| Feature | What you get |
+|---|---|
+| **Conversational init** | `/raygent init` skill: interview, critique, phase cut, stack with reasons, approved spec, generation |
+| **Adopt existing docs** | Reads `PRD*`, `ROADMAP*`, `SPEC*`, `BRIEF*`… (`.md`, `.txt`, `.pdf`) and shows what it took from where |
+| **Real scaffolds** | Next.js, Vite React, TanStack Start, landing pages, Express / Hono / NestJS backends, fullstack with optional Turborepo, React Native (Expo), Electron |
+| **Stack add-ons** | Tailwind, Zustand, TanStack Query / Table / Form, React Hook Form, Zod, nuqs, date-fns, Storybook, icon packs, design tokens |
+| **Agent layer** | `AGENTS.md` for Claude Code, opencode and Antigravity; Claude Code also gets subagents, skills, hooks and settings |
+| **Coding rules** | `docs/rules/` — principles, code-style, testing, git-workflow, API, SQL, UI styling, security, accessibility — gated by stack |
+| **Project preferences** | Comment density (none / minimal / full), build order (UI-first with a review gate / end-to-end), layout (mobile-first / web-first) |
+| **Phase 0 walking skeleton** | Step and gate task files, `docs/STATE.md`, `/start` and `/wrap` session commands |
+| **Init specs & presets** | One JSON file replays a whole setup with zero prompts, validated before any write; every run records its own |
+| **Skill manager** | Categorised `skill list`; installs to `~/.claude`, `~/.agents` and `~/.gemini` skill dirs at once |
+| **MCP setup** | Checklist written to `.mcp.json`; secrets stay `${VAR}` placeholders, never written |
+| **Optional AI review** | YC-partner-style feedback and doc elaboration through any OpenAI-compatible endpoint |
+| **Dashboard** | Local events, signups, DAU and revenue for every product you ship |
+| **`doctor`** | Checks node, pnpm, git, the scaffolder, skills and the AI endpoint before anything runs |
+
+## How it compares
+
+✅ yes · ◐ partly · — no
+
+| | Interview that pushes back | Product docs (PRD, roadmap) | Runnable stack scaffold | Agent rules in the repo | Phase / gate task plan | Replayable setup spec |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| **raygent** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| GitHub Spec Kit | ◐ | ✅ | — | ✅ | ◐ | — |
+| BMAD Method | ✅ | ✅ | — | ✅ | ◐ | — |
+| Agent OS | ◐ | ✅ | — | ✅ | ◐ | — |
+| superpowers (skills) | ◐ | ◐ | — | — | ◐ | — |
+| gstack (skills) | ✅ | ◐ | — | — | ◐ | — |
+| create-next-app / create-t3-app | — | — | ✅ | — | — | ◐ |
+| Claude Code `/init` | — | — | — | ◐ | — | — |
+| Lovable / Bolt / v0 | ◐ | — | ✅ | — | — | — |
+
+**Where raygent fits.** Spec frameworks such as Spec Kit, BMAD and Agent OS give
+you the planning discipline but leave you to bring the codebase. Scaffolders give
+you the codebase with no product context. `/init` documents a repo that already
+exists. raygent is for the moment *before* the repo exists, and hands you both
+halves at once.
+
+Process skills such as superpowers and gstack are complements, not rivals: they
+shape how work happens inside a repo, and raygent's init offers a skill checklist
+to install exactly those into the new project.
+
+**What raygent does not do.** It does not deploy — it stops at a built, verified
+phase 1. And for a throwaway prototype you want to click today, a hosted builder
+is faster.
+
+<sub>Compared against each project's public documentation as of October 2026.
+Corrections are welcome as issues.</sub>
 
 ## Install
 
 ```bash
 npm install -g raygent
+raygent skill install        # the raygent skill, once per machine
 ```
 
-Requires Node.js >= 20.
+Requires Node.js >= 20. Then, in an empty folder, run **`/raygent init`** in your
+coding agent.
 
 ## Tutorial: from scratch to product-ready
 
@@ -267,7 +377,10 @@ The critique posture is the one behind the optional AI review — except your ow
 agent does it, so it needs no API key and no config.
 
 A skill of the same name in `~/.raygent/skills/` always wins, so the bundled copy
-can never shadow one you wrote.
+can never shadow one you wrote. After that the bundled copy beats any copy in the
+shared agent dirs (`./.agent`, `~/.agents`, `~/.gemini`): those are also install
+targets, so an old install there must not block `skill install -f` from
+refreshing it.
 
 ### Init
 
