@@ -2,6 +2,8 @@ import { useRef } from 'react';
 import { CommandChip } from '../components/CommandChip';
 import { INSTALL_COMMAND, LINKS } from '../content/links';
 import { useReveal } from '../motion/useReveal';
+import { Icon } from '../components/Icon';
+import { BookOpen, Download, ListTree, Puzzle, SquareTerminal } from 'lucide-react';
 
 export function Docs() {
   const ref = useRef<HTMLElement>(null);
@@ -19,7 +21,10 @@ export function Docs() {
 
         <ol className="plate m-0 grid list-none p-0 lg:grid-cols-3">
           <li className="grid content-start gap-4 p-6 md:p-8" data-reveal>
-            <h3 className="title">Install the CLI</h3>
+            <h3 className="title icon-row">
+              <Icon as={Download} className="text-signal-mute" />
+              Install the CLI
+            </h3>
             <CommandChip command={INSTALL_COMMAND} />
             <p className="m-0 text-small text-signal-mute">
               Then <code className="font-mono text-mono-s text-signal-white">raygent doctor</code> checks node, pnpm,
@@ -27,14 +32,20 @@ export function Docs() {
             </p>
           </li>
           <li className="grid content-start gap-4 border-t border-hairline-soft p-6 md:p-8 lg:border-t-0 lg:border-l" data-reveal>
-            <h3 className="title">Install the skill, once per machine</h3>
+            <h3 className="title icon-row">
+              <Icon as={Puzzle} className="text-signal-mute" />
+              Install the skill, once per machine
+            </h3>
             <CommandChip command="raygent skill install" />
             <p className="m-0 text-small text-signal-mute">
               Global on purpose: you use it before a project exists, so a project-local copy would be out of reach.
             </p>
           </li>
           <li className="grid content-start gap-4 border-t border-hairline-soft p-6 md:p-8 lg:border-t-0 lg:border-l" data-reveal>
-            <h3 className="title">Start in an empty folder</h3>
+            <h3 className="title icon-row">
+              <Icon as={SquareTerminal} className="text-signal-mute" />
+              Start in an empty folder
+            </h3>
             <CommandChip command="/raygent init" prompt=">" />
             <p className="m-0 text-small text-signal-mute">
               Type it in your coding agent with one sentence about the idea. Already have docs? Run it in the folder
@@ -51,9 +62,11 @@ export function Docs() {
           </p>
           <nav aria-label="Documentation" className="flex flex-wrap gap-3">
             <a href={LINKS.tutorial} className="btn btn-ghost" target="_blank" rel="noreferrer">
+              <Icon as={BookOpen} size={18} />
               Tutorial
             </a>
             <a href={LINKS.commands} className="btn btn-ghost" target="_blank" rel="noreferrer">
+              <Icon as={ListTree} size={18} />
               Command reference
             </a>
           </nav>

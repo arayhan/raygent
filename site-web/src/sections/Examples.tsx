@@ -4,6 +4,7 @@ import { EXAMPLES } from '../content/examples';
 import { LINKS } from '../content/links';
 import { DUR, EASE_OUT_EXPO, gsap, prefersReducedMotion } from '../motion/gsap';
 import { useReveal } from '../motion/useReveal';
+import { Icon } from '../components/Icon';
 
 export function Examples() {
   const ref = useRef<HTMLElement>(null);
@@ -90,10 +91,11 @@ export function Examples() {
                 aria-selected={i === active}
                 aria-controls="example-panel"
                 tabIndex={i === active ? 0 : -1}
-                className="tab"
+                className="tab inline-flex items-center gap-2"
                 onClick={() => select(i)}
                 onKeyDown={onKeyDown}
               >
+                <Icon as={e.icon} size={18} />
                 {e.tab}
               </button>
             ))}

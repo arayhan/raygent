@@ -3,6 +3,8 @@ import { CommandChip } from '../components/CommandChip';
 import { RingMark } from '../components/RingMark';
 import { INSTALL_COMMAND, LINKS } from '../content/links';
 import { useReveal } from '../motion/useReveal';
+import { GitHubMark, Icon } from '../components/Icon';
+import { HandHeart, Heart } from 'lucide-react';
 
 export function Cta() {
   const ref = useRef<HTMLElement>(null);
@@ -20,6 +22,7 @@ export function Cta() {
         <div className="flex flex-wrap items-center gap-4" data-reveal>
           <CommandChip command={INSTALL_COMMAND} />
           <a href={LINKS.repo} className="btn btn-ghost" target="_blank" rel="noreferrer">
+            <GitHubMark />
             GitHub
           </a>
         </div>
@@ -30,13 +33,17 @@ export function Cta() {
           data-reveal
         >
           <div className="grid gap-2">
-            <h3 className="title">Support raygent</h3>
+            <h3 className="title icon-row">
+              <Icon as={HandHeart} className="text-signal-mute" />
+              Support raygent
+            </h3>
             <p className="prose-measure m-0 text-signal-dim">
               raygent is free and MIT-licensed. If it saves you a week of setup, you can support its development on
               Saweria.
             </p>
           </div>
           <a href={LINKS.saweria} className="btn btn-primary justify-self-start" target="_blank" rel="noreferrer">
+            <Icon as={Heart} size={18} />
             Support on Saweria
           </a>
         </div>

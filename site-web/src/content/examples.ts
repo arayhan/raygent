@@ -1,6 +1,10 @@
+import type { LucideIcon } from 'lucide-react';
+import { AppWindow, FileJson, LayoutDashboard, LayoutTemplate, Monitor, Server, Smartphone, SquareTerminal } from 'lucide-react';
+
 // Every command below was run against the CLI as an equivalent --from spec,
 // and every output line is copied from that run (absolute paths shortened to ./).
 export interface Example {
+  icon: LucideIcon;
   id: string;
   tab: string;
   ask: string;
@@ -25,6 +29,7 @@ function scaffolded(steps: string[], summary: string, name: string): string[] {
 
 export const EXAMPLES: Example[] = [
   {
+    icon: LayoutTemplate,
     id: 'landing',
     tab: 'Landing page',
     ask: 'A waitlist page for an invoicing tool for freelancers.',
@@ -35,6 +40,7 @@ export const EXAMPLES: Example[] = [
     note: 'Next.js with a marketing starter: hero, features, CTA, email capture and /api/subscribe. No framework question: a landing page has one shape.',
   },
   {
+    icon: AppWindow,
     id: 'saas',
     tab: 'SaaS web app',
     ask: 'A SaaS where small clinics book and track patient follow-ups.',
@@ -45,6 +51,7 @@ export const EXAMPLES: Example[] = [
     note: 'A Turborepo with apps/web, apps/api and packages/domain. UI-first builds every screen on mock data and stops at a review gate before any backend work.',
   },
   {
+    icon: LayoutDashboard,
     id: 'dashboard',
     tab: 'Client dashboard',
     ask: 'An internal ops portal for a logistics client. Their API already exists.',
@@ -54,6 +61,7 @@ export const EXAMPLES: Example[] = [
     note: 'Client mode swaps the product interview for a brief intake: requirements, scope, deliverables, decision-maker.',
   },
   {
+    icon: Server,
     id: 'api',
     tab: 'API only',
     ask: 'An orders API for an existing storefront.',
@@ -63,6 +71,7 @@ export const EXAMPLES: Example[] = [
     note: 'A bare backend gets only the framework-agnostic add-ons and no UI rules such as accessibility.md.',
   },
   {
+    icon: Smartphone,
     id: 'mobile',
     tab: 'Mobile app',
     ask: 'A habit tracker with streaks and reminders.',
@@ -72,6 +81,7 @@ export const EXAMPLES: Example[] = [
     note: 'Expo-based React Native with a deletable example feature module that shows the feature-driven layout.',
   },
   {
+    icon: Monitor,
     id: 'desktop',
     tab: 'Desktop app',
     ask: 'An offline notes app for field researchers.',
@@ -81,6 +91,7 @@ export const EXAMPLES: Example[] = [
     note: 'Electron with main, preload and renderer split, plus the same example feature module as mobile.',
   },
   {
+    icon: SquareTerminal,
     id: 'cli',
     tab: 'CLI tool',
     ask: 'A CLI that drafts release notes from merged pull requests.',
@@ -93,6 +104,7 @@ export const EXAMPLES: Example[] = [
     note: 'CLI platforms get raygent\'s own doc set (PRD, architecture, progress) rather than a runnable scaffold.',
   },
   {
+    icon: FileJson,
     id: 'spec',
     tab: 'Zero prompts',
     ask: 'The fifth landing page this month, from CI.',

@@ -325,6 +325,16 @@
   .flow-stage[data-live='true'] .title {
     color: var(--color-signal-white);
   }
+  .flow-icon {
+    color: var(--color-signal-mute);
+    transition: color var(--dur-hover) ease-out;
+  }
+  .flow-stage[data-lit='true'] .flow-icon {
+    color: var(--color-signal-dim);
+  }
+  .flow-stage[data-live='true'] .flow-icon {
+    color: var(--color-signal-white);
+  }
   .flow-stage[data-live='true'] .flow-node {
     border-color: var(--color-signal-white);
   }
@@ -405,7 +415,8 @@
   .flow-stage .title,
   .feature-row,
   .feature-row .title,
-  .feature-icon {
+  .feature-icon,
+  .flow-icon {
     transition: none;
   }
   .caret[data-typing='true'] {

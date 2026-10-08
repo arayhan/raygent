@@ -1,5 +1,6 @@
 import { LINKS } from '../content/links';
 import { RingMark } from './RingMark';
+import { GitHubMark } from './Icon';
 
 const NAV = [
   { href: '#flagship', label: 'Flagship' },
@@ -32,6 +33,7 @@ export function Header() {
           </ul>
         </nav>
         <a href={LINKS.repo} className="btn btn-ghost px-4 py-2" target="_blank" rel="noreferrer">
+          <GitHubMark size={16} />
           GitHub
         </a>
       </div>

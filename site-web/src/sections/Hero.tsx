@@ -3,6 +3,8 @@ import { CommandChip } from '../components/CommandChip';
 import { RingField } from '../components/RingField';
 import { INSTALL_COMMAND } from '../content/links';
 import { DUR, EASE_OUT_EXPO, STAGGER, gsap, prefersReducedMotion, useGSAP } from '../motion/gsap';
+import { Icon } from '../components/Icon';
+import { ArrowRight } from 'lucide-react';
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -45,6 +47,7 @@ export function Hero() {
           <div className="flex flex-wrap items-center gap-4" data-hero-rest>
             <a href="#docs" className="btn btn-primary">
               Get started
+              <Icon as={ArrowRight} size={18} />
             </a>
             <CommandChip command={INSTALL_COMMAND} />
           </div>

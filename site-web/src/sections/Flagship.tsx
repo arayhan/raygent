@@ -1,35 +1,44 @@
 import { useRef } from 'react';
 import { ScrollTrigger, gsap, prefersReducedMotion, useGSAP } from '../motion/gsap';
+import { Icon } from '../components/Icon';
+import { BadgeCheck, FileCheck2, FolderGit2, Lightbulb, MessagesSquare, PenLine, Scissors, type LucideIcon } from 'lucide-react';
 
-const STAGES: { title: string; code?: string; body: string }[] = [
+const STAGES: { icon: LucideIcon; title: string; code?: string; body: string }[] = [
   {
+    icon: Lightbulb,
     title: 'Your idea, or the docs you already have',
     body: 'A sentence, a written brief, or existing PRD, ROADMAP and PDF files. Each adopted answer shows the file it came from.',
   },
   {
+    icon: MessagesSquare,
     title: 'An interview that pushes back',
     body: 'It asks what it does not know yet, then names the riskiest assumption, the first real user, and whether this is a feature inside somebody else\'s product.',
   },
   {
+    icon: Scissors,
     title: 'Phase 1, cut',
     body: 'The non-goals get said out loud. The stack is picked with one reason per choice, so you can argue with it.',
   },
   {
+    icon: FileCheck2,
     title: 'The spec, approved',
     code: 'raygent-init.json',
     body: 'Shown to you before anything exists. This is the last cheap moment to change your mind.',
   },
   {
+    icon: FolderGit2,
     title: 'The repo, generated',
     code: 'raygent init --from raygent-init.json',
     body: 'Runnable code, AGENTS.md, product docs, docs/rules/ and the .claude/ layer, with zero prompts.',
   },
   {
+    icon: PenLine,
     title: 'The gaps, filled',
     code: '/bootstrap-project',
     body: 'Interviews you for exactly the TODO(content) markers the conversation left. Nothing is invented to fill them.',
   },
   {
+    icon: BadgeCheck,
     title: 'Built, verified, reviewed',
     code: '/verify',
     body: 'Step and gate tasks drive the build. /verify quotes lint, test and build output, and the reviewer answers APPROVE or FIX-FIRST.',
@@ -116,7 +125,10 @@ export function Flagship() {
           {STAGES.map((stage) => (
             <li key={stage.title} data-stage data-lit="false" data-live="false" className="flow-stage relative grid gap-2">
               <span aria-hidden="true" className="flow-node absolute top-[6px] -left-10 h-[23px] w-[23px] rounded-full" />
-              <h3 className="title">{stage.title}</h3>
+              <h3 className="title icon-row">
+                <Icon as={stage.icon} className="flow-icon" />
+                {stage.title}
+              </h3>
               {stage.code && <code className="font-mono text-mono text-signal-white">{stage.code}</code>}
               <p className="prose-measure m-0 text-signal-dim">{stage.body}</p>
             </li>

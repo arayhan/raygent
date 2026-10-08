@@ -1,11 +1,14 @@
 import { LINKS } from '../content/links';
 import { RingMark } from './RingMark';
+import type { ReactNode } from 'react';
+import { BookOpen, Heart, Scale } from 'lucide-react';
+import { GitHubMark, Icon } from './Icon';
 
-const FOOTER_LINKS = [
-  { href: LINKS.readme, label: 'Docs' },
-  { href: LINKS.repo, label: 'GitHub' },
-  { href: LINKS.saweria, label: 'Saweria' },
-  { href: LINKS.license, label: 'MIT License' },
+const FOOTER_LINKS: { href: string; label: string; icon: ReactNode }[] = [
+  { href: LINKS.readme, label: 'Docs', icon: <Icon as={BookOpen} size={14} /> },
+  { href: LINKS.repo, label: 'GitHub', icon: <GitHubMark size={14} /> },
+  { href: LINKS.saweria, label: 'Saweria', icon: <Icon as={Heart} size={14} /> },
+  { href: LINKS.license, label: 'MIT License', icon: <Icon as={Scale} size={14} /> },
 ];
 
 export function Footer() {
@@ -20,7 +23,8 @@ export function Footer() {
           <ul className="m-0 flex list-none flex-wrap gap-x-7 gap-y-3 p-0">
             {FOOTER_LINKS.map((l) => (
               <li key={l.label}>
-                <a href={l.href} className="link-sweep label inline-block py-2 hover:text-signal-white" target="_blank" rel="noreferrer">
+                <a href={l.href} className="link-sweep label inline-flex items-center gap-2 py-2 hover:text-signal-white" target="_blank" rel="noreferrer">
+                  {l.icon}
                   {l.label}
                 </a>
               </li>

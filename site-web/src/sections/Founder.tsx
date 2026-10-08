@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { LINKS } from '../content/links';
 import { useReveal } from '../motion/useReveal';
+import { GitHubMark } from '../components/Icon';
 
 export function Founder() {
   const ref = useRef<HTMLElement>(null);
@@ -34,6 +35,7 @@ export function Founder() {
           </p>
           <div>
             <a href={LINKS.author} className="btn btn-ghost" target="_blank" rel="noreferrer">
+              <GitHubMark />
               github.com/arayhan
             </a>
           </div>

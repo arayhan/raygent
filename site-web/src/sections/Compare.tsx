@@ -1,6 +1,8 @@
 import { useRef } from 'react';
 import { Mark, type MarkValue } from '../components/Mark';
 import { useReveal } from '../motion/useReveal';
+import { Icon } from '../components/Icon';
+import { Ban, Compass } from 'lucide-react';
 
 const COLUMNS = [
   'Interview that pushes back',
@@ -82,7 +84,10 @@ export function Compare() {
 
         <div className="grid gap-10 md:grid-cols-2">
           <div className="grid content-start gap-3" data-reveal>
-            <h3 className="title">Where raygent fits</h3>
+            <h3 className="title icon-row">
+              <Icon as={Compass} className="text-signal-mute" />
+              Where raygent fits
+            </h3>
             <p className="m-0 text-signal-dim">
               Spec frameworks such as Spec Kit, BMAD and Agent OS give you planning discipline and leave you to bring the
               codebase. Scaffolders give you the codebase with no product context. Claude Code's /init documents a repo
@@ -94,7 +99,10 @@ export function Compare() {
             </p>
           </div>
           <div className="grid content-start gap-3" data-reveal>
-            <h3 className="title">What raygent does not do</h3>
+            <h3 className="title icon-row">
+              <Icon as={Ban} className="text-signal-mute" />
+              What raygent does not do
+            </h3>
             <p className="m-0 text-signal-dim">
               It does not deploy. It stops at a built, verified phase 1, and shipping is yours. For a throwaway prototype
               you want to click today, a hosted builder is faster.

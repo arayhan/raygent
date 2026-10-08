@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react';
+import { Check, Copy } from 'lucide-react';
+import { Icon } from './Icon';
 
 /**
  * A copyable command. `prompt` is `$` for a shell and `>` for something typed
@@ -38,7 +40,8 @@ export function CommandChip({ command, prompt = '$' }: { command: string; prompt
         </span>
         {command}
       </code>
-      <button type="button" className="copy" onClick={copy} aria-label={`Copy command: ${command}`}>
+      <button type="button" className="copy inline-flex items-center gap-1.5" onClick={copy} aria-label={`Copy command: ${command}`}>
+        <Icon as={status === 'copied' ? Check : Copy} size={14} />
         {status === 'copied' ? 'Copied' : 'Copy'}
       </button>
       <span className="sr-only-x" aria-live="polite">
