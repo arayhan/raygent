@@ -112,6 +112,16 @@ describe('listSkills', () => {
     expect(result).toEqual([{ name: 'shared', installed: false, installedGlobally: false, source: 'project' }]);
   });
 
+  it('reports bundled over a same-name copy in the shared agent dirs', async () => {
+    fs.mkdirSync(path.join(bundledSkillsDir, 'shipped'));
+    fs.mkdirSync(path.join(agentSkillsDir, 'shipped'));
+    fs.mkdirSync(path.join(globalAgentSkillsDir, 'shipped'));
+
+    const result = await listSkills(roots);
+
+    expect(result).toEqual([{ name: 'shipped', installed: false, installedGlobally: false, source: 'bundled' }]);
+  });
+
   it('does not throw when agentSkillsDir or globalAgentSkillsDir does not exist', async () => {
     fs.rmSync(agentSkillsDir, { recursive: true, force: true });
     fs.rmSync(globalAgentSkillsDir, { recursive: true, force: true });
@@ -152,7 +162,7 @@ describe('addSkill', () => {
 
   it('throws when the source skill does not exist in any location', async () => {
     await expect(addSkill('missing-skill', roots)).rejects.toThrow(
-      `skill 'missing-skill' not found in ${path.join(skillsRoot, 'missing-skill')}, ${path.join(agentSkillsDir, 'missing-skill')}, ${path.join(globalAgentSkillsDir, 'missing-skill')}`
+      `skill 'missing-skill' not found in ${path.join(skillsRoot, 'missing-skill')}, ${path.join(bundledSkillsDir, 'missing-skill')}, ${path.join(agentSkillsDir, 'missing-skill')}, ${path.join(globalAgentSkillsDir, 'missing-skill')}`
     );
   });
 
@@ -186,6 +196,33 @@ describe('addSkill', () => {
 
     const copied = fs.readFileSync(path.join(projectSkillsDir, 'shared', 'SKILL.md'), 'utf8');
     expect(copied).toBe('# personal');
+  });
+
+  it('refreshes a global install from bundled instead of the stale copy it left in the agent dirs', async () => {
+    fs.mkdirSync(path.join(bundledSkillsDir, 'shipped'));
+    fs.writeFileSync(path.join(bundledSkillsDir, 'shipped', 'SKILL.md'), '# new');
+    for (const dir of [globalSkillsDir, globalAgentSkillsDir, globalGeminiSkillsDir]) {
+      fs.mkdirSync(path.join(dir, 'shipped'));
+      fs.writeFileSync(path.join(dir, 'shipped', 'SKILL.md'), '# stale');
+    }
+
+    await addSkill('shipped', roots, { scope: 'global', force: true });
+
+    for (const dir of [globalSkillsDir, globalAgentSkillsDir, globalGeminiSkillsDir]) {
+      expect(fs.readFileSync(path.join(dir, 'shipped', 'SKILL.md'), 'utf8')).toBe('# new');
+    }
+  });
+
+  it('prefers bundled over a copy in agentSkillsDir on a project install', async () => {
+    fs.mkdirSync(path.join(bundledSkillsDir, 'shipped'));
+    fs.writeFileSync(path.join(bundledSkillsDir, 'shipped', 'SKILL.md'), '# new');
+    fs.mkdirSync(path.join(agentSkillsDir, 'shipped'));
+    fs.writeFileSync(path.join(agentSkillsDir, 'shipped', 'SKILL.md'), '# stale');
+
+    await addSkill('shipped', roots, { force: true });
+
+    expect(fs.readFileSync(path.join(projectSkillsDir, 'shipped', 'SKILL.md'), 'utf8')).toBe('# new');
+    expect(fs.readFileSync(path.join(agentSkillsDir, 'shipped', 'SKILL.md'), 'utf8')).toBe('# new');
   });
 
   it('throws when destination already exists and force is not set', async () => {

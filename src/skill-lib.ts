@@ -94,14 +94,14 @@ export async function listSkills(roots: Roots): Promise<SkillInfo[]> {
   const geminiNames = await readSkillDirNames(roots.globalGeminiSkillsDir);
   const bundledNames = await readSkillDirNames(roots.bundledSkillsDir);
 
-  // precedence on name collision: personal > project > global > bundled.
-  // Bundled is last so raygent's own copy never shadows one the user wrote,
-  // matching the candidate order in addSkill.
+  // precedence on name collision: personal > bundled > project > global,
+  // matching the candidate order in addSkill so the reported source is the
+  // copy an install would actually take.
   const bySource = new Map<string, SkillInfo['source']>();
-  for (const name of bundledNames) bySource.set(name, 'bundled');
   for (const name of geminiNames) bySource.set(name, 'global');
   for (const name of globalNames) bySource.set(name, 'global');
   for (const name of projectNames) bySource.set(name, 'project');
+  for (const name of bundledNames) bySource.set(name, 'bundled');
   for (const name of personalNames) bySource.set(name, 'personal');
 
   const skills: SkillInfo[] = [];
@@ -136,15 +136,18 @@ export async function addSkill(
     }
   }
 
-  // Order is precedence. The bundled copy is LAST so a user's own version of a
-  // skill with the same name always wins -- shipping one inside the package must
-  // not quietly override something they wrote.
+  // Order is precedence. Personal comes first: ~/.raygent/skills is only ever
+  // written by the user, so a copy there is always theirs. Bundled comes next,
+  // ahead of the shared agent dirs, because those are also install
+  // destinations -- with them first, the copy a previous install left behind
+  // shadowed the bundled one forever and --force reinstalled the stale version
+  // over itself. They stay as a fallback for skills only other tools put there.
   const candidateDirs = [
     path.join(roots.skillsRoot, name),
+    ...(roots.bundledSkillsDir ? [path.join(roots.bundledSkillsDir, name)] : []),
     path.join(roots.agentSkillsDir, name),
     path.join(roots.globalAgentSkillsDir, name),
     ...(roots.globalGeminiSkillsDir ? [path.join(roots.globalGeminiSkillsDir, name)] : []),
-    path.join(roots.bundledSkillsDir, name),
   ];
 
   let sourceDir: string | undefined;
