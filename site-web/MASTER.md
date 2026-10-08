@@ -29,8 +29,21 @@ at 35ms per character; exits 200ms ease-in fade. Forbidden: glow, lift,
 bounce, gradient text, glass, texture, any colour beyond the one cyan role.
 Reduced motion: static rings, complete flow, final terminal text, no fades.
 
+**v2.1 amendment (validated 2026-10-08).** Visual: lucide line icons at 20px
+with a 1.5px stroke sit beside labels, headings and buttons, `signal-mute` at
+rest, `signal-white` when their row is active or hovered, cyan only inside the
+primary button. Interaction: the features preview panel crossfades (200ms out,
+450ms in, opacity only) when the active row changes on scroll; the active row
+is marked by colour and a 1px white left rule.
+
 **Allowed patterns:** hero ring rotation (the one loop), hairline rules, typed
-terminal, the ring mark, mono only for commands and terminal output.
+terminal, the ring mark, mono only for commands and terminal output, line
+icons beside labels, a sticky example panel showing real command output and
+real files.
+
+**Still forbidden:** emoji as icons, an icon standing in for a label (the
+GitHub mark always sits next to the word or carries an aria-label), filled or
+coloured icons.
 
 ## Colour
 
@@ -116,3 +129,12 @@ page's only perpetual loop.
 - **Matrix marks**: SVG ring (yes, `signal-white`), half ring (partly,
   `signal-mute`), dash (no, `hairline`), each with a visually hidden word.
 - **Ring mark**: white strokes, no glow.
+- **Icon**: `components/Icon.tsx`, lucide, 20px (18 in buttons, 14 in the
+  footer and copy buttons), stroke 1.5, `aria-hidden`, colour inherited.
+  `.icon-row` puts it on the first line of the text it labels. The GitHub mark
+  is a local SVG (lucide 1.x has no brand marks).
+- **Features panel**: rows (icon, name, one-line benefit) with a 1px
+  `hairline-soft` left rule, white when active; at `lg` one sticky `.term`
+  panel shows the active row's example, below `lg` each example sits under its
+  row. Examples are real: CLI output, generated files, README blocks, or the
+  exact shape the source writes. Never a drawn imitation.
