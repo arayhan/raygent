@@ -53,11 +53,20 @@ above:
   as the page scrolls, scrubbed to the scrollbar, transform and opacity only;
   static under reduced motion.
 
+**v2.4 amendment (validated 2026-10-08).** Interaction: a fixed particle field
+(canvas 2D, 140 dots at three depths) sits above the light field and behind all
+content. Dots drift; near dots move further with scroll than far ones; scroll
+velocity speeds the drift and draws a short streak (24px max) that settles in
+about 400ms; each section eases the field to its own density, colour mix and
+direction over about 800ms. Reduced motion: one still frame.
+
 **Allowed patterns:** hero ring rotation (the one loop), hairline rules, typed
 terminal, the ring mark, mono only for commands and terminal output, line
 icons beside labels (blue), a sticky example panel showing real command output
 and real files, soft radial light pools behind content (scroll-linked),
-indigo only inside the light field, blue section eyebrows.
+indigo only inside the light field and the particle field, blue section
+eyebrows, the particle drift (the second perpetual loop: paused with the tab,
+static under reduced motion), dots at most 2.5px and 0.6 alpha.
 
 **Still forbidden:** emoji as icons, an icon standing in for a label (the
 GitHub mark always sits next to the word or carries an aria-label), filled
@@ -172,3 +181,12 @@ page's only perpetual loop.
   radial pools (one with an indigo twin for the crossfade), one GSAP timeline
   scrubbed to page scroll. `body` is transparent so the layer sits between the
   html ground and the content; `main` and `footer` are `relative z-10`.
+- **Particle field**: `components/ParticleField.tsx`, one fixed `-z-10` canvas
+  after the light field (DOM order puts it on top). Layers far / mid / near:
+  60 / 50 / 30 dots, parallax factor 0.25 / 0.55 / 1, size 1 / 1.5 / 2.5px,
+  alpha 0.3 / 0.45 / 0.6. Colours from `motion/palette.ts` (shared with the
+  rings). `SECTION_FIELDS` maps each section id to a density, a colour mix
+  over blue, blue tint, indigo and mute, and a drift angle. Known trade-off,
+  accepted by the owner: where a dot passes under a glyph that 1 to 2.5px spot
+  drops to 1.94:1 for signal-mute at worst; the surrounding text keeps full
+  contrast.
