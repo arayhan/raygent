@@ -35,7 +35,7 @@ export function CommandChip({ command, prompt = '$' }: { command: string; prompt
   return (
     <div className="cmd">
       <code ref={codeRef}>
-        <span className="text-signal-mute" aria-hidden="true">
+        <span className="text-blue" aria-hidden="true">
           {prompt}{' '}
         </span>
         {command}

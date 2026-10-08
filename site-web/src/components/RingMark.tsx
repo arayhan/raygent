@@ -19,7 +19,7 @@ export function RingMark({ size = 36, className = '' }: { size?: number; classNa
         strokeDasharray="12 5.3"
         transform="rotate(-90 18 18)"
       />
-      <circle cx="18" cy="18" r="3.2" fill="var(--color-signal-white)" />
+      <circle cx="18" cy="18" r="3.2" fill="var(--color-blue)" />
     </svg>
   );
 }

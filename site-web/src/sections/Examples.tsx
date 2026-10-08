@@ -112,7 +112,7 @@ export function Examples() {
               <div className="grid gap-2">
                 <p className="label m-0">Say it to your agent</p>
                 <p className="m-0 text-body-l text-signal-white">
-                  <code className="font-mono text-mono text-signal-mute">/raygent init</code> {ex.ask}
+                  <code className="font-mono text-mono text-blue">/raygent init</code> {ex.ask}
                 </p>
               </div>
               <p className="m-0 text-signal-dim">{ex.note}</p>

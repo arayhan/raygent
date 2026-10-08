@@ -14,7 +14,9 @@ import {
 } from 'three';
 
 // MASTER.md tokens. three needs numbers, so they are read here once.
-const SIGNAL_WHITE = new Color('#e7edf5');
+const BLUE = new Color('#5b8cff');
+// Signal White pulled toward the accent: the rings read white with a blue cast.
+const BLUE_TINT = new Color('#c4d4ff');
 const SIGNAL_DIM = new Color('#b7c1cd');
 
 // Inner to outer. speed is MASTER.md "ring speeds" in revolutions per second.
@@ -53,12 +55,12 @@ export function createRingScene(canvas: HTMLCanvasElement): RingScene {
   const disposables: { dispose(): void }[] = [];
   const spinners: { group: Group; omega: number }[] = [];
 
-  for (const ring of RINGS) {
+  for (const [index, ring] of RINGS.entries()) {
     const group = new Group();
     const step = (Math.PI * 2) / ring.segments;
     const arc = step * (1 - ring.gap);
     const material = new MeshBasicMaterial({
-      color: SIGNAL_WHITE,
+      color: index === 0 ? BLUE : BLUE_TINT,
       transparent: true,
       opacity: ring.opacity,
       depthWrite: false,
@@ -99,9 +101,9 @@ export function createRingScene(canvas: HTMLCanvasElement): RingScene {
   tilt.add(points);
   const pointsOmega = 0.01 * Math.PI * 2;
 
-  // The core: a small white dot, no halo.
+  // The core: a small blue dot, no halo.
   const coreGeometry = new RingGeometry(0, 0.07, 32);
-  const coreMaterial = new MeshBasicMaterial({ color: SIGNAL_WHITE });
+  const coreMaterial = new MeshBasicMaterial({ color: BLUE });
   disposables.push(coreGeometry, coreMaterial);
   tilt.add(new Mesh(coreGeometry, coreMaterial));
 

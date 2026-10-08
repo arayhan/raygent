@@ -11,9 +11,11 @@
   --color-signal-dim: #b7c1cd;
   --color-signal-mute: #8b98a8;
   --color-wash: rgba(231, 237, 245, 0.04);
-  /* The one colour role: the primary button. */
-  --color-cyan: #4fd3e8;
-  --color-cyan-bright: #7fe0ef;
+  /* The single accent: whatever is live or actionable. */
+  --color-blue: #5b8cff;
+  --color-blue-bright: #86a8ff;
+  --color-blue-dim: #3a5aa6;
+  --color-blue-wash: rgba(91, 140, 255, 0.08);
 
   --font-display: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   --font-body: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
@@ -73,11 +75,11 @@
     background: var(--color-void);
   }
   ::selection {
-    background: var(--color-signal-white);
+    background: var(--color-blue);
     color: var(--color-void);
   }
   :focus-visible {
-    outline: 2px solid var(--color-signal-white);
+    outline: 2px solid var(--color-blue);
     outline-offset: 2px;
   }
   h1,
@@ -161,13 +163,13 @@
     cursor: not-allowed;
   }
   .btn-primary {
-    background: var(--color-cyan);
+    background: var(--color-blue);
     color: var(--color-void);
-    border: 1px solid var(--color-cyan);
+    border: 1px solid var(--color-blue);
   }
   .btn-primary:hover {
-    background: var(--color-cyan-bright);
-    border-color: var(--color-cyan-bright);
+    background: var(--color-blue-bright);
+    border-color: var(--color-blue-bright);
   }
   .btn-ghost {
     background: transparent;
@@ -188,7 +190,7 @@
     bottom: 0;
     width: 100%;
     height: 1px;
-    background: var(--color-signal-white);
+    background: var(--color-blue);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform var(--dur-hover) ease-out;
@@ -259,7 +261,7 @@
     width: 8px;
     height: 1.1em;
     vertical-align: text-bottom;
-    background: var(--color-signal-white);
+    background: var(--color-blue);
   }
   .caret[data-typing='true'] {
     animation: caret-blink 1s steps(1) infinite;
@@ -286,11 +288,11 @@
     color: var(--color-signal-white);
   }
   .tab:active {
-    background: var(--color-wash);
+    background: var(--color-blue-wash);
   }
   .tab[aria-selected='true'] {
-    color: var(--color-signal-white);
-    border-bottom-color: var(--color-signal-white);
+    color: var(--color-blue);
+    border-bottom-color: var(--color-blue);
   }
 
   /* Flagship flow: a stage is idle, lit once the line reaches it, live while it
@@ -305,7 +307,7 @@
     position: absolute;
     inset: 7px;
     border-radius: 9999px;
-    background: var(--color-signal-white);
+    background: var(--color-blue);
     opacity: 0;
     transition: opacity var(--dur-hover) ease-out;
   }
@@ -317,13 +319,13 @@
     color: var(--color-signal-dim);
   }
   .flow-stage[data-lit='true'] .flow-node {
-    border-color: var(--color-signal-mute);
+    border-color: var(--color-blue-dim);
   }
   .flow-stage[data-lit='true'] .flow-node::after {
     opacity: 0.5;
   }
   .flow-stage[data-live='true'] .title {
-    color: var(--color-signal-white);
+    color: var(--color-blue);
   }
   .flow-icon {
     color: var(--color-signal-mute);
@@ -333,10 +335,10 @@
     color: var(--color-signal-dim);
   }
   .flow-stage[data-live='true'] .flow-icon {
-    color: var(--color-signal-white);
+    color: var(--color-blue);
   }
   .flow-stage[data-live='true'] .flow-node {
-    border-color: var(--color-signal-white);
+    border-color: var(--color-blue);
   }
   .flow-stage[data-live='true'] .flow-node::after {
     opacity: 1;
@@ -352,10 +354,12 @@
     margin-top: 2px;
   }
 
-  /* Features: the row crossing the middle of the viewport is active. Colour
-     and a 1px white left rule only. */
+  /* Features: the row crossing the middle of the viewport is active: a blue
+     left rule, a blue icon, a faint blue ground. Colour only. */
   .feature-row {
-    transition: border-color var(--dur-hover) ease-out;
+    transition:
+      border-color var(--dur-hover) ease-out,
+      background-color var(--dur-hover) ease-out;
   }
   .feature-row .title,
   .feature-icon {
@@ -363,11 +367,14 @@
     transition: color var(--dur-hover) ease-out;
   }
   .feature-row[data-active='true'] {
-    border-left-color: var(--color-signal-white);
+    border-left-color: var(--color-blue);
+    background: var(--color-blue-wash);
   }
-  .feature-row[data-active='true'] .title,
-  .feature-row[data-active='true'] .feature-icon {
+  .feature-row[data-active='true'] .title {
     color: var(--color-signal-white);
+  }
+  .feature-row[data-active='true'] .feature-icon {
+    color: var(--color-blue);
   }
   @media (max-width: 1023px) {
     .feature-row .title,

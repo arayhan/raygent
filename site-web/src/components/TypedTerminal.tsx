@@ -57,7 +57,7 @@ export function TypedTerminal({ dir, command, output, play }: Props) {
         aria-hidden="true"
         className="m-0 min-h-[17rem] overflow-x-auto p-4 font-mono text-mono whitespace-pre-wrap break-words text-signal-dim md:p-5"
       >
-        <span className="text-signal-mute">$ </span>
+        <span className="text-blue">$ </span>
         <span className="text-signal-white">{command.slice(0, typed)}</span>
         {typing && <span className="caret" data-typing="true" />}
         {!typing &&
@@ -68,7 +68,7 @@ export function TypedTerminal({ dir, command, output, play }: Props) {
           ))}
         {done && (
           <span className="block">
-            <span className="text-signal-mute">$ </span>
+            <span className="text-blue">$ </span>
             <span className="caret" data-typing="false" />
           </span>
         )}
