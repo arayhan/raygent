@@ -1,4 +1,6 @@
 import { Header } from './components/Header';
+import { Hero } from './sections/Hero';
+import { Why } from './sections/Why';
 
 export function App() {
   return (
@@ -7,7 +9,10 @@ export function App() {
         Skip to content
       </a>
       <Header />
-      <main id="main" />
+      <main id="main">
+        <Hero />
+        <Why />
+      </main>
     </>
   );
 }

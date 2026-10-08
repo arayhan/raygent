@@ -173,10 +173,6 @@
       transform var(--dur-hover) ease-out,
       border-color var(--dur-hover) ease-out;
   }
-  .plate-hover:hover {
-    transform: translateY(-2px);
-    border-color: var(--color-cyan-dim);
-  }
 
   .btn {
     position: relative;
@@ -214,10 +210,6 @@
     color: var(--color-void);
     border: 1px solid var(--color-cyan);
   }
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-glow-live);
-  }
   .btn-ghost {
     background: transparent;
     color: var(--color-signal-white);
@@ -235,10 +227,6 @@
     transform: scaleX(0);
     transform-origin: left;
     transition: transform var(--dur-hover) ease-out;
-  }
-  .btn-ghost:hover {
-    transform: translateY(-2px);
-    border-color: var(--color-cyan-dim);
   }
   .btn-ghost:hover::after,
   .link-sweep:hover::after,
@@ -284,6 +272,7 @@
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-control);
     padding: 4px 10px;
+    min-height: 32px;
     cursor: pointer;
     transition:
       color var(--dur-hover) ease-out,
@@ -326,6 +315,7 @@
     border-bottom: 1px solid transparent;
     border-radius: var(--radius-control) var(--radius-control) 0 0;
     padding: 10px 6px;
+    min-height: 44px;
     cursor: pointer;
     white-space: nowrap;
     transition:
@@ -364,6 +354,22 @@
     overflow: hidden;
     clip: rect(0 0 0 0);
     white-space: nowrap;
+  }
+}
+
+/* Hover is a desktop enhancement: touch screens never get a stuck lift. */
+@media (hover: hover) and (pointer: fine) {
+  .plate-hover:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-cyan-dim);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow-live);
+  }
+  .btn-ghost:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-cyan-dim);
   }
 }
 
