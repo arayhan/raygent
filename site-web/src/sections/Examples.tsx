@@ -32,11 +32,23 @@ export function Examples() {
 
   const select = (index: number, focus = false) => {
     const next = (index + EXAMPLES.length) % EXAMPLES.length;
-    setActive(next);
     if (focus) tabRefs.current[next]?.focus();
-    if (!prefersReducedMotion() && panelRef.current) {
-      gsap.fromTo(panelRef.current, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.enterS, ease: EASE_OUT_EXPO });
+    const panel = panelRef.current;
+    if (next === active || prefersReducedMotion() || !panel) {
+      setActive(next);
+      return;
     }
+    // Exit subtler than enter: 200ms ease-in fade out, then the new panel rises in.
+    gsap.killTweensOf(panel);
+    gsap.to(panel, {
+      opacity: 0,
+      duration: DUR.exit,
+      ease: 'power1.in',
+      onComplete: () => {
+        setActive(next);
+        gsap.fromTo(panel, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.enterS, ease: EASE_OUT_EXPO });
+      },
+    });
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {

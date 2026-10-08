@@ -114,6 +114,7 @@ Base 8. Scale: `1` 4px, `2` 8px, `3` 12px, `4` 16px, `6` 24px, `8` 32px,
 | `dur-enter-s` | 450ms | small items, rows, labels |
 | `dur-enter` | 600ms | blocks, plates |
 | `dur-enter-l` | 700ms | headlines |
+| `dur-exit` | 200ms ease-in, opacity only | content leaving (example tab swap); exit is always subtler than enter |
 | `stagger` | 60ms | sibling entrances |
 | `type-char` | 35ms | terminal typing per character |
 | `type-line` | 120ms | terminal output, per printed line |

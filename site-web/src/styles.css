@@ -378,6 +378,9 @@
     opacity: 1;
   }
 
+  .ring-glow {
+    filter: drop-shadow(var(--shadow-glow-live));
+  }
   .glow-live {
     color: var(--color-cyan);
     text-shadow: var(--shadow-glow-live);

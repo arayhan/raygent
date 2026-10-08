@@ -90,7 +90,7 @@ export function RingField() {
       <canvas
         ref={canvasRef}
         aria-hidden="true"
-        className="h-full w-full transition-opacity duration-700"
+        className="h-full w-full transition-opacity duration-700 motion-reduce:transition-none"
         style={{ opacity: ready ? 1 : 0, transitionTimingFunction: 'var(--ease-out-expo)' }}
       />
       {!reduced && ready && (

@@ -6,8 +6,7 @@ export function RingMark({ size = 36, className = '' }: { size?: number; classNa
       height={size}
       viewBox="0 0 36 36"
       aria-hidden="true"
-      className={className}
-      style={{ filter: 'drop-shadow(0 0 6px rgba(79, 211, 232, 0.45))' }}
+      className={`ring-glow ${className}`}
     >
       <circle cx="18" cy="18" r="16" fill="none" stroke="var(--color-cyan)" strokeOpacity="0.55" strokeWidth="1" />
       <circle

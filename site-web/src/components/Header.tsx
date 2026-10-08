@@ -24,7 +24,7 @@ export function Header() {
           <ul className="m-0 flex list-none gap-7 p-0">
             {NAV.map((item) => (
               <li key={item.href}>
-                <a href={item.href} className="link-sweep label pb-1 hover:text-signal-white">
+                <a href={item.href} className="link-sweep label inline-block py-2 hover:text-signal-white">
                   {item.label}
                 </a>
               </li>

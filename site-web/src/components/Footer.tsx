@@ -20,7 +20,7 @@ export function Footer() {
           <ul className="m-0 flex list-none flex-wrap gap-x-7 gap-y-3 p-0">
             {FOOTER_LINKS.map((l) => (
               <li key={l.label}>
-                <a href={l.href} className="link-sweep label pb-1 hover:text-signal-white" target="_blank" rel="noreferrer">
+                <a href={l.href} className="link-sweep label inline-block py-2 hover:text-signal-white" target="_blank" rel="noreferrer">
                   {l.label}
                 </a>
               </li>
