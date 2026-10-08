@@ -1,5 +1,6 @@
 import { Header } from './components/Header';
 import { LightField } from './components/LightField';
+import { ParticleField } from './components/ParticleField';
 import { Hero } from './sections/Hero';
 import { Why } from './sections/Why';
 import { Flagship } from './sections/Flagship';
@@ -18,6 +19,7 @@ export function App() {
         Skip to content
       </a>
       <LightField />
+      <ParticleField />
       <Header />
       <main id="main" className="relative z-10">
         <Hero />

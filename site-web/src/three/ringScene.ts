@@ -12,12 +12,12 @@ import {
   Scene,
   WebGLRenderer,
 } from 'three';
+import { PALETTE } from '../motion/palette';
 
-// MASTER.md tokens. three needs numbers, so they are read here once.
-const BLUE = new Color('#5b8cff');
-// Signal White pulled toward the accent: the rings read white with a blue cast.
-const BLUE_TINT = new Color('#c4d4ff');
-const SIGNAL_DIM = new Color('#b7c1cd');
+// MASTER.md tokens, from the shared palette.
+const BLUE = new Color(PALETTE.blue);
+const BLUE_TINT = new Color(PALETTE.blueTint);
+const SIGNAL_DIM = new Color(PALETTE.signalDim);
 
 // Inner to outer. speed is MASTER.md "ring speeds" in revolutions per second.
 const RINGS = [
