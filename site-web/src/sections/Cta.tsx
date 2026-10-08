@@ -5,9 +5,11 @@ import { INSTALL_COMMAND, LINKS } from '../content/links';
 import { useReveal } from '../motion/useReveal';
 import { GitHubMark, Icon } from '../components/Icon';
 import { HandHeart, Heart } from 'lucide-react';
+import { useT } from '../i18n/LanguageProvider';
 
 export function Cta() {
   const ref = useRef<HTMLElement>(null);
+  const t = useT();
   useReveal(ref);
 
   return (
@@ -17,7 +19,7 @@ export function Cta() {
           <RingMark size={44} />
         </span>
         <h2 id="start-title" className="display-xl max-w-[14ch]" data-reveal>
-          Your next idea, argued and built
+          {t.cta.title}
         </h2>
         <div className="flex flex-wrap items-center gap-4" data-reveal>
           <CommandChip command={INSTALL_COMMAND} />
@@ -35,16 +37,13 @@ export function Cta() {
           <div className="grid gap-2">
             <h3 className="title icon-row">
               <Icon as={HandHeart} className="text-blue" />
-              Support raygent
+              {t.cta.supportTitle}
             </h3>
-            <p className="prose-measure m-0 text-signal-dim">
-              raygent is free and MIT-licensed. If it saves you a week of setup, you can support its development on
-              Saweria.
-            </p>
+            <p className="prose-measure m-0 text-signal-dim">{t.cta.supportBody}</p>
           </div>
           <a href={LINKS.saweria} className="btn btn-primary justify-self-start" target="_blank" rel="noreferrer">
             <Icon as={Heart} size={18} />
-            Support on Saweria
+            {t.cta.supportCta}
           </a>
         </div>
       </div>

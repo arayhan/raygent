@@ -1,52 +1,24 @@
 import { useRef } from 'react';
+import { useT } from '../i18n/LanguageProvider';
+import type { StageId } from '../i18n/types';
 import { ScrollTrigger, gsap, prefersReducedMotion, useGSAP } from '../motion/gsap';
 import { Icon } from '../components/Icon';
 import { BadgeCheck, FileCheck2, FolderGit2, Lightbulb, MessagesSquare, PenLine, Scissors, type LucideIcon } from 'lucide-react';
 
-const STAGES: { icon: LucideIcon; title: string; code?: string; body: string }[] = [
-  {
-    icon: Lightbulb,
-    title: 'Your idea, or the docs you already have',
-    body: 'A sentence, a written brief, or existing PRD, ROADMAP and PDF files. Each adopted answer shows the file it came from.',
-  },
-  {
-    icon: MessagesSquare,
-    title: 'An interview that pushes back',
-    body: 'It asks what it does not know yet, then names the riskiest assumption, the first real user, and whether this is a feature inside somebody else\'s product.',
-  },
-  {
-    icon: Scissors,
-    title: 'Phase 1, cut',
-    body: 'The non-goals get said out loud. The stack is picked with one reason per choice, so you can argue with it.',
-  },
-  {
-    icon: FileCheck2,
-    title: 'The spec, approved',
-    code: 'raygent-init.json',
-    body: 'Shown to you before anything exists. This is the last cheap moment to change your mind.',
-  },
-  {
-    icon: FolderGit2,
-    title: 'The repo, generated',
-    code: 'raygent init --from raygent-init.json',
-    body: 'Runnable code, AGENTS.md, product docs, docs/rules/ and the .claude/ layer, with zero prompts.',
-  },
-  {
-    icon: PenLine,
-    title: 'The gaps, filled',
-    code: '/bootstrap-project',
-    body: 'Interviews you for exactly the TODO(content) markers the conversation left. Nothing is invented to fill them.',
-  },
-  {
-    icon: BadgeCheck,
-    title: 'Built, verified, reviewed',
-    code: '/verify',
-    body: 'Step and gate tasks drive the build. /verify quotes lint, test and build output, and the reviewer answers APPROVE or FIX-FIRST.',
-  },
+// Copy lives in i18n; the commands are identical in every language.
+const STAGES: { id: StageId; icon: LucideIcon; code?: string }[] = [
+  { id: 'idea', icon: Lightbulb },
+  { id: 'interview', icon: MessagesSquare },
+  { id: 'cut', icon: Scissors },
+  { id: 'spec', icon: FileCheck2, code: 'raygent-init.json' },
+  { id: 'repo', icon: FolderGit2, code: 'raygent init --from raygent-init.json' },
+  { id: 'gaps', icon: PenLine, code: '/bootstrap-project' },
+  { id: 'verify', icon: BadgeCheck, code: '/verify' },
 ];
 
 export function Flagship() {
   const ref = useRef<HTMLElement>(null);
+  const t = useT();
 
   useGSAP(
     () => {
@@ -101,18 +73,12 @@ export function Flagship() {
     <section id="flagship" ref={ref} className="page-x section-y" aria-labelledby="flagship-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
         <div className="grid content-start gap-5 lg:sticky lg:top-28">
-          <p className="label eyebrow m-0">Flagship</p>
+          <p className="label eyebrow m-0">{t.flagship.eyebrow}</p>
           <h2 id="flagship-title" className="display-l">
             <code className="font-mono font-medium tracking-[-0.03em]">/raygent init</code>
           </h2>
-          <p className="prose-measure m-0 text-body-l text-signal-dim">
-            One conversation in your coding agent, from idea to a verified phase 1. raygent argues once, clearly, and
-            then builds what you asked for.
-          </p>
-          <p className="prose-measure m-0 text-small text-signal-mute">
-            An unanswered question stays a visible <code className="font-mono text-mono-s">TODO(content)</code> instead of
-            a plausible guess nobody will question later.
-          </p>
+          <p className="prose-measure m-0 text-body-l text-signal-dim">{t.flagship.intro}</p>
+          <p className="prose-measure m-0 text-small text-signal-mute">{t.flagship.note}</p>
         </div>
 
         <ol data-track className="relative m-0 grid list-none gap-12 p-0 pl-10">
@@ -123,14 +89,14 @@ export function Flagship() {
             className="absolute top-2 bottom-2 left-[11px] w-px origin-top bg-blue"
           />
           {STAGES.map((stage) => (
-            <li key={stage.title} data-stage data-lit="false" data-live="false" className="flow-stage relative grid gap-2">
+            <li key={stage.id} data-stage data-lit="false" data-live="false" className="flow-stage relative grid gap-2">
               <span aria-hidden="true" className="flow-node absolute top-[6px] -left-10 h-[23px] w-[23px] rounded-full" />
               <h3 className="title icon-row">
                 <Icon as={stage.icon} className="flow-icon" />
-                {stage.title}
+                {t.flagship.stages[stage.id].title}
               </h3>
               {stage.code && <code className="font-mono text-mono text-signal-white">{stage.code}</code>}
-              <p className="prose-measure m-0 text-signal-dim">{stage.body}</p>
+              <p className="prose-measure m-0 text-signal-dim">{t.flagship.stages[stage.id].body}</p>
             </li>
           ))}
         </ol>

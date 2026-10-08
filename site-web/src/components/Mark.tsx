@@ -1,7 +1,10 @@
+import { useT } from '../i18n/LanguageProvider';
+
 export type MarkValue = 'yes' | 'partly' | 'no';
 
 /** Comparison mark: full ring (yes), half ring (partly), dash (no). The word is always read out. */
 export function Mark({ value, accent = false }: { value: MarkValue; accent?: boolean }) {
+  const t = useT();
   const yes = accent ? 'var(--color-blue)' : 'var(--color-signal-white)';
   return (
     <span className="inline-flex items-center justify-center">
@@ -20,7 +23,7 @@ export function Mark({ value, accent = false }: { value: MarkValue; accent?: boo
         )}
         {value === 'no' && <line x1="4.5" y1="9" x2="13.5" y2="9" stroke="var(--color-hairline)" strokeWidth="2" />}
       </svg>
-      <span className="sr-only-x">{value === 'yes' ? 'yes' : value === 'partly' ? 'partly' : 'no'}</span>
+      <span className="sr-only-x">{t.ui.marks[value]}</span>
     </span>
   );
 }

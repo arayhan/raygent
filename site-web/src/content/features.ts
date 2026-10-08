@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { FeatureId } from '../i18n/types';
 import {
   Bot,
   Boxes,
@@ -17,9 +18,9 @@ import {
 } from 'lucide-react';
 
 export interface Feature {
+  id: FeatureId;
   icon: LucideIcon;
-  name: string;
-  benefit: string;
+  /** Real output, identical in every language. Names and benefits live in i18n. */
   example: { title: string; lines: string[] };
 }
 
@@ -31,8 +32,7 @@ export interface Feature {
 export const FEATURES: Feature[] = [
   {
     icon: MessagesSquare,
-    name: 'Conversational init',
-    benefit: 'You approve a plan you argued for before a single file exists.',
+    id: 'init',
     example: {
       title: 'docs/raygent-init.json, shown for approval',
       lines: [
@@ -55,8 +55,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: FileSearch,
-    name: 'Adopt existing docs',
-    benefit: 'The PRD you already wrote becomes interview answers, each with its source.',
+    id: 'adopt',
     example: {
       title: '/raygent init in a folder that holds your docs',
       lines: [
@@ -70,8 +69,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: Boxes,
-    name: 'Real scaffolds',
-    benefit: 'Dependencies installed and git initialised: runnable on the first pnpm dev.',
+    id: 'scaffolds',
     example: {
       title: 'clinic-followups/',
       lines: [
@@ -93,8 +91,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: Layers,
-    name: 'Stack add-ons',
-    benefit: 'The libraries you always add arrive configured, not as a todo list.',
+    id: 'addons',
     example: {
       title: 'raygent init --template, the addons block',
       lines: [
@@ -117,8 +114,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: Bot,
-    name: 'Agent layer',
-    benefit: 'Your coding agent knows the roles, the rules and the next task on its first session.',
+    id: 'agents',
     example: {
       title: 'waitlist-page/.claude/',
       lines: [
@@ -137,8 +133,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: ScrollText,
-    name: 'Coding rules',
-    benefit: 'One rule file per concern, and only the ones your stack can break.',
+    id: 'rules',
     example: {
       title: 'orders-api/docs/rules/ (NestJS, no frontend)',
       lines: [
@@ -157,8 +152,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: SlidersHorizontal,
-    name: 'Project preferences',
-    benefit: 'Agents comment, build and lay out the way you chose, not the way they default.',
+    id: 'prefs',
     example: {
       title: 'waitlist-page/docs/rules/project-preferences.md',
       lines: [
@@ -177,8 +171,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: ListChecks,
-    name: 'Phase 0 walking skeleton',
-    benefit: 'Day one has an ordered plan, and the gates are decisions you sign.',
+    id: 'phase0',
     example: {
       title: 'clinic-followups/docs/tasks/ (UI-first)',
       lines: [
@@ -194,8 +187,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: FileJson,
-    name: 'Init specs and presets',
-    benefit: 'Replay a whole setup with zero prompts, and a typo fails before anything is written.',
+    id: 'specs',
     example: {
       title: '$ raygent init --from launch.json',
       lines: [
@@ -212,8 +204,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: Library,
-    name: 'Skill manager',
-    benefit: 'Find a skill by what it is for, and install it for Claude, agents and Gemini at once.',
+    id: 'skills',
     example: {
       title: '$ raygent skill list',
       lines: [
@@ -233,8 +224,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: Plug,
-    name: 'MCP setup',
-    benefit: 'Tools are connected in .mcp.json and secrets stay in your shell, never in a file.',
+    id: 'mcp',
     example: {
       title: '.mcp.json',
       lines: [
@@ -254,8 +244,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: MessageSquareQuote,
-    name: 'Optional AI review',
-    benefit: 'A second opinion on the plan from any OpenAI-compatible model, only if you configure one.',
+    id: 'ai',
     example: {
       title: '~/.raygent/config.json',
       lines: [
@@ -273,8 +262,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: LayoutDashboard,
-    name: 'Dashboard',
-    benefit: 'Events, signups, DAU and revenue for every product you ship, on your own machine.',
+    id: 'dashboard',
     example: {
       title: 'after it ships',
       lines: [
@@ -291,8 +279,7 @@ export const FEATURES: Feature[] = [
   },
   {
     icon: Stethoscope,
-    name: 'doctor',
-    benefit: 'A missing tool shows up before init, not halfway through it.',
+    id: 'doctor',
     example: {
       title: '$ raygent doctor',
       lines: [

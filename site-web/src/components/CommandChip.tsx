@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Icon } from './Icon';
+import { useT } from '../i18n/LanguageProvider';
 
 /**
  * A copyable command. `prompt` is `$` for a shell and `>` for something typed
@@ -10,6 +11,7 @@ import { Icon } from './Icon';
 export function CommandChip({ command, prompt = '$' }: { command: string; prompt?: '$' | '>' }) {
   const codeRef = useRef<HTMLElement>(null);
   const [status, setStatus] = useState<'idle' | 'copied' | 'select'>('idle');
+  const t = useT();
 
   const selectText = () => {
     const node = codeRef.current;
@@ -40,12 +42,12 @@ export function CommandChip({ command, prompt = '$' }: { command: string; prompt
         </span>
         {command}
       </code>
-      <button type="button" className="copy inline-flex items-center gap-1.5" onClick={copy} aria-label={`Copy command: ${command}`}>
+      <button type="button" className="copy inline-flex items-center gap-1.5" onClick={copy} aria-label={t.ui.copyLabel(command)}>
         <Icon as={status === 'copied' ? Check : Copy} size={14} />
-        {status === 'copied' ? 'Copied' : 'Copy'}
+        {status === 'copied' ? t.ui.copied : t.ui.copy}
       </button>
       <span className="sr-only-x" aria-live="polite">
-        {status === 'copied' ? 'Copied' : status === 'select' ? 'Copy unavailable. The command is selected.' : ''}
+        {status === 'copied' ? t.ui.copied : status === 'select' ? t.ui.copyFallback : ''}
       </span>
     </div>
   );

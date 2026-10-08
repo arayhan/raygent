@@ -3,15 +3,7 @@ import { Mark, type MarkValue } from '../components/Mark';
 import { useReveal } from '../motion/useReveal';
 import { Icon } from '../components/Icon';
 import { Ban, Compass } from 'lucide-react';
-
-const COLUMNS = [
-  'Interview that pushes back',
-  'Product docs (PRD, roadmap)',
-  'Runnable stack scaffold',
-  'Agent rules in the repo',
-  'Phase and gate task plan',
-  'Replayable setup spec',
-];
+import { useT } from '../i18n/LanguageProvider';
 
 // Mirrors the README comparison: public documentation as of October 2026.
 const ROWS: { name: string; marks: MarkValue[]; self?: boolean }[] = [
@@ -28,29 +20,28 @@ const ROWS: { name: string; marks: MarkValue[]; self?: boolean }[] = [
 
 export function Compare() {
   const ref = useRef<HTMLElement>(null);
+  const t = useT();
   useReveal(ref);
 
   return (
     <section id="compare" ref={ref} className="page-x section-y" aria-labelledby="compare-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12">
         <div className="grid gap-4" data-reveal>
-          <p className="label eyebrow m-0">How it compares</p>
+          <p className="label eyebrow m-0">{t.compare.eyebrow}</p>
           <h2 id="compare-title" className="display-l">
-            Built for the moment before the repo exists
+            {t.compare.title}
           </h2>
         </div>
 
         <div className="plate overflow-x-auto" data-reveal>
           <table className="w-full min-w-[860px] border-collapse text-left">
-            <caption className="sr-only-x">
-              Capabilities of raygent and similar tools: yes, partly or no for each column.
-            </caption>
+            <caption className="sr-only-x">{t.compare.caption}</caption>
             <thead>
               <tr className="border-b border-hairline-soft">
                 <th scope="col" className="label px-5 py-4 font-semibold">
-                  Tool
+                  {t.compare.toolHeader}
                 </th>
-                {COLUMNS.map((c) => (
+                {t.compare.columns.map((c) => (
                   <th key={c} scope="col" className="label px-3 py-4 text-center font-semibold">
                     {c}
                   </th>
@@ -69,10 +60,10 @@ export function Compare() {
                       row.self ? 'text-blue' : 'text-signal-white'
                     }`}
                   >
-                    {row.name}
+                    {t.compare.rowNames[row.name] ?? row.name}
                   </th>
                   {row.marks.map((m, i) => (
-                    <td key={COLUMNS[i]} className="px-3 py-3.5 text-center">
+                    <td key={i} className="px-3 py-3.5 text-center">
                       <Mark value={m} accent={row.self} />
                     </td>
                   ))}
@@ -86,31 +77,18 @@ export function Compare() {
           <div className="grid content-start gap-3" data-reveal>
             <h3 className="title icon-row">
               <Icon as={Compass} className="text-blue" />
-              Where raygent fits
+              {t.compare.fitTitle}
             </h3>
-            <p className="m-0 text-signal-dim">
-              Spec frameworks such as Spec Kit, BMAD and Agent OS give you planning discipline and leave you to bring the
-              codebase. Scaffolders give you the codebase with no product context. Claude Code's /init documents a repo
-              that already exists. raygent starts before the repo exists and hands you both halves at once.
-            </p>
-            <p className="m-0 text-signal-dim">
-              Process skills such as superpowers and gstack work alongside it: they shape how work happens inside the
-              repo, and raygent's init offers a skill checklist to install exactly those.
-            </p>
+            <p className="m-0 text-signal-dim">{t.compare.fitBody[0]}</p>
+            <p className="m-0 text-signal-dim">{t.compare.fitBody[1]}</p>
           </div>
           <div className="grid content-start gap-3" data-reveal>
             <h3 className="title icon-row">
               <Icon as={Ban} className="text-blue" />
-              What raygent does not do
+              {t.compare.notTitle}
             </h3>
-            <p className="m-0 text-signal-dim">
-              It does not deploy. It stops at a built, verified phase 1, and shipping is yours. For a throwaway prototype
-              you want to click today, a hosted builder is faster.
-            </p>
-            <p className="m-0 text-small text-signal-mute">
-              Compared against each project's public documentation as of October 2026. Corrections are welcome as GitHub
-              issues.
-            </p>
+            <p className="m-0 text-signal-dim">{t.compare.notBody}</p>
+            <p className="m-0 text-small text-signal-mute">{t.compare.footnote}</p>
           </div>
         </div>
       </div>

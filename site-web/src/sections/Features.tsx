@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ExamplePanel } from '../components/ExamplePanel';
 import { Icon } from '../components/Icon';
 import { FEATURES } from '../content/features';
+import { useT } from '../i18n/LanguageProvider';
 import { DUR, EASE_OUT_EXPO, ScrollTrigger, gsap, prefersReducedMotion, useGSAP } from '../motion/gsap';
 import { useReveal } from '../motion/useReveal';
 
@@ -11,6 +12,7 @@ export function Features() {
   const activeRef = useRef(0);
   const [active, setActive] = useState(0);
   const [shown, setShown] = useState(0);
+  const t = useT();
   useReveal(ref, { start: 'top 85%' });
 
   // The row crossing the middle of the viewport is the active one. State only
@@ -61,20 +63,18 @@ export function Features() {
     <section id="features" ref={ref} className="page-x section-y" aria-labelledby="features-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12">
         <div className="grid gap-4" data-reveal>
-          <p className="label eyebrow m-0">Features</p>
+          <p className="label eyebrow m-0">{t.features.eyebrow}</p>
           <h2 id="features-title" className="display-l">
-            Everything between the idea and the first commit
+            {t.features.title}
           </h2>
-          <p className="prose-measure m-0 text-body-l text-signal-dim">
-            Each one with what it actually produces: real files and real command output from runs of the CLI.
-          </p>
+          <p className="prose-measure m-0 text-body-l text-signal-dim">{t.features.intro}</p>
         </div>
 
         <div className="grid gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
           <ol className="m-0 grid list-none gap-2 p-0">
             {FEATURES.map((f, i) => (
               <li
-                key={f.name}
+                key={f.id}
                 data-feature
                 data-active={i === active}
                 className="feature-row grid gap-4 border-l border-hairline-soft py-5 pl-5"
@@ -82,8 +82,8 @@ export function Features() {
                 <div className="icon-row">
                   <Icon as={f.icon} className="feature-icon" />
                   <div className="grid gap-1.5">
-                    <h3 className="title">{f.name}</h3>
-                    <p className="m-0 text-signal-dim">{f.benefit}</p>
+                    <h3 className="title">{t.features.items[f.id].name}</h3>
+                    <p className="m-0 text-signal-dim">{t.features.items[f.id].benefit}</p>
                   </div>
                 </div>
                 {/* Phones: the example sits under its row. Desktop: read by
@@ -100,7 +100,7 @@ export function Features() {
             <div className="sticky top-28">
               <ExamplePanel ref={panelRef} title={current.example.title} lines={current.example.lines} />
               <p className="label mt-4">
-                {current.name}
+                {t.features.items[current.id].name}
               </p>
             </div>
           </div>

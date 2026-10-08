@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RingScene } from '../three/ringScene';
 import { prefersReducedMotion } from '../motion/gsap';
+import { useT } from '../i18n/LanguageProvider';
 
 /**
  * The hero's tech-rings. three.js is loaded only when this mounts, renders one
@@ -17,6 +18,7 @@ export function RingField() {
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
   const [reduced] = useState(prefersReducedMotion);
+  const t = useT();
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +102,7 @@ export function RingField() {
           className="copy absolute right-2 bottom-2 min-h-9"
           aria-pressed={paused}
         >
-          {paused ? 'Play rings' : 'Pause rings'}
+          {paused ? t.ui.playRings : t.ui.pauseRings}
         </button>
       )}
     </div>

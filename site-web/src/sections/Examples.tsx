@@ -5,6 +5,7 @@ import { LINKS } from '../content/links';
 import { DUR, EASE_OUT_EXPO, gsap, prefersReducedMotion } from '../motion/gsap';
 import { useReveal } from '../motion/useReveal';
 import { Icon } from '../components/Icon';
+import { useT } from '../i18n/LanguageProvider';
 
 export function Examples() {
   const ref = useRef<HTMLElement>(null);
@@ -12,6 +13,7 @@ export function Examples() {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [active, setActive] = useState(0);
   const [inView, setInView] = useState(false);
+  const t = useT();
   useReveal(ref);
 
   // Typing starts the first time the terminal is actually on screen.
@@ -67,18 +69,15 @@ export function Examples() {
     <section id="examples" ref={ref} className="page-x section-y" aria-labelledby="examples-title">
       <div className="mx-auto grid max-w-(--container-page) gap-12">
         <div className="grid gap-4" data-reveal>
-          <p className="label eyebrow m-0">Examples</p>
+          <p className="label eyebrow m-0">{t.examples.eyebrow}</p>
           <h2 id="examples-title" className="display-l">
-            One sentence to your agent, or one command
+            {t.examples.title}
           </h2>
-          <p className="prose-measure m-0 text-body-l text-signal-dim">
-            Say the idea after <code className="font-mono text-mono text-signal-white">/raygent init</code> and it picks
-            the flags for you, or run the line yourself. Every command here was run before it was printed.
-          </p>
+          <p className="prose-measure m-0 text-body-l text-signal-dim">{t.examples.intro}</p>
         </div>
 
         <div className="grid gap-6" data-reveal>
-          <div role="tablist" aria-label="Project kinds" className="flex gap-5 overflow-x-auto border-b border-hairline-soft">
+          <div role="tablist" aria-label={t.examples.tabsLabel} className="flex gap-5 overflow-x-auto border-b border-hairline-soft">
             {EXAMPLES.map((e, i) => (
               <button
                 key={e.id}
@@ -96,7 +95,7 @@ export function Examples() {
                 onKeyDown={onKeyDown}
               >
                 <Icon as={e.icon} size={18} />
-                {e.tab}
+                {t.examples.items[e.id].tab}
               </button>
             ))}
           </div>
@@ -110,22 +109,21 @@ export function Examples() {
           >
             <div className="grid content-start gap-5">
               <div className="grid gap-2">
-                <p className="label m-0">Say it to your agent</p>
+                <p className="label m-0">{t.examples.sayIt}</p>
                 <p className="m-0 text-body-l text-signal-white">
-                  <code className="font-mono text-mono text-blue">/raygent init</code> {ex.ask}
+                  <code className="font-mono text-mono text-blue">/raygent init</code> {t.examples.items[ex.id].ask}
                 </p>
               </div>
-              <p className="m-0 text-signal-dim">{ex.note}</p>
+              <p className="m-0 text-signal-dim">{t.examples.items[ex.id].note}</p>
             </div>
             <TypedTerminal key={ex.id} dir={ex.dir} command={ex.command} output={ex.output} play={inView} />
           </div>
         </div>
 
         <p className="m-0 text-small text-signal-mute" data-reveal>
-          Flags you leave out are asked. Agents, rules, add-ons and the skill and MCP checklists are prompts too, unless
-          a preset or a spec answers them. More in the{' '}
+          {t.examples.footer}{' '}
           <a href={LINKS.examples} className="link-sweep text-signal-white" target="_blank" rel="noreferrer">
-            README examples
+            {t.examples.readmeLink}
           </a>
           .
         </p>

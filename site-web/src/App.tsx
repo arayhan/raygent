@@ -11,13 +11,21 @@ import { Examples } from './sections/Examples';
 import { Founder } from './sections/Founder';
 import { Cta } from './sections/Cta';
 import { Footer } from './components/Footer';
+import { LanguageProvider, useT } from './i18n/LanguageProvider';
+
+function SkipLink() {
+  const t = useT();
+  return (
+    <a href="#main" className="btn btn-primary skip-link">
+      {t.ui.skip}
+    </a>
+  );
+}
 
 export function App() {
   return (
-    <>
-      <a href="#main" className="btn btn-primary skip-link">
-        Skip to content
-      </a>
+    <LanguageProvider initial="en">
+      <SkipLink />
       <LightField />
       <ParticleField />
       <Header />
@@ -33,6 +41,6 @@ export function App() {
         <Cta />
       </main>
       <Footer />
-    </>
+    </LanguageProvider>
   );
 }
