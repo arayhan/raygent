@@ -255,8 +255,9 @@ export function validateInitSpec(spec: InitSpec, opts: { requireComplete?: boole
       const valid = FRAMEWORKS_BY_PLATFORM[platform as Platform];
       check('stack.framework', stack.framework, valid);
     }
-  } else if (required && stack.kind !== 'landing' && stack.platform !== undefined) {
-    // A landing page has no framework question; everything else does.
+  } else if (required && stack.kind !== 'landing' && stack.target !== 'backend' && stack.platform !== undefined) {
+    // A landing page and a backend-only web project have no frontend framework
+    // question; everything else does.
     problems.push({ path: 'stack.framework', message: 'missing' });
   }
 

@@ -130,6 +130,19 @@ describe('validateInitSpec', () => {
     expect(p.message).toMatch(/Did you mean "styling"/);
   });
 
+  it('does not require a frontend framework for a backend-only web project', () => {
+    const apiOnly = {
+      project: { name: 'acme-api', type: 'product' },
+      stack: { platform: 'web', target: 'backend', backend: 'nestjs' },
+    };
+    expect(validateInitSpec(apiOnly)).toEqual([]);
+  });
+
+  it('still requires a framework for a frontend web project', () => {
+    const problems = validateInitSpec({ project: { name: 'x', type: 'product' }, stack: { platform: 'web', target: 'frontend' } });
+    expect(problems.map((p) => p.path)).toEqual(['stack.framework']);
+  });
+
   it('rejects an invalid preference value and suggests the nearest one', () => {
     const problems = validateInitSpec({ ...complete, preferences: { comments: 'minimall' } });
     expect(problems).toHaveLength(1);
