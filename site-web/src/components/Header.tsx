@@ -18,7 +18,7 @@ export function Header() {
       <div className="mx-auto flex max-w-(--container-page) items-center justify-between gap-6 py-4">
         <a href="#top" className="flex items-center gap-3 no-underline" aria-label="raygent, back to top">
           <RingMark size={28} />
-          <span className="font-display text-[22px] font-bold uppercase tracking-[0.04em]">raygent</span>
+          <span className="font-display text-[22px] font-semibold tracking-[-0.01em]">raygent</span>
         </a>
         <nav aria-label="Sections" className="hidden md:block">
           <ul className="m-0 flex list-none gap-7 p-0">

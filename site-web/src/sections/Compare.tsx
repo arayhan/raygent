@@ -63,7 +63,7 @@ export function Compare() {
                 >
                   <th
                     scope="row"
-                    className={`px-5 py-3.5 font-display text-[17px] font-semibold tracking-[0.02em] ${
+                    className={`px-5 py-3.5 text-[17px] font-semibold tracking-[-0.01em] ${
                       row.self ? 'text-cyan' : 'text-signal-white'
                     }`}
                   >

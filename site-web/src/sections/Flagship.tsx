@@ -94,7 +94,7 @@ export function Flagship() {
         <div className="grid content-start gap-5 lg:sticky lg:top-28">
           <p className="label m-0">Flagship</p>
           <h2 id="flagship-title" className="display-l">
-            <code className="font-display">/raygent init</code>
+            <code className="font-mono font-medium tracking-[-0.03em]">/raygent init</code>
           </h2>
           <p className="prose-measure m-0 text-body-l text-signal-dim">
             One conversation in your coding agent, from idea to a verified phase 1. raygent argues once, clearly, and
