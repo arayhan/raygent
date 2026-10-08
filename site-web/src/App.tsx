@@ -6,6 +6,9 @@ import { Features } from './sections/Features';
 import { Compare } from './sections/Compare';
 import { Docs } from './sections/Docs';
 import { Examples } from './sections/Examples';
+import { Founder } from './sections/Founder';
+import { Cta } from './sections/Cta';
+import { Footer } from './components/Footer';
 
 export function App() {
   return (
@@ -22,7 +25,10 @@ export function App() {
         <Compare />
         <Docs />
         <Examples />
+        <Founder />
+        <Cta />
       </main>
+      <Footer />
     </>
   );
 }
