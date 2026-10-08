@@ -333,6 +333,51 @@
     border-bottom-color: var(--color-cyan);
   }
 
+  /* Flagship flow: a stage is idle, lit once the line reaches it, live while it
+     is the latest lit one. Only colour and opacity change. */
+  .flow-node {
+    background: var(--color-void);
+    border: 1px solid var(--color-hairline);
+    transition:
+      border-color var(--dur-hover) ease-out,
+      box-shadow var(--dur-hover) ease-out;
+  }
+  .flow-node::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border-radius: 9999px;
+    background: var(--color-cyan);
+    opacity: 0;
+    transition: opacity var(--dur-hover) ease-out;
+  }
+  .flow-stage .title {
+    color: var(--color-signal-mute);
+    transition:
+      color var(--dur-hover) ease-out,
+      text-shadow var(--dur-hover) ease-out;
+  }
+  .flow-stage[data-lit='true'] .title {
+    color: var(--color-signal-white);
+  }
+  .flow-stage[data-lit='true'] .flow-node {
+    border-color: var(--color-cyan-dim);
+  }
+  .flow-stage[data-lit='true'] .flow-node::after {
+    opacity: 0.6;
+  }
+  .flow-stage[data-live='true'] .title {
+    color: var(--color-cyan);
+    text-shadow: var(--shadow-glow-live);
+  }
+  .flow-stage[data-live='true'] .flow-node {
+    border-color: var(--color-cyan);
+    box-shadow: var(--shadow-glow-live);
+  }
+  .flow-stage[data-live='true'] .flow-node::after {
+    opacity: 1;
+  }
+
   .glow-live {
     color: var(--color-cyan);
     text-shadow: var(--shadow-glow-live);
@@ -388,7 +433,10 @@
   .link-sweep::after,
   .plate-hover,
   .copy,
-  .tab {
+  .tab,
+  .flow-node,
+  .flow-node::after,
+  .flow-stage .title {
     transition: none;
   }
   .btn-primary:hover,

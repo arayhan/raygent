@@ -1,6 +1,8 @@
 import { Header } from './components/Header';
 import { Hero } from './sections/Hero';
 import { Why } from './sections/Why';
+import { Flagship } from './sections/Flagship';
+import { Features } from './sections/Features';
 
 export function App() {
   return (
@@ -12,6 +14,8 @@ export function App() {
       <main id="main">
         <Hero />
         <Why />
+        <Flagship />
+        <Features />
       </main>
     </>
   );
