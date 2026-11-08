@@ -168,14 +168,22 @@ page's only perpetual loop.
 - **Matrix marks**: SVG ring (yes, `signal-white`), half ring (partly,
   `signal-mute`), dash (no, `hairline`), each with a visually hidden word.
 - **Mark** (`components/RingMark.tsx`, favicon `public/icon.svg`): the
-  "prompt" mark, in the same flat style as baiti and selfwire. A
-  `signal-white` `>` chevron on a `tile` (#3d6bf0) square with rx 16 on a
-  64 grid, and a `yellow` (#f5c431) dot where the cursor sits. Normal:
-  `M20 20 L32 32 L20 44`, stroke 7, dot (44,44) r 5. At 32px and below, use
-  the heavy drawing: `M20 19 L33 32 L20 45`, stroke 9.5, dot (45,45) r 6.5.
-  Round caps and joins. No gradient, glow or shadow. `tile` and `yellow`
-  are logo colours only, never UI accents. The dragon avatar stays as the
-  creator photo and og:image.
+  "prompt dragon, silhouette". A friendly dragon bust in `void`, rising out
+  of the bottom of a `blue` square (rx 16 on a 64 grid), with a
+  `signal-white` eye. It is in the owner's flat brand style (baiti,
+  selfwire, arayhan.dev) and uses only raygent's own colours.
+  - Head: `M17 64 C13 52 12 38 15 28 C18 21 24 18 31 20 L46 24 C52 26 53 34
+    47 36 L36 39 C32 41 31 48 32 64 Z`, filled, with a 3 stroke and round
+    joins to soften the corners.
+  - Horns: `M20 22 C15 18 11 17 6 18` and `M27 19 C25 14 22 12 17 11`,
+    stroke 5.5, with round caps.
+  - Eye: (27,29), r 4.
+  - Nostril: `blue`, (46,29.5), r 1.8.
+
+  At 32px and below, use the small drawing: horns at stroke 6.5, the eye at
+  r 4.5, and no nostril. No gradient, glow or shadow. The dragon
+  illustration `raygent-avatar.jpg` stays in the Founder section and the
+  og:image.
 - **Icon**: `components/Icon.tsx`, lucide, 20px (18 in buttons, 14 in the
   footer and copy buttons), stroke 1.5, `aria-hidden`, colour inherited.
   `.icon-row` puts it on the first line of the text it labels. The GitHub mark
