@@ -167,7 +167,15 @@ page's only perpetual loop.
   white underline; arrow-key navigation.
 - **Matrix marks**: SVG ring (yes, `signal-white`), half ring (partly,
   `signal-mute`), dash (no, `hairline`), each with a visually hidden word.
-- **Ring mark**: white strokes, `blue` core, no glow.
+- **Mark** (`components/RingMark.tsx`, favicon `public/icon.svg`): the
+  "prompt" mark, in the same flat style as baiti and selfwire. A
+  `signal-white` `>` chevron on a `tile` (#3d6bf0) square with rx 16 on a
+  64 grid, and a `yellow` (#f5c431) dot where the cursor sits. Normal:
+  `M20 20 L32 32 L20 44`, stroke 7, dot (44,44) r 5. At 32px and below, use
+  the heavy drawing: `M20 19 L33 32 L20 45`, stroke 9.5, dot (45,45) r 6.5.
+  Round caps and joins. No gradient, glow or shadow. `tile` and `yellow`
+  are logo colours only, never UI accents. The dragon avatar stays as the
+  creator photo and og:image.
 - **Icon**: `components/Icon.tsx`, lucide, 20px (18 in buttons, 14 in the
   footer and copy buttons), stroke 1.5, `aria-hidden`, colour inherited.
   `.icon-row` puts it on the first line of the text it labels. The GitHub mark
