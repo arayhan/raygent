@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { defaultRoots } from './paths.js';
 import { resolveCcpBin } from './scaffold-tools.js';
 import { loadAiConfig } from './config.js';
+import { readAccounts } from './accounts.js';
 
 export interface DoctorCheck {
   name: string;
@@ -93,6 +94,17 @@ export async function runDoctorChecks(fetchImpl: typeof fetch = globalThis.fetch
     }
     checks.push({ name: 'ai', ok: reachOk, detail: reach });
   }
+
+  const accounts = await readAccounts();
+  const policies = Object.keys(accounts.projects).length;
+  checks.push({
+    name: 'accounts',
+    ok: true, // informational -- launchers fall back to the default login
+    detail:
+      accounts.accounts.length === 0
+        ? 'none registered (raygent accounts discover)'
+        : `${accounts.accounts.length} account${accounts.accounts.length === 1 ? '' : 's'}, policies for ${policies} project${policies === 1 ? '' : 's'}`,
+  });
 
   return checks;
 }
