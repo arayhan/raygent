@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import path from 'node:path';
+import os from 'node:os';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { Command } from 'commander';
@@ -78,6 +79,28 @@ import {
 import { runFeedback, runElaborate, type ProjectMeta } from './ai-client.js';
 import { runDoctorChecks } from './doctor.js';
 import { registerProduct, listProducts } from './products.js';
+import {
+  ACCOUNT_PROVIDERS,
+  readAccounts,
+  upsertAccount,
+  removeAccount,
+  setProjectPolicy,
+  getProjectPolicy,
+  discoverClaudeAccounts,
+  currentAccount,
+  pickAccount,
+  isLimited,
+  parseUntil,
+  markLimited,
+  observeTranscript,
+  resolveAccountEnv,
+  installHooks,
+  describeAccount,
+  maskEmail,
+  DEFAULT_LIMIT_MS,
+  type Account,
+  type AccountProvider,
+} from './accounts.js';
 import { addFinanceEntry, readFinanceEntries, summarizeFinance } from './finance.js';
 import { createDashboardServer } from './dashboard.js';
 
@@ -462,9 +485,233 @@ finance
     }
   });
 
+const accounts = program
+  .command('accounts')
+  .description('AI accounts and which of them each project may use (~/.raygent/accounts.json)');
+
+function limitNote(a: Account): string {
+  return isLimited(a) ? ` limited until ${new Date(a.limitedUntil as string).toLocaleString()}` : '';
+}
+
+accounts
+  .command('discover')
+  .description('Register every logged-in Claude Code config dir (Orca profiles and ~/.claude)')
+  .action(async () => {
+    try {
+      const found = await discoverClaudeAccounts();
+      if (found.length === 0) {
+        console.log('No Claude Code logins found (no Orca profiles, no ~/.claude/.claude.json).');
+        return;
+      }
+      const file = await readAccounts();
+      for (const d of found) {
+        const known = file.accounts.find(
+          (a) => a.provider === 'claude' && a.configDir !== undefined && path.resolve(a.configDir).toLowerCase() === path.resolve(d.configDir).toLowerCase()
+        );
+        const id = known?.id ?? d.id;
+        await upsertAccount({ id, provider: 'claude', configDir: d.configDir, email: d.email, org: d.org });
+        console.log(`${known ? 'kept' : 'added'} ${id}: ${d.email ? maskEmail(d.email) : '(no login yet)'} — ${d.configDir}`);
+      }
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+accounts
+  .command('add <id>')
+  .description('Register an account by hand (a Claude config dir, or env var names for gemini)')
+  .requiredOption('--provider <provider>', `one of: ${ACCOUNT_PROVIDERS.join(', ')}`)
+  .option('--config-dir <dir>', 'CLAUDE_CONFIG_DIR of a logged-in Claude Code (claude only)')
+  .option('--env <KEY=$VAR...>', 'env to set at launch; $VAR values are read from your environment, never stored')
+  .action(async (id: string, opts: { provider: string; configDir?: string; env?: string[] }) => {
+    try {
+      if (!ACCOUNT_PROVIDERS.includes(opts.provider as AccountProvider)) {
+        throw new Error(`unknown provider '${opts.provider}' (use: ${ACCOUNT_PROVIDERS.join(', ')})`);
+      }
+      const provider = opts.provider as AccountProvider;
+      if (provider === 'claude' && !opts.configDir) throw new Error('claude accounts need --config-dir');
+      const env: Record<string, string> = {};
+      for (const pair of opts.env ?? []) {
+        const eq = pair.indexOf('=');
+        if (eq <= 0) throw new Error(`--env expects KEY=VALUE, got '${pair}'`);
+        env[pair.slice(0, eq)] = pair.slice(eq + 1);
+      }
+      await upsertAccount({
+        id,
+        provider,
+        configDir: opts.configDir ? path.resolve(opts.configDir) : undefined,
+        env: Object.keys(env).length > 0 ? env : undefined,
+      });
+      console.log(`Registered account '${id}'`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+accounts
+  .command('remove <id>')
+  .description('Forget an account and drop it from every project policy')
+  .action(async (id: string) => {
+    try {
+      console.log((await removeAccount(id)) ? `Removed account '${id}'` : `No account '${id}'`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+accounts
+  .command('list')
+  .description('List registered accounts')
+  .action(async () => {
+    try {
+      const file = await readAccounts();
+      if (file.accounts.length === 0) {
+        console.log('No accounts registered yet (raygent accounts discover).');
+        return;
+      }
+      for (const a of file.accounts) {
+        const uses = Object.values(file.projects).filter((ids) => ids.includes(a.id)).length;
+        console.log(`${describeAccount(a)}${limitNote(a)}${uses ? ` — allowed in ${uses} project${uses === 1 ? '' : 's'}` : ''}`);
+      }
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+accounts
+  .command('allow <id...>')
+  .description('Set the accounts a project may use, in fallback order (cwd unless --project)')
+  .option('--project <path>', 'project directory', process.cwd())
+  .action(async (ids: string[], opts: { project: string }) => {
+    try {
+      await setProjectPolicy(opts.project, ids);
+      console.log(`${path.resolve(opts.project)} may use: ${ids.join(' → ')}`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+accounts
+  .command('policy')
+  .description('Show which accounts the project may use')
+  .option('--project <path>', 'project directory', process.cwd())
+  .action(async (opts: { project: string }) => {
+    try {
+      const file = await readAccounts();
+      const policy = getProjectPolicy(opts.project, file);
+      if (!policy) {
+        console.log(`No policy for ${path.resolve(opts.project)}: every registered account is allowed.`);
+        return;
+      }
+      for (const id of policy) {
+        const a = file.accounts.find((x) => x.id === id);
+        console.log(a ? `${describeAccount(a)}${limitNote(a)}` : `${id} (not registered any more)`);
+      }
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+accounts
+  .command('limit <id>')
+  .description('Mark an account as rate-limited so launchers skip it (default: 5 hours)')
+  .option('--until <time>', 'ISO 8601 or a clock time like 7:30pm')
+  .option('--clear', 'lift the mark')
+  .action(async (id: string, opts: { until?: string; clear?: boolean }) => {
+    try {
+      const until = opts.clear ? undefined : opts.until ? parseUntil(opts.until) : new Date(Date.now() + DEFAULT_LIMIT_MS);
+      const a = await markLimited(id, until);
+      console.log(until ? `${a.id} limited until ${until.toLocaleString()}` : `${a.id} is no longer marked limited`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+accounts
+  .command('check')
+  .description("Report whether this session's Claude account is allowed for the project")
+  .option('--project <path>', 'project directory', process.cwd())
+  .option('--hook', 'print only a warning (for a SessionStart hook)')
+  .action(async (opts: { project: string; hook?: boolean }) => {
+    try {
+      const file = await readAccounts();
+      const project = path.resolve(opts.project);
+      const policy = getProjectPolicy(project, file);
+      const current = currentAccount(file);
+      if (file.accounts.length === 0) {
+        if (!opts.hook) console.log('No accounts registered yet (raygent accounts discover).');
+        return;
+      }
+      if (!current) {
+        const dir = process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), '.claude');
+        if (!opts.hook || policy) console.log(`raygent accounts: ${dir} is not a registered account; ${project} allows ${policy ? policy.join(', ') : 'every account'}`);
+        return;
+      }
+      if (!policy) {
+        if (!opts.hook) console.log(`ok: ${current.id}; no policy for ${project} (every account allowed)`);
+        return;
+      }
+      if (policy.includes(current.id)) {
+        if (!opts.hook) console.log(`ok: ${current.id} allowed for ${project}`);
+        return;
+      }
+      console.log(
+        `raygent accounts: this session runs as ${describeAccount(current)}, but ${project} only allows ${policy.join(', ')}. Switch profile, or start with: raygent claude`
+      );
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+accounts
+  .command('observe')
+  .description('Hook target: read the hook JSON on stdin and record a usage limit seen in the transcript')
+  .action(async () => {
+    // Never fail: a hook that errors would interrupt the session it watches.
+    try {
+      let raw = '';
+      for await (const chunk of process.stdin) raw += chunk;
+      const payload = JSON.parse(raw.replace(/^﻿/, '')) as { transcript_path?: string };
+      if (typeof payload.transcript_path !== 'string') return;
+      const marked = await observeTranscript(payload.transcript_path);
+      if (marked) console.log(`raygent accounts: ${marked.id} limited until ${new Date(marked.limitedUntil).toLocaleString()}`);
+    } catch {
+      // ignore
+    }
+  });
+
+accounts
+  .command('install-hooks')
+  .description('Add the check and observe hooks to settings.json of every registered Claude account')
+  .action(async () => {
+    try {
+      const file = await readAccounts();
+      const targets = file.accounts.filter((a) => a.provider === 'claude' && a.configDir);
+      if (targets.length === 0) {
+        console.log('No Claude accounts registered yet (raygent accounts discover).');
+        return;
+      }
+      for (const a of targets) {
+        const settingsPath = path.join(a.configDir as string, 'settings.json');
+        console.log(`${await installHooks(settingsPath)} ${a.id}: ${settingsPath}`);
+      }
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
 program
   .command('doctor')
-  .description('Check the raygent environment: node, pnpm, git, scaffolder, skills, AI endpoint')
+  .description('Check the raygent environment: node, pnpm, git, scaffolder, skills, AI endpoint, accounts')
   .action(async () => {
     const checks = await runDoctorChecks();
     for (const c of checks) {
