@@ -1,6 +1,6 @@
 {
   "name": "raygent",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "From a raw idea to a runnable repo your coding agents already know how to work in: an interview that argues with your plan, then a real scaffold with AGENTS.md, rules and a Phase 0 task plan.",
   "keywords": [
     "claude-code",
