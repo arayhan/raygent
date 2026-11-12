@@ -802,6 +802,39 @@ under an account the project does not allow; they never block it.
 Everything lives in `~/.raygent/accounts.json`, keyed by project path. A
 project without a policy may use every registered account.
 
+### Sync
+
+Move between laptops and find the same memory, the same resumable Claude Code
+sessions and the same account policies, even when projects sit at different
+paths on each laptop.
+
+```bash
+raygent sync              # pull, merge, push everything
+raygent sync --dry-run    # show what would move
+raygent sync status       # what syncs from this laptop, last run, folders left out
+raygent sync install-task # every 15 minutes, hidden (Task Scheduler; prints a crontab line elsewhere)
+```
+
+It works on a private `~/claude-personal` repo (`RAYGENT_PERSONAL_DIR` to move
+it) that maps each project to a slug per laptop in `hosts/<COMPUTERNAME>.json`:
+
+| What | How it travels |
+|---|---|
+| memory, instructions | the repo's own git remote (commit, `pull --rebase`, push) |
+| account policies | `accounts.json` in the repo, keyed by slug; config dirs stay per laptop in `hosts/<COMPUTERNAME>.accounts.json`. Logins never move: run `raygent accounts discover` on each laptop |
+| sessions | rsync to `<host>:<dir>/<slug>/` from `sync.json`; pulled into this laptop's folder for the project's path, so `claude --resume` finds them |
+
+```json
+{ "sessions": { "host": "me@my-vps", "key": "~/.ssh/my_vps", "dir": "claude-sync/sessions", "keepDays": 30 } }
+```
+
+On Windows rsync runs from WSL (`wsl -e rsync`) with the Windows OpenSSH as
+transport, so the Windows key applies; set `"rsync": "native"` to use an rsync
+on PATH instead. Only sessions from the last `keepDays` come back down, and
+nothing is ever deleted on either side. A conflict in the synced accounts files
+resolves itself; a memory file edited on both laptops stops the git step until
+you resolve it by hand, and the other steps keep running.
+
 ### Config & doctor
 
 ```bash
