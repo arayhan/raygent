@@ -158,7 +158,7 @@ describe('syncSessions', () => {
     touch(path.join(root, '-code-foo', 'old.jsonl'), 'x', 1000);
     touch(path.join(root, '-code-bar', 'b.jsonl'), 'x', 3000);
     const { run, calls } = fakeRunner((cmd) => (cmd === 'ssh' ? { stdout: 'foo/old.jsonl\t1000\nfoo/new.jsonl\t2000\nbaz/z.jsonl\t1\n' } : undefined));
-    const state: SyncState = { lastPush: 2000 * 1000 };
+    const state: SyncState = { pushed: { '-code-foo': 2000 * 1000, '-code-bar': 2000 * 1000 } };
     const detail = await syncSessions(cfg, { foo: '/code/foo', bar: '/code/bar' }, root, state, { run, now, platform: 'linux', tmpDir: dir });
 
     const rsyncs = calls.filter((c) => c.cmd === 'rsync');
@@ -166,8 +166,18 @@ describe('syncSessions', () => {
     expect(rsyncs[0].args.slice(-2)).toEqual(['me@vps:raygent-sync/sessions/foo/', path.join(root, '-code-foo') + '/']);
     expect(rsyncs[1].args.slice(-2)).toEqual([path.join(root, '-code-bar') + '/', 'me@vps:raygent-sync/sessions/bar/']);
     expect(detail).toBe('pulled 1 file into 1 folder, pushed 1 folder');
-    expect(state.lastPush).toBe(5_000_000_000);
+    expect(state.pushed).toEqual({ '-code-foo': 2000 * 1000, '-code-bar': 5_000_000_000 });
     expect(fs.readdirSync(dir).filter((f) => f.startsWith('raygent-sync-'))).toEqual([]);
+  });
+
+  it('pushes a newly mapped folder even when its sessions are older than other marks', async () => {
+    const root = path.join(dir, 'projects');
+    touch(path.join(root, '-code-old', 'a.jsonl'), 'x', 1000);
+    const { run, calls } = fakeRunner();
+    const state: SyncState = { pushed: { '-code-foo': 9_000_000 } };
+    await syncSessions(cfg, { old: '/code/old' }, root, state, { run, now, platform: 'linux', tmpDir: dir });
+    expect(calls.filter((c) => c.cmd === 'rsync')).toHaveLength(1);
+    expect(state.pushed?.['-code-old']).toBe(5_000_000_000);
   });
 
   it('creates the project folder for a session that only exists remotely', async () => {
@@ -182,11 +192,11 @@ describe('syncSessions', () => {
     const root = path.join(dir, 'projects');
     touch(path.join(root, '-code-foo', 'a.jsonl'), 'x', 3000);
     const { run } = fakeRunner((cmd) => (cmd === 'rsync' ? { code: 255, stderr: 'connection refused' } : undefined));
-    const state: SyncState = { lastPush: 1 };
+    const state: SyncState = { pushed: { '-code-foo': 1 } };
     await expect(syncSessions(cfg, { foo: '/code/foo' }, root, state, { run, now, platform: 'linux', tmpDir: dir })).rejects.toThrow(
       /push foo: connection refused/
     );
-    expect(state.lastPush).toBe(1);
+    expect(state.pushed).toEqual({ '-code-foo': 1 });
   });
 
   it('fails when the listing cannot be read', async () => {
@@ -202,7 +212,7 @@ describe('syncSessions', () => {
     const detail = await syncSessions(cfg, { foo: '/code/foo' }, root, state, { run, now, platform: 'linux', dryRun: true });
     expect(calls.map((c) => c.cmd)).toEqual(['ssh']);
     expect(detail).toMatch(/^push foo: rsync /);
-    expect(state.lastPush).toBeUndefined();
+    expect(state.pushed).toBeUndefined();
   });
 });
 

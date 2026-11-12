@@ -69,7 +69,8 @@ export interface SyncState {
   lastRun?: string;
   lastOk?: boolean;
   phases?: PhaseResult[];
-  lastPush?: number;
+  // Per local folder name, so a project mapped later still gets its first push.
+  pushed?: Record<string, number>;
   known?: KnownShared;
 }
 
@@ -342,17 +343,20 @@ export async function syncSessions(
   }
 
   let pushed = 0;
-  let pushFailed = false;
+  const marks = { ...(state.pushed ?? {}) };
   for (const slug of slugs) {
     const { existing } = await localProjectDirs(projectsRoot, sessionKey(hosts[slug]));
     for (const dir of existing) {
-      if ((await newestMtime(dir)) <= (state.lastPush ?? 0)) continue;
-      if (await rsync(rsyncArgs('push', cfg, slug, dir, platform), `push ${slug}`)) pushed++;
-      else pushFailed = true;
+      const name = path.basename(dir);
+      if ((await newestMtime(dir)) <= (marks[name] ?? 0)) continue;
+      // Only a clean push moves a folder's mark; a failed one is retried next run.
+      if (await rsync(rsyncArgs('push', cfg, slug, dir, platform), `push ${slug}`)) {
+        pushed++;
+        marks[name] = pushStart;
+      }
     }
   }
-  // Only a clean push moves the mark; a failed folder is retried next run.
-  if (!deps.dryRun && !pushFailed) state.lastPush = pushStart;
+  if (!deps.dryRun) state.pushed = marks;
 
   if (deps.dryRun) return planned.length > 0 ? planned.join('\n') : 'nothing to pull or push';
   if (errors.length > 0) throw new Error(errors.join('; '));
