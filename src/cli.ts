@@ -733,9 +733,9 @@ accounts
 
 const sync = program
   .command('sync')
-  .description('Sync claude-personal, account policies and Claude Code sessions across laptops')
+  .description('Sync raygent-brain, account policies and Claude Code sessions across laptops')
   .option('--quiet', 'print problems only and always exit 0 (for hooks and the scheduled task)')
-  .option('--no-git', 'skip the claude-personal pull and push')
+  .option('--no-git', 'skip the raygent-brain pull and push')
   .option('--no-accounts', 'skip the account policy merge')
   .option('--no-sessions', 'skip the transcript rsync')
   .option('--dry-run', 'show what would happen and change nothing')

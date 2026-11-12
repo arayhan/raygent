@@ -815,7 +815,7 @@ raygent sync status       # what syncs from this laptop, last run, folders left 
 raygent sync install-task # every 15 minutes, hidden (Task Scheduler; prints a crontab line elsewhere)
 ```
 
-It works on a private `~/claude-personal` repo (`RAYGENT_PERSONAL_DIR` to move
+It works on a private `~/raygent-brain` repo (`RAYGENT_BRAIN_DIR` to move
 it) that maps each project to a slug per laptop in `hosts/<COMPUTERNAME>.json`:
 
 | What | How it travels |
@@ -825,7 +825,7 @@ it) that maps each project to a slug per laptop in `hosts/<COMPUTERNAME>.json`:
 | sessions | rsync to `<host>:<dir>/<slug>/` from `sync.json`; pulled into this laptop's folder for the project's path, so `claude --resume` finds them |
 
 ```json
-{ "sessions": { "host": "me@my-vps", "key": "~/.ssh/my_vps", "dir": "claude-sync/sessions", "keepDays": 30 } }
+{ "sessions": { "host": "me@my-vps", "key": "~/.ssh/my_vps", "dir": "raygent-sync/sessions", "keepDays": 30 } }
 ```
 
 On Windows rsync runs from WSL (`wsl -e rsync`) with the Windows OpenSSH as

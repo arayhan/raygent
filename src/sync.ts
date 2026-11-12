@@ -6,7 +6,7 @@ import { execFile } from 'node:child_process';
 import { accountsPath, normalizePath, readAccounts, writeAccounts, type Account, type AccountsFile } from './accounts.js';
 
 // Multi-laptop sync. Three things travel:
-//   - ~/claude-personal (memory, instructions, hosts maps) through its own git remote;
+//   - ~/raygent-brain (memory, instructions, hosts maps) through its own git remote;
 //   - account policies, translated between ~/.raygent/accounts.json (absolute
 //     paths, this laptop's config dirs) and slug-keyed files inside that repo;
 //   - Claude Code transcripts, by rsync to a VPS folder per project slug, so a
@@ -86,7 +86,7 @@ export function defaultSyncPaths(env: NodeJS.ProcessEnv = process.env): SyncPath
   const home = os.homedir();
   const raygentDir = path.dirname(accountsPath());
   return {
-    repo: env.RAYGENT_PERSONAL_DIR ?? path.join(home, 'claude-personal'),
+    repo: env.RAYGENT_BRAIN_DIR ?? path.join(home, 'raygent-brain'),
     host: env.COMPUTERNAME ?? os.hostname(),
     accountsFile: accountsPath(),
     statePath: path.join(raygentDir, 'sync-state.json'),
@@ -155,7 +155,7 @@ export async function localProjectDirs(projectsRoot: string, key: string): Promi
   };
 }
 
-// memory/ is a junction into claude-personal (git carries it); the index holds
+// memory/ is a junction into raygent-brain (git carries it); the index holds
 // absolute paths of the laptop that wrote it.
 const SKIP = new Set(['memory', 'sessions-index.json']);
 

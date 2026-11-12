@@ -45,7 +45,7 @@ afterEach(() => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-const cfg: SessionsConfig = { host: 'me@vps', key: '/keys/vps', dir: 'claude-sync/sessions', keepDays: 30, rsync: 'native' };
+const cfg: SessionsConfig = { host: 'me@vps', key: '/keys/vps', dir: 'raygent-sync/sessions', keepDays: 30, rsync: 'native' };
 
 function fakeRunner(handler: (cmd: string, args: string[]) => Partial<RunResult> | undefined = () => undefined) {
   const calls: { cmd: string; args: string[] }[] = [];
@@ -133,11 +133,11 @@ describe('rsync argv', () => {
     expect(rsyncArgs('push', cfg, 'foo', '/home/me/.claude/projects/-code-foo', 'linux')).toEqual([
       '-rt', '--update', '-e', 'ssh -i /keys/vps -o BatchMode=yes',
       '--exclude', 'memory', '--exclude', 'sessions-index.json',
-      '/home/me/.claude/projects/-code-foo/', 'me@vps:claude-sync/sessions/foo/',
+      '/home/me/.claude/projects/-code-foo/', 'me@vps:raygent-sync/sessions/foo/',
     ]);
     expect(rsyncArgs('pull', cfg, 'foo', '/p/', 'linux', '/tmp/list.txt')).toEqual([
       '-rt', '--update', '-e', 'ssh -i /keys/vps -o BatchMode=yes',
-      '--files-from', '/tmp/list.txt', 'me@vps:claude-sync/sessions/foo/', '/p/',
+      '--files-from', '/tmp/list.txt', 'me@vps:raygent-sync/sessions/foo/', '/p/',
     ]);
     expect(() => rsyncArgs('pull', cfg, 'foo', '/p', 'linux')).toThrow(/file list/);
   });
@@ -161,8 +161,8 @@ describe('syncSessions', () => {
 
     const rsyncs = calls.filter((c) => c.cmd === 'rsync');
     expect(rsyncs).toHaveLength(2);
-    expect(rsyncs[0].args.slice(-2)).toEqual(['me@vps:claude-sync/sessions/foo/', path.join(root, '-code-foo') + '/']);
-    expect(rsyncs[1].args.slice(-2)).toEqual([path.join(root, '-code-bar') + '/', 'me@vps:claude-sync/sessions/bar/']);
+    expect(rsyncs[0].args.slice(-2)).toEqual(['me@vps:raygent-sync/sessions/foo/', path.join(root, '-code-foo') + '/']);
+    expect(rsyncs[1].args.slice(-2)).toEqual([path.join(root, '-code-bar') + '/', 'me@vps:raygent-sync/sessions/bar/']);
     expect(detail).toBe('pulled 1 file into 1 folder, pushed 1 folder');
     expect(state.lastPush).toBe(5_000_000_000);
     expect(fs.readdirSync(dir).filter((f) => f.startsWith('raygent-sync-'))).toEqual([]);
