@@ -360,6 +360,7 @@ export async function syncSessions(
 }
 
 // Transcript folders that no slug maps to on this laptop: they never sync.
+// A folder holding only memory or a stale index has nothing to lose, so it is left out.
 export async function unmappedProjectDirs(projectsRoot: string, hosts: Record<string, string>): Promise<string[]> {
   const mapped = new Set(Object.values(hosts).map((p) => sessionKey(p).toLowerCase()));
   let names: string[] = [];
@@ -368,7 +369,11 @@ export async function unmappedProjectDirs(projectsRoot: string, hosts: Record<st
   } catch {
     return [];
   }
-  return names.filter((n) => !mapped.has(n.toLowerCase())).sort();
+  const unmapped: string[] = [];
+  for (const n of names.sort()) {
+    if (!mapped.has(n.toLowerCase()) && (await newestMtime(path.join(projectsRoot, n))) > 0) unmapped.push(n);
+  }
+  return unmapped;
 }
 
 // ---------------------------------------------------------------- accounts

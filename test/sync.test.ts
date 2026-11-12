@@ -85,9 +85,11 @@ describe('session folders', () => {
     expect(await newestMtime(path.join(dir, 'missing'))).toBe(0);
   });
 
-  it('lists folders no slug maps to', async () => {
-    fs.mkdirSync(path.join(dir, 'D--code-foo'));
-    fs.mkdirSync(path.join(dir, 'C--Users-me'));
+  it('lists folders with transcripts that no slug maps to', async () => {
+    touch(path.join(dir, 'D--code-foo', 'a.jsonl'));
+    touch(path.join(dir, 'C--Users-me', 'b.jsonl'));
+    touch(path.join(dir, 'd--old-index-only', 'sessions-index.json'));
+    touch(path.join(dir, 'd--old-memory-only', 'memory', 'MEMORY.md'));
     expect(await unmappedProjectDirs(dir, { foo: 'd:\\code\\foo' })).toEqual(['C--Users-me']);
   });
 });
