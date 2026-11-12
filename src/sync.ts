@@ -237,18 +237,18 @@ export function sshCommand(platform: NodeJS.Platform = process.platform): string
 }
 
 function sshOptions(cfg: SessionsConfig): string[] {
-  return [...(cfg.key ? ['-i', expandHome(cfg.key)] : []), '-o', 'BatchMode=yes'];
+  return [...(cfg.key ? ['-i', expandHome(cfg.key)] : []), '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15'];
 }
 
 // The ssh rsync runs as its transport. From WSL it is still the Windows
 // OpenSSH, so the Windows key and known_hosts apply and nothing is copied into WSL.
 export function rsyncSsh(cfg: SessionsConfig, flavour: RsyncFlavour, platform: NodeJS.Platform = process.platform): string {
   const key = cfg.key ? expandHome(cfg.key) : undefined;
-  if (platform !== 'win32') return ['ssh', ...(key ? ['-i', key] : []), '-o', 'BatchMode=yes'].join(' ');
+  if (platform !== 'win32') return ['ssh', ...(key ? ['-i', key] : []), '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15'].join(' ');
   const exe = flavour === 'wsl' ? '/mnt/c/Windows/System32/OpenSSH/ssh.exe' : 'ssh';
   const keyArg = key ? (flavour === 'wsl' ? key.replace(/\\/g, '/') : toRsyncPath(key, flavour, platform)) : undefined;
   const quoted = keyArg && /\s/.test(keyArg) ? `"${keyArg}"` : keyArg;
-  return [exe, ...(quoted ? ['-i', quoted] : []), '-o', 'BatchMode=yes'].join(' ');
+  return [exe, ...(quoted ? ['-i', quoted] : []), '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15'].join(' ');
 }
 
 export function remoteDir(cfg: SessionsConfig): string {
@@ -267,7 +267,8 @@ export function rsyncArgs(
   const remote = `${cfg.host}:${remoteDir(cfg)}/${slug}/`;
   const local = toRsyncPath(localDir, flavour, platform).replace(/\/?$/, '/');
   // --update: the newer copy of a transcript wins whole; never --delete, Claude purges old ones itself.
-  const base = ['-rt', '--update', '-e', rsyncSsh(cfg, flavour, platform)];
+  // --timeout: a stalled transfer fails in a minute instead of holding a hook until it is killed.
+  const base = ['-rt', '--update', '--timeout=60', '-e', rsyncSsh(cfg, flavour, platform)];
   if (kind === 'push') return [...base, '--exclude', 'memory', '--exclude', 'sessions-index.json', local, remote];
   if (!listFile) throw new Error('pull needs a file list');
   return [...base, '--files-from', toRsyncPath(listFile, flavour, platform), remote, local];

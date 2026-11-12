@@ -126,19 +126,19 @@ describe('rsync argv', () => {
 
   it('uses the Windows OpenSSH from WSL so the Windows key applies', () => {
     expect(rsyncSsh({ ...cfg, key: 'C:\\Users\\me\\.ssh\\vps', rsync: 'wsl' }, 'wsl', 'win32')).toBe(
-      '/mnt/c/Windows/System32/OpenSSH/ssh.exe -i C:/Users/me/.ssh/vps -o BatchMode=yes'
+      '/mnt/c/Windows/System32/OpenSSH/ssh.exe -i C:/Users/me/.ssh/vps -o BatchMode=yes -o ConnectTimeout=15'
     );
-    expect(rsyncSsh(cfg, 'native', 'linux')).toBe('ssh -i /keys/vps -o BatchMode=yes');
+    expect(rsyncSsh(cfg, 'native', 'linux')).toBe('ssh -i /keys/vps -o BatchMode=yes -o ConnectTimeout=15');
   });
 
   it('builds push and pull argv', () => {
     expect(rsyncArgs('push', cfg, 'foo', '/home/me/.claude/projects/-code-foo', 'linux')).toEqual([
-      '-rt', '--update', '-e', 'ssh -i /keys/vps -o BatchMode=yes',
+      '-rt', '--update', '--timeout=60', '-e', 'ssh -i /keys/vps -o BatchMode=yes -o ConnectTimeout=15',
       '--exclude', 'memory', '--exclude', 'sessions-index.json',
       '/home/me/.claude/projects/-code-foo/', 'me@vps:raygent-sync/sessions/foo/',
     ]);
     expect(rsyncArgs('pull', cfg, 'foo', '/p/', 'linux', '/tmp/list.txt')).toEqual([
-      '-rt', '--update', '-e', 'ssh -i /keys/vps -o BatchMode=yes',
+      '-rt', '--update', '--timeout=60', '-e', 'ssh -i /keys/vps -o BatchMode=yes -o ConnectTimeout=15',
       '--files-from', '/tmp/list.txt', 'me@vps:raygent-sync/sessions/foo/', '/p/',
     ]);
     expect(() => rsyncArgs('pull', cfg, 'foo', '/p', 'linux')).toThrow(/file list/);
