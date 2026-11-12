@@ -40,10 +40,7 @@
     "dev:web": "vite --config dashboard-web/vite.config.ts",
     "typecheck:web": "tsc -p dashboard-web/tsconfig.json",
     "prepublishOnly": "npm test && npm run build",
-    "bundle:scaffolder": "node scripts/bundle-scaffolder.mjs",
-    "dev:site": "vite --config site-web/vite.config.ts",
-    "build:site": "vite build --config site-web/vite.config.ts",
-    "typecheck:site": "tsc -p site-web/tsconfig.json"
+    "bundle:scaffolder": "node scripts/bundle-scaffolder.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -56,21 +53,12 @@
     "handlebars": "^4.7.8"
   },
   "devDependencies": {
-    "@fontsource/ibm-plex-mono": "^5.3.0",
-    "@fontsource/ibm-plex-sans": "^5.3.0",
-    "@gsap/react": "^2.1.2",
-    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.5.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
-    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^4.7.0",
-    "gsap": "^3.15.0",
-    "lucide-react": "^1.52.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwindcss": "^4.3.3",
-    "three": "^0.186.1",
     "tsx": "^4.16.2",
     "typescript": "^5.5.4",
     "vite": "^5.4.21",
