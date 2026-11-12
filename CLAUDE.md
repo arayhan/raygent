@@ -23,5 +23,6 @@ interviews with optional AI review, and a local monitoring dashboard.
   `skill-lib.ts`, `init-lib.ts`, `scaffold-tools.ts` (CCP_ANSWERS shell-out),
   `interview.ts`, `doc-fill.ts` (heading-surgical pre-fill), `ai-client.ts`,
   `config.ts` (also presets), `products.ts` / `finance.ts` / `dashboard.ts`
-  (monitoring), `doctor.ts`.
+  (monitoring), `accounts.ts` (AI accounts per project, limit fallback,
+  hooks), `doctor.ts`.
 - `npm run build` + `npm test` must pass before committing.

@@ -773,13 +773,42 @@ raygent dashboard             # http://localhost:4321 (--port to change)
   `raygent finance summary`. Data lives in `~/.raygent/` (products.json,
   finance.jsonl, analytics/events.jsonl).
 
+### Accounts
+
+Several AI accounts, and a rule per project for which of them it may use, in
+fallback order. The office account stays on office projects. No token is ever
+stored: a Claude account is a `CLAUDE_CONFIG_DIR` folder that is already logged
+in, and a Gemini account is the name of an env var.
+
+```bash
+raygent accounts discover                  # register every logged-in Claude Code (Orca profiles, ~/.claude)
+raygent accounts add gemini --provider gemini --env GEMINI_API_KEY=$GEMINI_API_KEY
+raygent accounts list
+raygent accounts allow personal sendtrack  # this project: personal first, sendtrack as backup
+raygent accounts policy
+
+raygent claude -p "hello"                  # runs claude as the first allowed, non-limited account
+raygent claude --account sendtrack         # force one (warns when the policy excludes it)
+raygent gemini
+```
+
+When Claude Code prints `Usage limit reached`, the account gets marked until
+its reset time and the next `raygent claude` skips it. The mark comes from a
+hook (`raygent accounts install-hooks` adds it to every registered account's
+`settings.json`) or by hand: `raygent accounts limit personal --until 7:30pm`,
+`--clear` to lift it. The same hooks warn at session start when a session runs
+under an account the project does not allow; they never block it.
+
+Everything lives in `~/.raygent/accounts.json`, keyed by project path. A
+project without a policy may use every registered account.
+
 ### Config & doctor
 
 ```bash
 raygent config show          # print config (API key masked)
 raygent config get ai.model
 raygent config set ai.baseUrl https://your-host/v1
-raygent doctor               # check node, pnpm, git, scaffolder, skills, AI endpoint
+raygent doctor               # check node, pnpm, git, scaffolder, skills, AI endpoint, accounts
 ```
 
 ## Development
