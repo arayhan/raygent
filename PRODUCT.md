@@ -57,9 +57,9 @@ is "glance at localhost:4321, know the state of every product in seconds."
 
 The logo is a flat, friendly dragon: a void dragon bust on an electric-blue
 tile, with a white eye. It is in the same style as the owner's baiti and
-selfwire marks, and its full spec is in `site-web/MASTER.md`
-(Components > Mark). It is used in the site header, the favicon and the
-dashboard.
+selfwire marks, and its full spec is in `MASTER.md` (Components > Mark)
+in the [raygent-website](https://github.com/arayhan/raygent-website) repo.
+It is used in the site header, the favicon and the dashboard.
 
 `raygent-avatar.jpg` (repo root, one level up) is the original dragon
 illustration and the visual root the mark was simplified from: an

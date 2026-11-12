@@ -1,5 +1,6 @@
-// The raygent mark (site-web/MASTER.md, Components > Mark): a friendly dragon
-// bust in void on an electric-blue tile. The eye carries the pulse, so the
+// The raygent mark (MASTER.md, Components > Mark, in the raygent-website
+// repo: https://github.com/arayhan/raygent-website): a friendly dragon bust
+// in void on an electric-blue tile. The eye carries the pulse, so the
 // page's one authored ambient motion reads as the dragon's eye glowing (see
 // styles.css). At 32px and below it draws the small version.
 export function RingMark({ size = 36 }: { size?: number }) {
