@@ -3,6 +3,7 @@ import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { spawn } from 'node:child_process';
 import { Command } from 'commander';
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
@@ -110,7 +111,10 @@ const program = new Command();
 program
   .name('raygent')
   .description('Personal CLI for Claude Code skills and project scaffolding')
-  .version(version);
+  .version(version)
+  // Program options only count before the subcommand, so `raygent claude
+  // --version` reaches the launcher instead of printing raygent's version.
+  .enablePositionalOptions();
 
 const skill = program.command('skill').description('Manage Claude Code skills');
 
@@ -708,6 +712,92 @@ accounts
       process.exitCode = 1;
     }
   });
+
+function quoteArg(arg: string): string {
+  return /[\s"&|<>^]/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg;
+}
+
+// Hands the terminal to the child. On Windows, .cmd/.ps1 shims need a shell,
+// and shell mode wants one command string (passing an args array triggers DEP0190).
+function launch(command: string, args: string[], extraEnv: Record<string, string>, viaShell: boolean): Promise<number> {
+  const env = { ...process.env, ...extraEnv };
+  const child =
+    viaShell && process.platform === 'win32'
+      ? spawn([command, ...args.map(quoteArg)].join(' '), { stdio: 'inherit', env, shell: true })
+      : spawn(command, args, { stdio: 'inherit', env });
+  const ignoreSigint = () => {};
+  process.on('SIGINT', ignoreSigint); // the child gets Ctrl+C itself; raygent waits for it
+  return new Promise((resolve, reject) => {
+    child.on('error', reject);
+    child.on('exit', (code, signal) => {
+      process.off('SIGINT', ignoreSigint);
+      resolve(code ?? (signal ? 1 : 0));
+    });
+  });
+}
+
+// Everything after `raygent claude` / `raygent gemini` goes to the tool
+// untouched, except our own --account <id>. Commander would reorder options
+// and operands, so the raw argv is read instead.
+function launcherArgs(name: string): { account?: string; args: string[] } {
+  const rest = process.argv[2] === name ? process.argv.slice(3) : [];
+  let account: string | undefined;
+  const args: string[] = [];
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === '--account' && i + 1 < rest.length) {
+      account = rest[++i];
+    } else if (rest[i].startsWith('--account=')) {
+      account = rest[i].slice('--account='.length);
+    } else {
+      args.push(rest[i]);
+    }
+  }
+  return { account, args };
+}
+
+async function runLauncher(provider: AccountProvider, command: string, viaShell: boolean): Promise<void> {
+  try {
+    const { account: wanted, args } = launcherArgs(command);
+    const file = await readAccounts();
+    const project = process.cwd();
+    let account: Account;
+    if (wanted) {
+      const found = file.accounts.find((a) => a.id === wanted && a.provider === provider);
+      if (!found) throw new Error(`no ${provider} account '${wanted}' (raygent accounts list)`);
+      const policy = getProjectPolicy(project, file);
+      if (policy && !policy.includes(found.id)) {
+        console.error(`raygent: ${project} only allows ${policy.join(', ')}; running as ${found.id} anyway`);
+      }
+      account = found;
+    } else {
+      account = pickAccount(file, project, provider).account;
+    }
+    const extraEnv = provider === 'claude' ? { CLAUDE_CONFIG_DIR: account.configDir as string } : resolveAccountEnv(account);
+    console.error(`raygent: ${command} as ${describeAccount(account)}`);
+    process.exitCode = await launch(command, args, extraEnv, viaShell);
+  } catch (err) {
+    console.error((err as Error).message);
+    process.exitCode = 1;
+  }
+}
+
+program
+  .command('claude')
+  .description('Run claude under an account the project allows, skipping rate-limited ones (--account <id> to force)')
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .passThroughOptions()
+  .helpOption(false)
+  .action(() => runLauncher('claude', 'claude', false));
+
+program
+  .command('gemini')
+  .description('Run gemini under an account the project allows (--account <id> to force)')
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .passThroughOptions()
+  .helpOption(false)
+  .action(() => runLauncher('gemini', 'gemini', true));
 
 program
   .command('doctor')
