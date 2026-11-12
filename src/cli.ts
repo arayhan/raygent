@@ -3,6 +3,7 @@ import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { Command } from 'commander';
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
@@ -103,6 +104,23 @@ import {
   type AccountProvider,
 } from './accounts.js';
 import { addFinanceEntry, readFinanceEntries, summarizeFinance } from './finance.js';
+import {
+  runSync,
+  defaultSyncPaths,
+  defaultRunner,
+  readJson,
+  remoteDir,
+  rsyncFlavour,
+  sshCommand,
+  expandHome,
+  unmappedProjectDirs,
+  hiddenLauncherVbs,
+  scheduleArgs,
+  TASK_NAME,
+  CRON_LINE,
+  type SyncConfig,
+  type SyncState,
+} from './sync.js';
 import { createDashboardServer } from './dashboard.js';
 
 const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
@@ -707,6 +725,93 @@ accounts
         const settingsPath = path.join(a.configDir as string, 'settings.json');
         console.log(`${await installHooks(settingsPath)} ${a.id}: ${settingsPath}`);
       }
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+const sync = program
+  .command('sync')
+  .description('Sync claude-personal, account policies and Claude Code sessions across laptops')
+  .option('--quiet', 'print problems only and always exit 0 (for hooks and the scheduled task)')
+  .option('--no-git', 'skip the claude-personal pull and push')
+  .option('--no-accounts', 'skip the account policy merge')
+  .option('--no-sessions', 'skip the transcript rsync')
+  .option('--dry-run', 'show what would happen and change nothing')
+  .action(async (opts: { quiet?: boolean; git: boolean; accounts: boolean; sessions: boolean; dryRun?: boolean }) => {
+    try {
+      const results = await runSync({ git: opts.git, accounts: opts.accounts, sessions: opts.sessions, dryRun: Boolean(opts.dryRun) });
+      for (const r of results) {
+        // In a SessionStart hook stdout lands in the session, so a failure is seen there.
+        if (opts.quiet) {
+          if (!r.ok) console.log(`raygent sync: ${r.phase} failed: ${r.detail}`);
+        } else {
+          console.log(`${r.ok ? 'ok  ' : 'FAIL'} ${r.phase}: ${r.detail}`);
+        }
+      }
+      if (!opts.quiet && results.some((r) => !r.ok)) process.exitCode = 1;
+    } catch (err) {
+      console.log(`raygent sync: ${(err as Error).message}`);
+      if (!opts.quiet) process.exitCode = 1;
+    }
+  });
+
+sync
+  .command('status')
+  .description('Show what syncs from this laptop and how the last run went')
+  .action(async () => {
+    try {
+      const paths = defaultSyncPaths();
+      const config = await readJson<SyncConfig>(path.join(paths.repo, 'sync.json'), {});
+      const hosts = await readJson<Record<string, string>>(path.join(paths.repo, 'hosts', `${paths.host}.json`), {});
+      const state = await readJson<SyncState>(paths.statePath, {});
+      const origin = await defaultRunner('git', ['-C', paths.repo, 'remote', 'get-url', 'origin']);
+      console.log(`repo:     ${paths.repo} (${origin.code === 0 ? origin.stdout.trim() : 'no remote'})`);
+      console.log(`host:     ${paths.host}, ${Object.keys(hosts).length} projects mapped in hosts/${paths.host}.json`);
+      const s = config.sessions;
+      if (!s) {
+        console.log('sessions: not configured (sessions in sync.json)');
+      } else {
+        const du = await defaultRunner(sshCommand(), [
+          ...(s.key ? ['-i', expandHome(s.key)] : []),
+          '-o',
+          'BatchMode=yes',
+          s.host,
+          `du -sh '${remoteDir(s)}' 2>/dev/null | cut -f1`,
+        ]);
+        const size = du.code === 0 && du.stdout.trim() ? du.stdout.trim() : 'unreachable';
+        console.log(`sessions: ${s.host}:${remoteDir(s)} (${size}), ${rsyncFlavour(s)} rsync, pulls the last ${s.keepDays ?? 30} days`);
+      }
+      const unmapped = await unmappedProjectDirs(paths.projectsRoot, hosts);
+      if (unmapped.length > 0) console.log(`not synced (no slug maps to them): ${unmapped.join(', ')}`);
+      if (!state.lastRun) {
+        console.log('last run: never');
+      } else {
+        console.log(`last run: ${new Date(state.lastRun).toLocaleString()} ${state.lastOk ? 'ok' : 'with failures'}`);
+        for (const r of state.phases ?? []) if (!r.ok) console.log(`  ${r.phase}: ${r.detail}`);
+      }
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+sync
+  .command('install-task')
+  .description('Run `raygent sync --quiet` every 15 minutes (Windows Task Scheduler; prints a crontab line elsewhere)')
+  .action(async () => {
+    try {
+      if (process.platform !== 'win32') {
+        console.log(`Add this with crontab -e:\n${CRON_LINE}`);
+        return;
+      }
+      const vbs = path.join(path.dirname(defaultSyncPaths().statePath), 'sync-hidden.vbs');
+      await fs.mkdir(path.dirname(vbs), { recursive: true });
+      await fs.writeFile(vbs, hiddenLauncherVbs(process.execPath, fileURLToPath(import.meta.url)));
+      const r = await defaultRunner('schtasks', scheduleArgs(vbs));
+      if (r.code !== 0) throw new Error(`schtasks: ${r.stderr.trim() || r.stdout.trim()}`);
+      console.log(`${TASK_NAME} runs every 15 minutes through ${vbs}`);
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;
