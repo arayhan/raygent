@@ -346,7 +346,8 @@ describe('syncAccounts', () => {
   });
 });
 
-describe('git phases (real git)', () => {
+// Each case spawns a dozen git processes; on Windows that alone nears the 5 s default.
+describe('git phases (real git)', { timeout: 30_000 }, () => {
   const g = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   const now = new Date('2026-11-13T00:00:00.000Z');
 
