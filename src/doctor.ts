@@ -4,6 +4,8 @@ import { defaultRoots } from './paths.js';
 import { resolveCcpBin } from './scaffold-tools.js';
 import { loadAiConfig } from './config.js';
 import { readAccounts } from './accounts.js';
+import path from 'node:path';
+import { defaultSyncPaths, readJson, type SyncConfig, type SyncState } from './sync.js';
 
 export interface DoctorCheck {
   name: string;
@@ -104,6 +106,19 @@ export async function runDoctorChecks(fetchImpl: typeof fetch = globalThis.fetch
       accounts.accounts.length === 0
         ? 'none registered (raygent accounts discover)'
         : `${accounts.accounts.length} account${accounts.accounts.length === 1 ? '' : 's'}, policies for ${policies} project${policies === 1 ? '' : 's'}`,
+  });
+
+  const syncPaths = defaultSyncPaths();
+  const syncConfig = await readJson<SyncConfig | null>(path.join(syncPaths.repo, 'sync.json'), null);
+  const syncState = await readJson<SyncState>(syncPaths.statePath, {});
+  checks.push({
+    name: 'sync',
+    ok: true, // informational -- a single laptop needs no sync
+    detail: !syncConfig
+      ? `not configured (${path.join(syncPaths.repo, 'sync.json')})`
+      : syncState.lastRun
+        ? `last run ${new Date(syncState.lastRun).toLocaleString()} ${syncState.lastOk ? 'ok' : 'with failures (raygent sync status)'}`
+        : 'configured, never run (raygent sync)',
   });
 
   return checks;
