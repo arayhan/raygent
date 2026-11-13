@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>raygent agents</title>
+    <meta name="description" content="The office of raygent's AI agents. Opening soon." />
+    <meta name="theme-color" content="#0a0d12" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%235b8cff'/%3E%3Cpath d='M17 64 C13 52 12 38 15 28 C18 21 24 18 31 20 L46 24 C52 26 53 34 47 36 L36 39 C32 41 31 48 32 64 Z' fill='%230a0d12'/%3E%3Ccircle cx='27' cy='29' r='4.5' fill='%23e7edf5'/%3E%3C/svg%3E" />
+    <!-- Placeholder for the Agent Office (step 5). Tokens mirror raygent-website/MASTER.md.
+         It shows no data on purpose: the hub at /api/ answers only with a token. -->
+    <style>
+      :root {
+        --void: #0a0d12;
+        --hairline: #2a3542;
+        --white: #e7edf5;
+        --dim: #b7c1cd;
+        --mute: #8b98a8;
+        --blue: #5b8cff;
+        --wash: rgba(231, 237, 245, 0.04);
+        color-scheme: dark;
+      }
+      html {
+        height: 100%;
+        background: var(--void);
+      }
+      body {
+        min-height: 100%;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 48px 16px;
+        box-sizing: border-box;
+        background: var(--void);
+        color: var(--white);
+        font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        display: grid;
+        justify-items: center;
+        gap: 20px;
+        max-width: 34rem;
+        text-align: center;
+      }
+      .mark {
+        width: 72px;
+        height: 72px;
+      }
+      .label {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue);
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(30px, 6vw, 48px);
+        line-height: 1.08;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+      }
+      p {
+        margin: 0;
+        color: var(--dim);
+      }
+      code {
+        font-family: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+        font-size: 14px;
+        color: var(--white);
+        background: var(--wash);
+        border: 1px solid var(--hairline);
+        border-radius: 4px;
+        padding: 2px 8px;
+        white-space: nowrap;
+      }
+      footer {
+        font-size: 14px;
+        color: var(--mute);
+      }
+      a {
+        color: var(--dim);
+        text-decoration: underline;
+        text-decoration-color: var(--blue);
+        text-underline-offset: 3px;
+      }
+      a:hover {
+        color: var(--white);
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg class="mark" viewBox="0 0 64 64" role="img" aria-label="raygent">
+        <rect width="64" height="64" rx="16" fill="#5b8cff" />
+        <path d="M17 64 C13 52 12 38 15 28 C18 21 24 18 31 20 L46 24 C52 26 53 34 47 36 L36 39 C32 41 31 48 32 64 Z" fill="#0a0d12" stroke="#0a0d12" stroke-width="3" stroke-linejoin="round" />
+        <g fill="none" stroke="#0a0d12" stroke-width="6.5" stroke-linecap="round">
+          <path d="M20 22 C15 18 11 17 6 18" />
+          <path d="M27 19 C25 14 22 12 17 11" />
+        </g>
+        <circle cx="27" cy="29" r="4.5" fill="#e7edf5" />
+      </svg>
+      <p class="label">raygent agents</p>
+      <h1>The office opens soon.</h1>
+      <p>Your agents already report here. See them with <code>raygent hub status</code>.</p>
+      <footer><a href="https://arayhan.github.io/raygent-website/docs/#hub">How the Agent Hub works</a></footer>
+    </main>
+  </body>
+</html>
