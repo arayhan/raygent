@@ -349,6 +349,45 @@ function sameToken(given: string, expected: string): boolean {
   return crypto.timingSafeEqual(a, b);
 }
 
+// Browser login. The Office page cannot hold the token, so a login trades it
+// for an HttpOnly cookie. The cookie is stateless, an expiry signed with the
+// token itself: nothing to store, and a new token logs every browser out.
+export const SESSION_COOKIE = 'raygent_hub';
+export const SESSION_MAX_AGE_S = 30 * 24 * 60 * 60;
+
+function sessionSignature(token: string, exp: number): string {
+  return crypto.createHmac('sha256', token).update(`office:${exp}`).digest('base64url');
+}
+
+export function makeSessionValue(token: string, now: Date): string {
+  const exp = Math.floor(now.getTime() / 1000) + SESSION_MAX_AGE_S;
+  return `v1.${exp}.${sessionSignature(token, exp)}`;
+}
+
+export function validSessionValue(value: string, token: string, now: Date): boolean {
+  const m = /^v1\.(\d{1,12})\.([A-Za-z0-9_-]{43})$/.exec(value);
+  if (!m) return false;
+  const exp = Number(m[1]);
+  if (exp * 1000 <= now.getTime()) return false;
+  const given = Buffer.from(m[2]);
+  const expected = Buffer.from(sessionSignature(token, exp));
+  return given.length === expected.length && crypto.timingSafeEqual(given, expected);
+}
+
+function readCookie(req: http.IncomingMessage, name: string): string | undefined {
+  for (const part of (req.headers.cookie ?? '').split(';')) {
+    const eq = part.indexOf('=');
+    if (eq > 0 && part.slice(0, eq).trim() === name) return part.slice(eq + 1).trim();
+  }
+  return undefined;
+}
+
+function sessionCookie(req: http.IncomingMessage, value: string, maxAge: number): string {
+  // Secure only behind TLS (nginx sets X-Forwarded-Proto); a local dev server is plain http.
+  const secure = req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : '';
+  return `${SESSION_COOKIE}=${value}; HttpOnly${secure}; SameSite=Strict; Path=/api; Max-Age=${maxAge}`;
+}
+
 function sendJson(res: http.ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(body));
@@ -379,9 +418,41 @@ export async function createHubServer(opts: HubServerOptions): Promise<http.Serv
         res.end('ok');
         return;
       }
+      if (url.pathname === '/api/session' && req.method === 'POST') {
+        let token: unknown;
+        try {
+          token = (JSON.parse(await readBody(req)) as { token?: unknown }).token;
+        } catch {
+          sendJson(res, 400, { error: 'expected {"token": "..."}' });
+          return;
+        }
+        if (typeof token !== 'string' || !sameToken(token, opts.token)) {
+          sendJson(res, 401, { error: 'unauthorized' });
+          return;
+        }
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Set-Cookie': sessionCookie(req, makeSessionValue(opts.token, now()), SESSION_MAX_AGE_S),
+        });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+      if (url.pathname === '/api/session' && req.method === 'DELETE') {
+        res.writeHead(204, { 'Set-Cookie': sessionCookie(req, '', 0) });
+        res.end();
+        return;
+      }
+
       const auth = req.headers.authorization ?? '';
-      if (!auth.startsWith('Bearer ') || !sameToken(auth.slice('Bearer '.length), opts.token)) {
+      const bearer = auth.startsWith('Bearer ') && sameToken(auth.slice('Bearer '.length), opts.token);
+      const cookie = readCookie(req, SESSION_COOKIE);
+      if (!bearer && !(cookie && validSessionValue(cookie, opts.token, now()))) {
         sendJson(res, 401, { error: 'unauthorized' });
+        return;
+      }
+
+      if (url.pathname === '/api/session' && req.method === 'GET') {
+        sendJson(res, 200, { ok: true });
         return;
       }
 

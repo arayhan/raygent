@@ -11,6 +11,8 @@ import {
   eventFromHook,
   HUB_HOOK_COMMANDS,
   hubFetch,
+  makeSessionValue,
+  validSessionValue,
   matchAgent,
   readHubConfig,
   replay,
@@ -199,10 +201,10 @@ describe('hub server', () => {
   let server: http.Server;
   let cfg: HubConfig;
 
-  async function start(): Promise<void> {
-    server = await createHubServer({ dataDir: tmp, token: TOKEN });
+  async function start(token: string = TOKEN): Promise<void> {
+    server = await createHubServer({ dataDir: tmp, token });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-    cfg = { url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`, token: TOKEN };
+    cfg = { url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`, token };
   }
   async function stop(): Promise<void> {
     server.closeAllConnections();
@@ -210,6 +212,76 @@ describe('hub server', () => {
   }
   afterEach(async () => {
     if (server?.listening) await stop();
+  });
+
+  describe('browser login', () => {
+    async function login(token: string, headers: Record<string, string> = {}): Promise<Response> {
+      return fetch(`${cfg.url}/api/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ token }),
+      });
+    }
+    const cookieOf = (res: Response) => (res.headers.get('set-cookie') ?? '').split(';')[0];
+
+    it('trades the token for an HttpOnly cookie that opens the API', async () => {
+      await start();
+      const res = await login(TOKEN);
+      expect(res.status).toBe(200);
+      const header = res.headers.get('set-cookie')!;
+      expect(header).toMatch(/^raygent_hub=v1\.\d+\./);
+      expect(header).toMatch(/HttpOnly/);
+      expect(header).toMatch(/SameSite=Strict/);
+      expect(header).toMatch(/Path=\/api/);
+      expect(header).not.toMatch(/Secure/); // plain http here
+      const cookie = cookieOf(res);
+      expect((await fetch(`${cfg.url}/api/session`, { headers: { Cookie: cookie } })).status).toBe(200);
+      expect((await fetch(`${cfg.url}/api/status`, { headers: { Cookie: cookie } })).status).toBe(200);
+      const stream = await fetch(`${cfg.url}/api/stream`, { headers: { Cookie: cookie } });
+      expect(stream.status).toBe(200);
+      await stream.body!.cancel();
+    });
+
+    it('marks the cookie Secure behind TLS', async () => {
+      await start();
+      expect((await login(TOKEN, { 'X-Forwarded-Proto': 'https' })).headers.get('set-cookie')).toMatch(/; Secure/);
+    });
+
+    it('refuses a wrong token, a tampered cookie and an expired one', async () => {
+      await start();
+      const res = await login('wrong-token-0123456789');
+      expect(res.status).toBe(401);
+      expect(res.headers.get('set-cookie')).toBeNull();
+      const good = cookieOf(await login(TOKEN));
+      const tampered = good.slice(0, -2) + (good.endsWith('AA') ? 'BB' : 'AA');
+      expect((await fetch(`${cfg.url}/api/status`, { headers: { Cookie: tampered } })).status).toBe(401);
+      const past = new Date(Date.now() - 31 * 24 * 3600_000);
+      const expired = `raygent_hub=${makeSessionValue(TOKEN, past)}`;
+      expect((await fetch(`${cfg.url}/api/status`, { headers: { Cookie: expired } })).status).toBe(401);
+    });
+
+    it('logs every browser out when the token changes', async () => {
+      await start();
+      const cookie = cookieOf(await login(TOKEN));
+      await stop();
+      await start('another-token-0123456789');
+      expect((await fetch(`${cfg.url}/api/status`, { headers: { Cookie: cookie } })).status).toBe(401);
+    });
+
+    it('logout clears the cookie', async () => {
+      await start();
+      const res = await fetch(`${cfg.url}/api/session`, { method: 'DELETE' });
+      expect(res.status).toBe(204);
+      expect(res.headers.get('set-cookie')).toMatch(/^raygent_hub=; .*Max-Age=0/);
+    });
+
+    it('validates the cookie value on its own', () => {
+      const v = makeSessionValue(TOKEN, NOW);
+      expect(validSessionValue(v, TOKEN, NOW)).toBe(true);
+      expect(validSessionValue(v, 'other-token-0123456789', NOW)).toBe(false);
+      expect(validSessionValue(v, TOKEN, new Date(NOW.getTime() + 31 * 24 * 3600_000))).toBe(false);
+      expect(validSessionValue('garbage', TOKEN, NOW)).toBe(false);
+    });
   });
 
   it('refuses a short token', async () => {
