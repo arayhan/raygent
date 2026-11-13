@@ -367,10 +367,13 @@ interface HookEntry {
   hooks?: HookCommand[];
 }
 
-// Merges the raygent hooks into a Claude Code settings.json, keeping every
-// other key. A file that does not parse is left alone: overwriting it would
+// Merges a set of raygent hooks (event -> command) into a Claude Code
+// settings.json, keeping every other key. A file that does not parse is left alone: overwriting it would
 // drop whatever the user (or Orca) put there.
-export async function installHooks(settingsPath: string): Promise<'added' | 'unchanged'> {
+export async function installHooks(
+  settingsPath: string,
+  commands: Record<string, string> = HOOK_COMMANDS
+): Promise<'added' | 'unchanged'> {
   let settings: { hooks?: Record<string, HookEntry[]> } & Record<string, unknown> = {};
   try {
     const raw = await fs.readFile(settingsPath, 'utf8');
@@ -386,7 +389,7 @@ export async function installHooks(settingsPath: string): Promise<'added' | 'unc
   }
   const hooks = (settings.hooks ??= {});
   let changed = false;
-  for (const [event, command] of Object.entries(HOOK_COMMANDS)) {
+  for (const [event, command] of Object.entries(commands)) {
     const entries = (hooks[event] ??= []);
     const present = entries.some((e) => (e.hooks ?? []).some((h) => h.command === command));
     if (present) continue;
