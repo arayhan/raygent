@@ -121,6 +121,14 @@ raygent skill install        # the raygent skill, once per machine
 Requires Node.js >= 20. Then, in an empty folder, run **`/raygent init`** in your
 coding agent.
 
+## Guides
+
+One guide per service, in English ([docs/en](docs/en/overview.md)) and
+Indonesian ([docs/id](docs/id/overview.md)), also on the
+[website](https://arayhan.github.io/raygent-website/docs/): skills, init,
+interview and AI review, config, MCP, dashboard, accounts, sync, doctor and the
+Orca plugin.
+
 ## Examples
 
 Two ways to drive every recipe below:
@@ -435,6 +443,8 @@ prompt for a real answer, and an invented one would never be questioned again.
 And nothing here deploys.
 
 ## Commands
+
+Full guides: [docs/en](docs/en/overview.md).
 
 ### Skills
 
