@@ -6,6 +6,7 @@ import { loadAiConfig } from './config.js';
 import { readAccounts } from './accounts.js';
 import path from 'node:path';
 import { defaultSyncPaths, readJson, type SyncConfig, type SyncState } from './sync.js';
+import { hubUrl, readHubConfig } from './hub.js';
 
 export interface DoctorCheck {
   name: string;
@@ -120,6 +121,20 @@ export async function runDoctorChecks(fetchImpl: typeof fetch = globalThis.fetch
         ? `last run ${new Date(syncState.lastRun).toLocaleString()} ${syncState.lastOk ? 'ok' : 'with failures (raygent sync status)'}`
         : 'configured, never run (raygent sync)',
   });
+
+  const hub = await readHubConfig();
+  if (!hub) {
+    checks.push({ name: 'hub', ok: true, detail: 'not configured (raygent hub login <url>)' });
+  } else {
+    let reachable = false;
+    try {
+      reachable = (await fetchImpl(hubUrl(hub, '/healthz'), { signal: AbortSignal.timeout(5000) })).ok;
+    } catch {
+      reachable = false;
+    }
+    // A configured hub that is down means sessions report into the void.
+    checks.push({ name: 'hub', ok: reachable, detail: `${hub.url} ${reachable ? 'reachable' : 'unreachable'}` });
+  }
 
   return checks;
 }
