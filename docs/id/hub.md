@@ -83,7 +83,7 @@ raygent hub status / watch ◀── /api/status, /api/stream
 
 ## API
 
-Semua route kecuali `/api/health` butuh `Authorization: Bearer <token>`.
+Semua route kecuali `/api/health` dan login butuh `Authorization: Bearer <token>` atau cookie sesi browser.
 
 | Route | Fungsi |
 |---|---|
@@ -92,6 +92,19 @@ Semua route kecuali `/api/health` butuh `Authorization: Bearer <token>`.
 | `GET /api/agents`, `PUT /api/agents/<id>`, `DELETE /api/agents/<id>` | daftar agent |
 | `GET /api/stream` | server-sent events: setiap event saat masuk |
 | `GET /api/health` | `ok` |
+| `POST /api/session` | login browser: `{"token": "..."}` memasang cookie sesi |
+| `GET /api/session` | `{"ok": true}` kalau sudah login, selain itu 401 |
+| `DELETE /api/session` | logout: menghapus cookie |
+
+## Login browser
+
+Halaman web (Agent Office) tidak boleh memegang token, jadi token ditukar sekali:
+
+1. Halaman mengirim token ke `POST /api/session`.
+2. Hub membalas dengan cookie `raygent_hub`: `HttpOnly` (script halaman tidak bisa membacanya), `Secure` di belakang TLS, `SameSite=Strict` (situs lain tidak bisa memakainya), terbatas ke `/api`, berlaku 30 hari.
+3. Semua request berikutnya, termasuk stream live, otomatis membawa cookie itu.
+
+Cookie berisi waktu kedaluwarsa yang ditandatangani dengan token, jadi hub tidak menyimpan apa pun. Untuk me-logout semua browser, ganti token di `~/.raygent/hub/token` lalu restart hub; setelah itu login ulang di laptop.
 
 ## File
 

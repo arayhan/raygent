@@ -83,7 +83,7 @@ raygent hub status / watch ◀── /api/status, /api/stream
 
 ## API
 
-Every route except `/api/health` needs `Authorization: Bearer <token>`.
+Every route except `/api/health` and the login needs `Authorization: Bearer <token>` or the browser session cookie.
 
 | Route | Does |
 |---|---|
@@ -92,6 +92,19 @@ Every route except `/api/health` needs `Authorization: Bearer <token>`.
 | `GET /api/agents`, `PUT /api/agents/<id>`, `DELETE /api/agents/<id>` | the registry |
 | `GET /api/stream` | server-sent events: every event as it arrives |
 | `GET /api/health` | `ok` |
+| `POST /api/session` | browser login: `{"token": "..."}` sets the session cookie |
+| `GET /api/session` | `{"ok": true}` when logged in, else 401 |
+| `DELETE /api/session` | logout: clears the cookie |
+
+## Browser login
+
+A web page (the Agent Office) cannot hold the token, so it trades it once:
+
+1. The page posts the token to `POST /api/session`.
+2. The hub answers with a `raygent_hub` cookie: `HttpOnly` (page scripts cannot read it), `Secure` behind TLS, `SameSite=Strict` (other sites cannot use it), limited to `/api`, valid for 30 days.
+3. Every later request, including the live stream, carries the cookie on its own.
+
+The cookie is an expiry signed with the token, so the hub stores nothing. To log every browser out, put a new token in `~/.raygent/hub/token` and restart the hub; then log the laptops in again.
 
 ## Files
 
