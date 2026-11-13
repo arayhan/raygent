@@ -126,8 +126,8 @@ coding agent.
 One guide per service, in English ([docs/en](docs/en/overview.md)) and
 Indonesian ([docs/id](docs/id/overview.md)), also on the
 [website](https://arayhan.github.io/raygent-website/docs/): skills, init,
-interview and AI review, config, MCP, dashboard, accounts, sync, doctor and the
-Orca plugin.
+interview and AI review, config, MCP, dashboard, accounts, sync, the Agent Hub,
+doctor and the Orca plugin.
 
 ## Examples
 
@@ -844,6 +844,23 @@ on PATH instead. Only sessions from the last `keepDays` come back down, and
 nothing is ever deleted on either side. A conflict in the synced accounts files
 resolves itself; a memory file edited on both laptops stops the git step until
 you resolve it by hand, and the other steps keep running.
+
+### Agent Hub
+
+A small server (usually on your VPS) that knows every agent you create: its
+role, AI account, projects and character class, and what each live session is
+doing. Laptops report through Claude Code hooks that never slow a session.
+
+```bash
+raygent hub serve                          # on the server, behind nginx + TLS
+ssh me@my-vps cat ~/.raygent/hub/token | raygent hub login https://hub.example.com
+raygent hub install-hooks                  # report every Claude session
+raygent hub agent add kage --account personal --role "backend dev" --project my-app --class ninja
+raygent hub status                         # who works on what, right now
+raygent hub watch                          # events as they arrive
+```
+
+Full guide: [docs/en/hub.md](docs/en/hub.md).
 
 ### Config & doctor
 

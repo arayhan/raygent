@@ -25,5 +25,6 @@ interviews with optional AI review, and a local monitoring dashboard.
   `config.ts` (also presets), `products.ts` / `finance.ts` / `dashboard.ts`
   (monitoring), `accounts.ts` (AI accounts per project, limit fallback,
   hooks), `sync.ts` (multi-laptop sync: raygent-brain git, account
-  policies by slug, session rsync), `doctor.ts`.
+  policies by slug, session rsync), `hub.ts` (Agent Hub: agent registry,
+  session status, event stream; server and client), `doctor.ts`.
 - `npm run build` + `npm test` must pass before committing.

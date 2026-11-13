@@ -26,6 +26,7 @@ raygent needs Node.js 20 or newer. Then, in an empty folder, type `/raygent init
 | [Dashboard](dashboard.md) | `raygent dashboard`, `product`, `finance` | Watch events, signups and revenue for what you ship |
 | [Accounts](accounts.md) | `raygent accounts`, `raygent claude`, `raygent gemini` | Decide which AI account each project may use, and skip rate-limited ones |
 | [Sync](sync.md) | `raygent sync` | Carry memory, account policies and Claude Code sessions between laptops |
+| [Agent Hub](hub.md) | `raygent hub` | See every agent, its account and project, and what each session is doing |
 | [Doctor](doctor.md) | `raygent doctor` | Check that everything raygent needs is in place |
 | [Orca plugin](orca.md) | raygent-orca | See and edit the account policy inside Orca |
 
@@ -64,3 +65,4 @@ raygent stops at a built, verified phase 1. Deploying is yours.
 | `~/.raygent/accounts.json` | AI accounts and project policies ([Accounts](accounts.md)) |
 | `~/.raygent/products.json`, `finance.jsonl`, `analytics/` | dashboard data ([Dashboard](dashboard.md)) |
 | `~/.raygent/sync-state.json`, `sync.lock` | sync bookkeeping ([Sync](sync.md)) |
+| `~/.raygent/hub.json` | the hub URL and token ([Agent Hub](hub.md)) |

@@ -35,6 +35,7 @@ ok   sync             last run 11/13/2026, 11:00 PM ok
 | `ai` | not configured, or `<baseUrl>/models` answers within 5 s | fix `ai.baseUrl`, `ai.apiKey`, `ai.model`. See [Config](config.md) |
 | `accounts` | informational: how many accounts and policies | see [Accounts](accounts.md) |
 | `sync` | informational: whether sync is set up and how the last run went | see [Sync](sync.md) |
+| `hub` | not configured, or the hub's `/healthz` answers within 5 s | see [Agent Hub](hub.md); sessions report nowhere while it is down |
 
 "Not configured" is a pass for `ai`: the AI steps simply stay off.
 

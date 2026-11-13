@@ -26,6 +26,7 @@ raygent butuh Node.js 20 atau lebih baru. Lalu, di folder kosong, ketik `/raygen
 | [Dashboard](dashboard.md) | `raygent dashboard`, `product`, `finance` | Memantau event, signup dan pendapatan dari yang kamu rilis |
 | [Akun](accounts.md) | `raygent accounts`, `raygent claude`, `raygent gemini` | Menentukan akun AI mana yang boleh dipakai tiap proyek, dan melewati akun yang kena limit |
 | [Sync](sync.md) | `raygent sync` | Membawa memori, kebijakan akun dan sesi Claude Code antar laptop |
+| [Agent Hub](hub.md) | `raygent hub` | Melihat setiap agent, akun dan proyeknya, dan apa yang dikerjakan tiap sesi |
 | [Doctor](doctor.md) | `raygent doctor` | Mengecek bahwa semua yang dibutuhkan raygent sudah ada |
 | [Plugin Orca](orca.md) | raygent-orca | Melihat dan mengubah kebijakan akun langsung di Orca |
 
@@ -64,3 +65,4 @@ raygent berhenti di phase 1 yang sudah dibangun dan diverifikasi. Deploy adalah 
 | `~/.raygent/accounts.json` | akun AI dan kebijakan proyek ([Akun](accounts.md)) |
 | `~/.raygent/products.json`, `finance.jsonl`, `analytics/` | data dashboard ([Dashboard](dashboard.md)) |
 | `~/.raygent/sync-state.json`, `sync.lock` | catatan sync ([Sync](sync.md)) |
+| `~/.raygent/hub.json` | URL hub dan token ([Agent Hub](hub.md)) |
