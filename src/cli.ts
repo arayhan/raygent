@@ -5,6 +5,7 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import crypto from 'node:crypto';
 import { Command } from 'commander';
 import { input, select, checkbox, confirm, password } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
@@ -1206,7 +1207,16 @@ async function runLauncher(provider: AccountProvider, command: string, viaShell:
     }
     const extraEnv = provider === 'claude' ? { CLAUDE_CONFIG_DIR: account.configDir as string } : resolveAccountEnv(account);
     console.error(`raygent: ${command} as ${describeAccount(account)}`);
+    // Gemini has no hooks, so the launcher reports its session. Claude reports
+    // through its own hooks; reporting here too would count it twice.
+    const report = provider === 'gemini' && (await readHubConfig()) ? await hubContext(project) : undefined;
+    const session = crypto.randomUUID();
+    const emit = (type: HubEvent['type']) => {
+      if (report) emitDetached({ type, session, provider, account: account.id, project: report.project, host: report.host, ts: new Date().toISOString() });
+    };
+    emit('session.start');
     process.exitCode = await launch(command, args, extraEnv, viaShell);
+    emit('session.end');
   } catch (err) {
     console.error((err as Error).message);
     process.exitCode = 1;
