@@ -207,7 +207,7 @@ setInterval(refresh, 10000);
 </html>`;
 }
 
-function readBody(req: http.IncomingMessage): Promise<string> {
+export function readBody(req: http.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', (chunk) => {
