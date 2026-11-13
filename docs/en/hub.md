@@ -79,11 +79,11 @@ raygent hub status / watch ◀── /api/status, /api/stream
 
 **Hooks never slow a session.** `hub emit` prints nothing, never fails, and hands the network call to a detached process. With the hub down, a hook still returns in about the time Node takes to start.
 
-**Behind nginx.** The server binds to `127.0.0.1`. Proxy a subdomain to it, turn off buffering for `/api/stream` (`proxy_buffering off`, a long `proxy_read_timeout`), and add TLS with certbot.
+**Behind nginx.** The server binds to `127.0.0.1` and every route it has lives under `/api/`. Proxy only `/api/` to it, so the root of the domain stays free for the agents' site; turn off buffering for `/api/stream` (`proxy_buffering off`, a long `proxy_read_timeout`), and add TLS with certbot. A working site file is in `deploy/agents.arayhan.com/` in the raygent repo.
 
 ## API
 
-Every route except `/healthz` needs `Authorization: Bearer <token>`.
+Every route except `/api/health` needs `Authorization: Bearer <token>`.
 
 | Route | Does |
 |---|---|
@@ -91,7 +91,7 @@ Every route except `/healthz` needs `Authorization: Bearer <token>`.
 | `GET /api/status` | agents with their live sessions, plus unassigned sessions |
 | `GET /api/agents`, `PUT /api/agents/<id>`, `DELETE /api/agents/<id>` | the registry |
 | `GET /api/stream` | server-sent events: every event as it arrives |
-| `GET /healthz` | `ok` |
+| `GET /api/health` | `ok` |
 
 ## Files
 
@@ -109,7 +109,7 @@ The start of each prompt (120 characters) is stored on the server as the task ti
 
 ## Troubleshooting
 
-- **`status` says it cannot reach the hub.** Check `raygent doctor`, then `curl https://<hub>/healthz`.
+- **`status` says it cannot reach the hub.** Check `raygent doctor`, then `curl https://<hub>/api/health`.
 - **"the hub refused this token".** The token in the pipe does not match the server's. Read it again from `~/.raygent/hub/token`.
 - **A session shows as unassigned.** No agent has its account, or the agent lists other projects. Check `raygent hub agent list`.
 - **Nothing shows at all.** Run `raygent hub install-hooks`, then start a new session; open sessions keep the hooks they started with.

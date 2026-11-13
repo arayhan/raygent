@@ -128,7 +128,7 @@ export async function runDoctorChecks(fetchImpl: typeof fetch = globalThis.fetch
   } else {
     let reachable = false;
     try {
-      reachable = (await fetchImpl(hubUrl(hub, '/healthz'), { signal: AbortSignal.timeout(5000) })).ok;
+      reachable = (await fetchImpl(hubUrl(hub, '/api/health'), { signal: AbortSignal.timeout(5000) })).ok;
     } catch {
       reachable = false;
     }

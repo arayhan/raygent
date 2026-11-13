@@ -35,7 +35,7 @@ ok   sync             last run 11/13/2026, 11:00 PM ok
 | `ai` | belum dikonfigurasi, atau `<baseUrl>/models` menjawab dalam 5 detik | perbaiki `ai.baseUrl`, `ai.apiKey`, `ai.model`. Lihat [Config](config.md) |
 | `accounts` | informasi: jumlah akun dan kebijakan | lihat [Akun](accounts.md) |
 | `sync` | informasi: apakah sync sudah disiapkan dan hasil run terakhir | lihat [Sync](sync.md) |
-| `hub` | belum dikonfigurasi, atau `/healthz` hub menjawab dalam 5 detik | lihat [Agent Hub](hub.md); selama mati, sesi tidak melapor ke mana pun |
+| `hub` | belum dikonfigurasi, atau `/api/health` hub menjawab dalam 5 detik | lihat [Agent Hub](hub.md); selama mati, sesi tidak melapor ke mana pun |
 
 "Not configured" dianggap lulus untuk `ai`: langkah AI cukup tetap mati.
 

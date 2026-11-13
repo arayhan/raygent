@@ -79,11 +79,11 @@ raygent hub status / watch ◀── /api/status, /api/stream
 
 **Hook tidak pernah memperlambat sesi.** `hub emit` tidak mencetak apa pun, tidak pernah gagal, dan menyerahkan panggilan jaringan ke proses terpisah. Saat hub mati, hook tetap selesai kira-kira secepat Node mulai.
 
-**Di belakang nginx.** Server hanya mendengarkan di `127.0.0.1`. Arahkan subdomain ke sana, matikan buffering untuk `/api/stream` (`proxy_buffering off`, `proxy_read_timeout` yang panjang), dan pasang TLS dengan certbot.
+**Di belakang nginx.** Server hanya mendengarkan di `127.0.0.1` dan semua route-nya ada di bawah `/api/`. Arahkan hanya `/api/` ke server, supaya root domain tetap bebas untuk situs agent; matikan buffering untuk `/api/stream` (`proxy_buffering off`, `proxy_read_timeout` yang panjang), dan pasang TLS dengan certbot. Contoh file site yang sudah jalan ada di `deploy/agents.arayhan.com/` di repo raygent.
 
 ## API
 
-Semua route kecuali `/healthz` butuh `Authorization: Bearer <token>`.
+Semua route kecuali `/api/health` butuh `Authorization: Bearer <token>`.
 
 | Route | Fungsi |
 |---|---|
@@ -91,7 +91,7 @@ Semua route kecuali `/healthz` butuh `Authorization: Bearer <token>`.
 | `GET /api/status` | agent beserta sesi aktifnya, plus sesi unassigned |
 | `GET /api/agents`, `PUT /api/agents/<id>`, `DELETE /api/agents/<id>` | daftar agent |
 | `GET /api/stream` | server-sent events: setiap event saat masuk |
-| `GET /healthz` | `ok` |
+| `GET /api/health` | `ok` |
 
 ## File
 
@@ -109,7 +109,7 @@ Awal setiap prompt (120 karakter) disimpan di server sebagai judul task. Jangan 
 
 ## Pemecahan masalah
 
-- **`status` bilang tidak bisa menjangkau hub.** Cek `raygent doctor`, lalu `curl https://<hub>/healthz`.
+- **`status` bilang tidak bisa menjangkau hub.** Cek `raygent doctor`, lalu `curl https://<hub>/api/health`.
 - **"the hub refused this token".** Token di pipe tidak cocok dengan milik server. Baca lagi dari `~/.raygent/hub/token`.
 - **Sesi tampil sebagai unassigned.** Belum ada agent dengan akun itu, atau agent-nya mencantumkan proyek lain. Cek `raygent hub agent list`.
 - **Tidak ada yang tampil sama sekali.** Jalankan `raygent hub install-hooks`, lalu mulai sesi baru; sesi yang sudah terbuka tetap memakai hook lamanya.

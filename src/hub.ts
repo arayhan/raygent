@@ -374,7 +374,7 @@ export async function createHubServer(opts: HubServerOptions): Promise<http.Serv
   const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? '/', 'http://localhost');
-      if (url.pathname === '/healthz') {
+      if (url.pathname === '/api/health') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('ok');
         return;

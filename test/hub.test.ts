@@ -216,10 +216,11 @@ describe('hub server', () => {
     await expect(createHubServer({ dataDir: tmp, token: 'short' })).rejects.toThrow(/at least/);
   });
 
-  it('answers /healthz without a token and nothing else', async () => {
+  it('answers /api/health without a token and nothing else', async () => {
     await start();
-    expect(await (await fetch(`${cfg.url}/healthz`)).text()).toBe('ok');
+    expect(await (await fetch(`${cfg.url}/api/health`)).text()).toBe('ok');
     expect((await fetch(`${cfg.url}/api/status`)).status).toBe(401);
+    expect((await fetch(`${cfg.url}/healthz`)).status).toBe(401);
     expect((await hubFetch({ ...cfg, token: 'wrong-token-0123456789' }, '/api/status')).status).toBe(401);
   });
 
