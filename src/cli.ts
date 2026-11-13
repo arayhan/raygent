@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { Command } from 'commander';
-import { input, select, checkbox, confirm } from '@inquirer/prompts';
+import { input, select, checkbox, confirm, password } from '@inquirer/prompts';
 import { defaultRoots } from './paths.js';
 import { listSkills, addSkill, removeSkill, skillDestDir, skillDestDirs, skillSourceDir, type SkillInfo } from './skill-lib.js';
 import {
@@ -122,6 +122,23 @@ import {
   type SyncState,
 } from './sync.js';
 import { createDashboardServer } from './dashboard.js';
+import {
+  createHubServer,
+  eventFromHook,
+  HUB_HOOK_COMMANDS,
+  hubConfigPath,
+  hubFetch,
+  readHubConfig,
+  sendEvent,
+  slugForPath,
+  writeHubConfig,
+  type HookPayload,
+  type HubAgent,
+  type HubConfig,
+  type HubEvent,
+  type HubStatus,
+  type StatusSession,
+} from './hub.js';
 
 const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
 
@@ -812,6 +829,316 @@ sync
       const r = await defaultRunner('schtasks', scheduleArgs(vbs));
       if (r.code !== 0) throw new Error(`schtasks: ${r.stderr.trim() || r.stdout.trim()}`);
       console.log(`${TASK_NAME} runs every 15 minutes through ${vbs}`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+// ---------------------------------------------------------------- hub
+
+// Who the session is: the raygent account behind CLAUDE_CONFIG_DIR and the
+// project slug from the brain's hosts map, so every laptop names it the same.
+async function hubContext(cwd: string): Promise<{ account?: string; project: string; host: string }> {
+  const paths = defaultSyncPaths();
+  const hosts = await readJson<Record<string, string>>(path.join(paths.repo, 'hosts', `${paths.host}.json`), {});
+  const file = await readAccounts();
+  return { account: currentAccount(file)?.id, project: slugForPath(hosts, cwd), host: paths.host };
+}
+
+// A hook must never wait on the network: a detached child does the POST and
+// the hook returns as soon as Node has started.
+function emitDetached(event: HubEvent): void {
+  try {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), 'hub', 'send'], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+      env: { ...process.env, RAYGENT_HUB_EVENT: JSON.stringify(event) },
+    });
+    child.on('error', () => {});
+    child.unref();
+  } catch {
+    // reporting is best effort
+  }
+}
+
+async function requireHub(): Promise<HubConfig> {
+  const cfg = await readHubConfig();
+  if (!cfg) throw new Error('no hub configured (raygent hub login <url>)');
+  return cfg;
+}
+
+async function hubJson<T>(cfg: HubConfig, route: string, init: RequestInit = {}): Promise<T> {
+  let res: Response;
+  try {
+    res = await hubFetch(cfg, route, init);
+  } catch (err) {
+    throw new Error(`cannot reach the hub at ${cfg.url}: ${(err as Error).message}`);
+  }
+  if (!res.ok) {
+    let reason = '';
+    try {
+      reason = ` ${((await res.json()) as { error?: string }).error ?? ''}`;
+    } catch {
+      // no body
+    }
+    throw new Error(`hub ${route}: ${res.status}${reason}`);
+  }
+  return (res.status === 204 ? undefined : await res.json()) as T;
+}
+
+function since(iso: string, now: Date = new Date()): string {
+  const min = Math.floor((now.getTime() - Date.parse(iso)) / 60_000);
+  if (min < 1) return 'now';
+  return min < 60 ? `${min}m` : `${Math.floor(min / 60)}h`;
+}
+
+function printTable(rows: string[][]): void {
+  const widths = rows[0].map((_, i) => Math.max(...rows.map((r) => r[i].length)));
+  for (const r of rows) console.log(r.map((cell, i) => (i === r.length - 1 ? cell : cell.padEnd(widths[i]))).join('  ').trimEnd());
+}
+
+const CLASS_HINT = 'ninja, shinobi, dragon, boss, archer, warrior, knight, sorcerer, ...';
+
+const hub = program
+  .command('hub')
+  .description('Agent Hub: every agent, its account and project, and what each session is doing');
+
+hub
+  .command('serve')
+  .description('Run the hub server (on the VPS); token from RAYGENT_HUB_TOKEN or <data>/token')
+  .option('--port <port>', 'port to listen on', '3300')
+  .option('--host <address>', 'address to bind (keep it local behind nginx)', '127.0.0.1')
+  .option('--data <dir>', 'data folder', path.join(os.homedir(), '.raygent', 'hub'))
+  .action(async (opts: { port: string; host: string; data: string }) => {
+    try {
+      const tokenFile = path.join(opts.data, 'token');
+      const token = (process.env.RAYGENT_HUB_TOKEN ?? (await fs.readFile(tokenFile, 'utf8').catch(() => ''))).trim();
+      if (!token) throw new Error(`no token: set RAYGENT_HUB_TOKEN or write one to ${tokenFile}`);
+      const server = await createHubServer({ dataDir: opts.data, token });
+      server.on('error', (err) => {
+        console.error(err.message);
+        process.exit(1);
+      });
+      server.listen(Number(opts.port), opts.host, () => console.log(`raygent hub on http://${opts.host}:${opts.port} (data ${opts.data})`));
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+hub
+  .command('login <url>')
+  .description('Save the hub URL and token for this laptop (token from stdin, or asked)')
+  .action(async (url: string) => {
+    try {
+      if (!/^https?:\/\//.test(url)) throw new Error('the URL must start with https:// (or http:// for a tunnel)');
+      let token = '';
+      if (process.stdin.isTTY) {
+        token = await password({ message: 'Hub token', mask: true });
+      } else {
+        for await (const chunk of process.stdin) token += chunk;
+      }
+      const cfg: HubConfig = { url, token: token.trim() };
+      if (!cfg.token) throw new Error('no token given');
+      let res: Response;
+      try {
+        res = await hubFetch(cfg, '/api/status');
+      } catch (err) {
+        throw new Error(`cannot reach ${url}: ${(err as Error).message}`);
+      }
+      if (res.status === 401) throw new Error('the hub refused this token');
+      if (!res.ok) throw new Error(`the hub answered ${res.status}`);
+      await writeHubConfig(cfg);
+      console.log(`Saved ${hubConfigPath()}. Next: raygent hub install-hooks`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+hub
+  .command('status')
+  .description('Show every agent and what its sessions are doing')
+  .option('--json', 'print the raw status')
+  .action(async (opts: { json?: boolean }) => {
+    try {
+      const status = await hubJson<HubStatus>(await requireHub(), '/api/status');
+      if (opts.json) {
+        console.log(JSON.stringify(status, null, 2));
+        return;
+      }
+      const rows = [['AGENT', 'ROLE', 'ACCOUNT', 'STATUS', 'PROJECT', 'HOST', 'SINCE', 'TASK']];
+      const row = (agent: string, role: string, account: string, s?: StatusSession) =>
+        rows.push(
+          s
+            ? [agent, role, account, s.status, s.project, s.host, since(s.lastEventAt), s.task ?? '']
+            : [agent, role, account, 'offline', '', '', '', '']
+        );
+      for (const { agent, sessions } of status.agents) {
+        if (sessions.length === 0) row(agent.id, agent.role ?? '', agent.account);
+        for (const s of sessions) row(agent.id, agent.role ?? '', agent.account, s);
+      }
+      for (const s of status.unassigned) row('(unassigned)', '', s.account ?? `(${s.provider})`, s);
+      if (rows.length === 1) {
+        console.log('No agents and no live sessions yet (raygent hub agent add, raygent hub install-hooks).');
+        return;
+      }
+      printTable(rows);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+const hubAgent = hub.command('agent').description('The agent registry on the hub');
+
+hubAgent
+  .command('add <id>')
+  .description('Create or update an agent bound to one account (and optionally to projects)')
+  .requiredOption('--account <id>', 'the raygent account it runs under')
+  .option('--role <role>', 'what it does, e.g. "backend dev"')
+  .option(
+    '--project <slug>',
+    'a project slug it works in; repeat for more; none = every project',
+    (v: string, prev: string[]) => [...prev, v],
+    [] as string[]
+  )
+  .option('--class <class>', `character class for the Office: ${CLASS_HINT}`)
+  .action(async (id: string, opts: { account: string; role?: string; project: string[]; class?: string }) => {
+    try {
+      const cfg = await requireHub();
+      const local = await readAccounts();
+      if (!local.accounts.some((a) => a.id === opts.account)) {
+        console.error(`raygent: account '${opts.account}' is not registered on this laptop; saving anyway`);
+      }
+      const agent = await hubJson<HubAgent>(cfg, `/api/agents/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ account: opts.account, role: opts.role, projects: opts.project, class: opts.class }),
+      });
+      const scope = agent.projects.length ? agent.projects.join(', ') : 'every project';
+      console.log(`${agent.id}: ${agent.role ?? 'agent'} on ${agent.account}, ${scope}${agent.class ? `, ${agent.class}` : ''}`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+hubAgent
+  .command('list')
+  .description('List the agents on the hub')
+  .action(async () => {
+    try {
+      const { agents } = await hubJson<{ agents: HubAgent[] }>(await requireHub(), '/api/agents');
+      if (agents.length === 0) {
+        console.log('No agents yet (raygent hub agent add <id> --account <account>).');
+        return;
+      }
+      printTable([
+        ['AGENT', 'ROLE', 'ACCOUNT', 'PROJECTS', 'CLASS'],
+        ...agents.map((a) => [a.id, a.role ?? '', a.account, a.projects.length ? a.projects.join(',') : '(all)', a.class ?? '']),
+      ]);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+hubAgent
+  .command('remove <id>')
+  .description('Remove an agent; its sessions show as unassigned')
+  .action(async (id: string) => {
+    try {
+      await hubJson(await requireHub(), `/api/agents/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      console.log(`removed ${id}`);
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+hub
+  .command('watch')
+  .description('Print hub events live')
+  .action(async () => {
+    try {
+      const cfg = await requireHub();
+      // Its own signal: the default request timeout would cut a stream that is meant to stay open.
+      const res = await hubFetch(cfg, '/api/stream', { signal: new AbortController().signal });
+      if (!res.ok || !res.body) throw new Error(`hub /api/stream: ${res.status}`);
+      console.error(`watching ${cfg.url} (Ctrl+C to stop)`);
+      const decoder = new TextDecoder();
+      let buffer = '';
+      for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
+        buffer += decoder.decode(chunk, { stream: true });
+        let cut: number;
+        while ((cut = buffer.indexOf('\n\n')) >= 0) {
+          const frame = buffer.slice(0, cut);
+          buffer = buffer.slice(cut + 2);
+          const data = frame.split('\n').find((l) => l.startsWith('data: '));
+          if (!data) continue;
+          const e = JSON.parse(data.slice(6)) as HubEvent;
+          const time = new Date(e.receivedAt ?? e.ts).toLocaleTimeString();
+          const kind = e.type.replace('session.', '').padEnd(7);
+          console.log(`${time}  ${kind}  ${(e.account ?? '-').padEnd(12)}  ${e.project}@${e.host}${e.task ? `  ${e.task}` : ''}`);
+        }
+      }
+      console.error('the hub closed the stream');
+      process.exitCode = 1;
+    } catch (err) {
+      console.error((err as Error).message);
+      process.exitCode = 1;
+    }
+  });
+
+hub
+  .command('emit')
+  .description('Hook target: read the Claude Code hook JSON on stdin and report it to the hub')
+  .action(async () => {
+    // Prints nothing and never fails: UserPromptSubmit output would land in the
+    // prompt, and an erroring hook would interrupt the session it reports on.
+    try {
+      let raw = '';
+      for await (const chunk of process.stdin) raw += chunk;
+      if (!(await readHubConfig())) return;
+      const payload = JSON.parse(raw.replace(/^﻿/, '')) as HookPayload;
+      const ctx = await hubContext(typeof payload.cwd === 'string' ? payload.cwd : process.cwd());
+      const event = eventFromHook(payload, { ...ctx, now: new Date() });
+      if (event) emitDetached(event);
+    } catch {
+      // ignore
+    }
+  });
+
+hub
+  .command('send', { hidden: true })
+  .description('Internal: POST the event in RAYGENT_HUB_EVENT (started detached by emit)')
+  .action(async () => {
+    try {
+      const cfg = await readHubConfig();
+      const raw = process.env.RAYGENT_HUB_EVENT;
+      if (cfg && raw) await sendEvent(cfg, JSON.parse(raw) as HubEvent);
+    } catch {
+      // ignore
+    }
+  });
+
+hub
+  .command('install-hooks')
+  .description('Add the hub hooks (raygent hub emit) to settings.json of every registered Claude account')
+  .action(async () => {
+    try {
+      const file = await readAccounts();
+      const targets = file.accounts.filter((a) => a.provider === 'claude' && a.configDir);
+      if (targets.length === 0) {
+        console.log('No Claude accounts registered yet (raygent accounts discover).');
+        return;
+      }
+      for (const a of targets) {
+        const settingsPath = path.join(a.configDir as string, 'settings.json');
+        console.log(`${await installHooks(settingsPath, HUB_HOOK_COMMANDS)} ${a.id}: ${settingsPath}`);
+      }
     } catch (err) {
       console.error((err as Error).message);
       process.exitCode = 1;
